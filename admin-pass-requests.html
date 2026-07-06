@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Permanent Pass Requests</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    font-family:'Inter',sans-serif;
+    background:#f1f5f9;
+}
+
+table{
+    width:100%;
+}
+
+th{
+    background:#2563eb;
+    color:white;
+}
+
+th,td{
+    padding:12px;
+    border:1px solid #e5e7eb;
+    text-align:center;
+}
+
+button{
+    padding:8px 15px;
+    border-radius:10px;
+    color:white;
+    font-weight:bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="max-w-7xl mx-auto p-8">
+
+<h1 class="text-3xl font-extrabold text-blue-700 mb-6">
+
+Permanent Pass Requests
+
+</h1>
+
+<div class="bg-white shadow rounded-2xl overflow-hidden">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Request ID</th>
+
+<th>Employee Code</th>
+
+<th>Employee Name</th>
+
+<th>Department</th>
+
+<th>Mobile</th>
+
+<th>Route No</th>
+
+<th>Bus Stop</th>
+
+<th>Request Date</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="requestTable">
+
+<tr>
+
+<td colspan="9">
+
+Loading...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+async function loadRequests(){
+
+    try{
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/admin/pass-requests"
+        );
+
+        const data = await response.json();
+
+        const table =
+        document.getElementById("requestTable");
+
+        table.innerHTML = "";
+
+        if(data.length==0){
+
+            table.innerHTML=`
+
+            <tr>
+
+            <td colspan="9">
+
+            No Pending Requests
+
+            </td>
+
+            </tr>
+
+            `;
+
+            return;
+
+        }
+
+        data.forEach(function(item){
+
+            table.innerHTML += `
+
+            <tr>
+
+                <td>${item.requestId}</td>
+
+                <td>${item.employeeCode}</td>
+
+                <td>${item.employeeName}</td>
+
+                <td>${item.department}</td>
+
+                <td>${item.mobile}</td>
+
+                <td>${item.routeNumber}</td>
+
+                <td>${item.busStop}</td>
+
+                <td>${item.requestDate}</td>
+
+                <td>
+
+                    ${
+                        item.status=="Pending"
+                        ?
+                        `
+                        <button
+                        onclick="approvePass('${item.requestId}')"
+                        style="background:green">
+
+                        Approve
+
+                        </button>
+
+                        <button
+                        onclick="rejectPass('${item.requestId}')"
+                        style="background:red">
+
+                        Reject
+
+                        </button>
+                        `
+                        :
+                        `<b>${item.status}</b>`
+                    }
+
+                </td>
+
+            </tr>
+
+            `;
+
+        });
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        alert("Unable To Load Requests");
+
+    }
+
+}
+
+
+
+// =========================
+// APPROVE PASS
+// =========================
+
+async function approvePass(requestId){
+
+    if(!confirm("Approve this Permanent Pass?")){
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+
+            "http://127.0.0.1:5000/approve-pass",
+
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":"application/json"
+
+                },
+
+                body:JSON.stringify({
+
+                    requestId:requestId
+
+                })
+
+            }
+
+        );
+
+        const data = await response.json();
+
+        alert(data.message);
+
+        loadRequests();
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        alert("Server Error");
+
+    }
+
+}
+
+
+
+// =========================
+// REJECT PASS
+// =========================
+
+async function rejectPass(requestId){
+
+    if(!confirm("Reject this Permanent Pass?")){
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+
+            "http://127.0.0.1:5000/reject-pass",
+
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":"application/json"
+
+                },
+
+                body:JSON.stringify({
+
+                    requestId:requestId
+
+                })
+
+            }
+
+        );
+
+        const data = await response.json();
+
+        alert(data.message);
+
+        loadRequests();
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        alert("Server Error");
+
+    }
+
+}
+
+
+loadRequests();
+
+setInterval(function(){
+
+    loadRequests();
+
+},5000);
+
+</script>
+
+</body>
+</html>

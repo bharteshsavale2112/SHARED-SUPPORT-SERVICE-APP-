@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Bajaj Auto Transport</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Inter',sans-serif;
+background:#f1f5f9;
+}
+
+/* HERO */
+.hero{
+    min-height: 100vh;
+
+    background:
+    linear-gradient(
+        rgba(0, 20, 60, 0.55),
+        rgba(0, 20, 60, 0.55)
+    ),
+    url("bajaj.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+/* CARD */
+
+.card{
+transition:0.3s;
+}
+
+.card:hover{
+transform:translateY(-8px);
+}
+
+/* BUTTON */
+
+.btn{
+transition:0.2s;
+}
+
+.btn:hover{
+transform:scale(.97);
+}
+
+.shiftBtn{
+transition:0.2s;
+}
+
+.shiftBtn:hover{
+transform:scale(.97);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- HEADER -->
+
+
+<!-- Mobile Navigation 
+
+<div class="md:hidden bg-white border-t">
+
+    <div class="flex justify-around py-3 text-sm font-semibold">
+
+        <a href="#" class="text-blue-600">
+            🏠 Home
+        </a>
+
+        <a href="viewroots.html" class="text-gray-700">
+            🚌 Routes
+        </a>
+
+        <a href="EmergencyContact.html" class="text-gray-700">
+            📞 Contact
+        </a>
+
+    </div>
+
+</div> -->
+<header class="bg-white shadow-md sticky top-0 z-50">
+
+<div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+
+<div class="flex items-center gap-3">
+
+<div class="h-14 w-14 bg-white rounded-xl flex items-center justify-center p-1 shadow">
+
+    <img
+        src="download (1).png"
+        alt="Bajaj Auto Logo"
+        class="w-full h-full object-contain">
+
+</div>
+<div>
+
+<h1 class="font-extrabold text-blue-900 text-2xl">
+BAJAJ AUTO
+</h1>
+
+<p class="text-xs tracking-wider text-gray-500 uppercase">
+Employee Transport Management System
+</p>
+</div>
+
+</div>
+
+<nav class="hidden md:flex items-center gap-8 font-semibold text-sm">
+
+<a href="#" class="text-blue-600">
+Home
+</a>
+
+<a href="viewroots.html">
+Routes
+</a>
+
+
+<a href="EmergencyContact.html">
+Emergency Contact
+</a>
+
+</nav>
+
+<!-- LOGIN BUTTONS -->
+
+<div class="flex gap-3 flex-wrap">
+
+<!-- EMPLOYEE LOGIN -->
+
+<a href="employeelogin.html">
+
+<button
+class="bg-white border border-blue-600 text-blue-600 px-5 py-2 rounded-xl font-semibold btn">
+
+Employee Login
+
+</button>
+
+</a>
+
+<!-- ADMIN LOGIN -->
+
+<a href="adminlogin.html">
+
+<button
+class="bg-blue-600 text-white px-5 py-2 rounded-xl font-semibold btn">
+
+Admin Login
+
+</button>
+
+</a>
+
+
+</div>
+
+</div>
+
+</header>
+
+<!-- HERO SECTION -->
+
+<section class="hero min-h-screen flex items-center">
+
+<div class="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+
+<!-- LEFT -->
+
+<div>
+
+<div class="inline-block bg-blue-500/20 text-blue-100 border border-blue-400/20 px-4 py-2 rounded-full text-sm mb-6">
+🚍 Smart Employee Transport System
+</div>
+
+<h2 class="text-5xl md:text-7xl font-extrabold text-white leading-tight">
+
+Employee
+<span class="text-blue-400">
+Transport
+</span>
+Management
+
+</h2>
+
+<p class="text-slate-300 text-lg mt-6 leading-8">
+
+Manage employee routes, buses, drivers, and transport schedules with a modern professional system.
+
+</p>
+
+<!-- BUTTONS -->
+
+<div class="flex flex-wrap gap-4 mt-8">
+
+<a href="employeelogin.html">
+
+
+</a>
+
+<a href="viewroots.html">
+
+<button
+class="bg-white/10 border border-white/20 text-white px-8 py-4 rounded-2xl font-bold btn">
+
+View Routes
+
+</button>
+
+</a>
+
+<a href="driverpannel.html">
+
+<button
+class="bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-2xl font-bold btn">
+
+Driver Panel
+
+</button>
+
+</a>
+
+</div>
+
+<!-- STATS -->
+
+<div class="grid grid-cols-3 gap-4 mt-12">
+
+<div class="bg-white/10 border border-white/10 backdrop-blur rounded-2xl p-5">
+
+<h3 class="text-3xl font-extrabold text-white">
+40+
+</h3>
+
+<p class="text-slate-300 text-sm mt-1">
+Routes
+</p>
+
+</div>
+
+<div class="bg-white/10 border border-white/10 backdrop-blur rounded-2xl p-5">
+
+<h3 class="text-3xl font-extrabold text-white">
+100+
+</h3>
+
+<p class="text-slate-300 text-sm mt-1">
+Drivers
+</p>
+
+</div>
+
+<div class="bg-white/10 border border-white/10 backdrop-blur rounded-2xl p-5">
+
+<h3 class="text-3xl font-extrabold text-white">
+24/7
+</h3>
+
+<p class="text-slate-300 text-sm mt-1">
+Support
+</p>
+
+</div>
+
+</div>
+
+<!-- SHIFT SECTION -->
+
+<div class="mt-12">
+
+<h3 class="text-white text-3xl font-bold mb-5">
+Current Shift Routes
+</h3>
+
+<!-- SHIFT BUTTONS -->
+
+<div class="flex gap-4 flex-wrap mb-6">
+
+<button
+onclick="changeShift('1st Shift','Route 15, Route 22, Route 10')"
+class="shiftBtn bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold">
+
+1st Shift
+
+</button>
+
+<button
+onclick="changeShift('2nd Shift','Route 05, Route 12, Route 18')"
+class="shiftBtn bg-green-600 text-white px-6 py-3 rounded-2xl font-bold">
+
+2nd Shift
+
+</button>
+
+<button
+onclick="changeShift('3rd Shift','Route 02, Route 08, Route 25')"
+class="shiftBtn bg-yellow-500 text-white px-6 py-3 rounded-2xl font-bold">
+
+3rd Shift
+
+</button>
+
+</div>
+
+<!-- SHIFT DETAILS -->
+
+<div class="bg-white/10 border border-white/20 backdrop-blur rounded-3xl p-6">
+
+<div class="flex items-center justify-between mb-4">
+
+<div>
+
+<p class="text-slate-300 text-sm">
+CURRENT SHIFT
+</p>
+
+<h3 id="shiftName"
+class="text-3xl font-bold text-white">
+
+1st Shift
+
+</h3>
+
+</div>
+
+<div class="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-bold">
+ACTIVE
+</div>
+
+</div>
+
+<div>
+
+<p class="text-slate-300 text-sm mb-2">
+RUNNING ROUTES
+</p>
+
+<h4 id="routeList"
+class="text-white text-xl font-bold">
+
+Route 15, Route 22, Route 10
+
+</h4>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- RIGHT -->
+
+<div>
+
+<div class="bg-white rounded-3xl p-7 shadow-2xl">
+
+<div class="flex items-center justify-between mb-6">
+
+<div>
+
+<p class="text-gray-500 text-sm">
+Current Shift
+</p>
+
+<h3 id="cardShift"
+class="text-3xl font-bold text-blue-900">
+1st Shift
+</h3>
+
+</div>
+
+<div class="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-bold">
+ACTIVE
+</div>
+
+</div>
+
+<div class="space-y-4">
+
+<!-- ROUTE CARD -->
+
+<div class="bg-slate-50 border rounded-2xl p-4">
+
+<div class="flex items-center justify-between">
+
+<div>
+
+<p class="text-xs text-gray-500">
+ROUTE
+</p>
+
+<h4 id="cardRoute"
+class="font-bold text-lg">
+Route 15
+</h4>
+
+</div>
+
+<div class="text-green-600 font-bold">
+On Time
+</div>
+
+</div>
+
+</div>
+
+<!-- DRIVER CARD -->
+
+<div class="bg-slate-50 border rounded-2xl p-4">
+
+<div class="flex items-center justify-between">
+
+<div>
+
+<p class="text-xs text-gray-500">
+DRIVER
+</p>
+
+<h4 class="font-bold text-lg">
+Santosh Patil
+</h4>
+
+</div>
+
+<div class="text-blue-600 font-bold">
+Available
+</div>
+
+</div>
+
+</div>
+
+<!-- STATUS CARD -->
+
+<div class="bg-slate-50 border rounded-2xl p-4">
+
+<div class="flex items-center justify-between">
+
+<div>
+
+<p class="text-xs text-gray-500">
+BUS STATUS
+</p>
+
+<h4 class="font-bold text-lg">
+Running
+</h4>
+
+</div>
+
+<div class="text-yellow-600 font-bold">
+Live
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- SERVICES -->
+
+<section class="py-24">
+
+<div class="max-w-7xl mx-auto px-4">
+
+<div class="text-center mb-16">
+
+<h2 class="text-5xl font-extrabold text-slate-800">
+Our Services
+</h2>
+
+<p class="text-gray-500 mt-4 text-lg">
+Professional transport management features
+</p>
+
+</div>
+
+<div class="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
+
+<!-- CARD -->
+
+<div class="card bg-white rounded-3xl p-7 border shadow-sm">
+
+<div class="h-16 w-16 rounded-2xl bg-blue-100 flex items-center justify-center text-3xl mb-5">
+🚌
+</div>
+
+<h3 class="font-bold text-xl text-slate-800 mb-3">
+Route Management
+</h3>
+
+<p class="text-gray-500 leading-7">
+Manage employee routes and transport schedules easily.
+</p>
+
+</div>
+
+<!-- CARD -->
+
+<div class="card bg-white rounded-3xl p-7 border shadow-sm">
+
+<div class="h-16 w-16 rounded-2xl bg-green-100 flex items-center justify-center text-3xl mb-5">
+📍
+</div>
+
+<h3 class="font-bold text-xl text-slate-800 mb-3">
+Live Tracking
+</h3>
+
+<p class="text-gray-500 leading-7">
+Track buses and transport activities in real time.
+</p>
+
+</div>
+
+<!-- CARD -->
+
+<div class="card bg-white rounded-3xl p-7 border shadow-sm">
+
+<div class="h-16 w-16 rounded-2xl bg-yellow-100 flex items-center justify-center text-3xl mb-5">
+👨‍✈️
+</div>
+
+<h3 class="font-bold text-xl text-slate-800 mb-3">
+Driver Details
+</h3>
+
+<p class="text-gray-500 leading-7">
+Store driver information and contact details securely.
+</p>
+
+</div>
+
+<!-- CARD -->
+
+<div class="card bg-white rounded-3xl p-7 border shadow-sm">
+
+<div class="h-16 w-16 rounded-2xl bg-red-100 flex items-center justify-center text-3xl mb-5">
+📞
+</div>
+
+<h3 class="font-bold text-xl text-slate-800 mb-3">
+Emergency Support
+</h3>
+
+<p class="text-gray-500 leading-7">
+Quick emergency communication and support system.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer class="bg-slate-950 text-slate-400 py-8">
+
+<div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+
+<div>
+© 2026 Bajaj Auto Transport System
+</div>
+
+<div class="flex gap-6 text-sm">
+
+<a href="#">
+Privacy Policy
+</a>
+
+<a href="#">
+Support
+</a>
+
+<a href="#">
+Contact
+</a>
+
+</div>
+
+</div>
+
+</footer>
+
+<!-- SCRIPT -->
+
+<script>
+
+function changeShift(shift,routes){
+
+document.getElementById("shiftName").innerText = shift;
+
+document.getElementById("routeList").innerText = routes;
+
+document.getElementById("cardShift").innerText = shift;
+
+const firstRoute = routes.split(",")[0];
+
+document.getElementById("cardRoute").innerText = firstRoute;
+
+}
+
+</script>
+
+</body>
+</html>

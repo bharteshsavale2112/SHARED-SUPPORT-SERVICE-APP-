@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Bajaj Auto | Employee List</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Inter',sans-serif;
+}
+
+body{
+    background:#f1f5f9;
+}
+
+/* ===========================
+   CARD
+=========================== */
+
+.card{
+
+    background:#fff;
+
+    border-radius:20px;
+
+    padding:25px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+    transition:.3s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-5px);
+
+}
+
+/* ===========================
+   SEARCH
+=========================== */
+
+.search-box{
+
+    width:100%;
+
+    padding:15px;
+
+    border:1px solid #d1d5db;
+
+    border-radius:14px;
+
+    outline:none;
+
+}
+
+.search-box:focus{
+
+    border-color:#2563eb;
+
+}
+
+/* ===========================
+   TABLE
+=========================== */
+
+.table-container{
+
+    background:white;
+
+    border-radius:20px;
+
+    overflow-x:auto;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.08);
+
+}
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    min-width:1200px;
+
+}
+
+thead{
+
+    background:#0056b3;
+
+    color:white;
+
+}
+
+th{
+
+    padding:16px;
+
+    text-align:left;
+
+    font-size:15px;
+
+}
+
+td{
+
+    padding:14px;
+
+    border-bottom:1px solid #e5e7eb;
+
+}
+
+tbody tr:nth-child(even){
+
+    background:#f8fafc;
+
+}
+
+tbody tr:hover{
+
+    background:#e0f2fe;
+
+}
+
+/* ===========================
+   MOBILE
+=========================== */
+
+@media(max-width:768px){
+
+.card{
+
+padding:18px;
+
+}
+
+h1{
+
+font-size:28px;
+
+}
+
+table{
+
+min-width:1000px;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="max-w-7xl mx-auto p-4 md:p-8">
+
+<!-- ===========================
+HEADER
+=========================== -->
+
+<div class="bg-white rounded-3xl shadow-lg p-6 flex flex-col md:flex-row justify-between items-center gap-5 mb-6">
+
+<div>
+
+<h1 class="text-4xl font-extrabold text-blue-700">
+
+🚍 BAJAJ AUTO
+
+</h1>
+
+<p class="text-gray-500 mt-2">
+
+Employee Transport Management System
+
+</p>
+
+</div>
+
+<div class="flex flex-wrap gap-3">
+
+<a href="admin-dashboard.html"
+
+class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl">
+
+⬅ Dashboard
+
+</a>
+
+<button
+
+onclick="loadEmployees();loadSummary();"
+
+class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl">
+
+🔄 Refresh
+
+</button>
+
+</div>
+
+</div>
+
+<!-- ===========================
+SUMMARY CARDS
+=========================== -->
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+
+<div class="card">
+
+<p class="text-gray-500">
+
+Total Employees
+
+</p>
+
+<h2
+id="totalEmployees"
+class="text-5xl font-bold text-blue-600 mt-3">
+
+0
+
+</h2>
+
+</div>
+
+<div class="card">
+
+<p class="text-gray-500">
+
+Departments
+
+</p>
+
+<h2
+id="totalDepartments"
+class="text-5xl font-bold text-green-600 mt-3">
+
+0
+
+</h2>
+
+</div>
+
+<div class="card">
+
+<p class="text-gray-500">
+
+Routes Assigned
+
+</p>
+
+<h2
+id="totalRoutes"
+class="text-5xl font-bold text-orange-500 mt-3">
+
+0
+
+</h2>
+
+</div>
+
+</div>
+
+<!-- ===========================
+SEARCH BOX
+=========================== -->
+
+<div class="bg-white rounded-3xl shadow-lg p-5 mb-6">
+
+    <div class="grid md:grid-cols-2 gap-4">
+
+        <input
+            type="text"
+            id="searchEmployee"
+            class="search-box"
+            placeholder="🔍 Search Employee Code / Employee Name / Department / Route"
+            onkeyup="searchEmployee()">
+
+        <button
+            onclick="loadEmployees();loadSummary();"
+            class="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6">
+
+            Refresh Employee List
+
+        </button>
+
+    </div>
+
+</div>
+
+<!-- ===========================
+EMPLOYEE TABLE
+=========================== -->
+
+<div class="table-container">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Employee Code</th>
+
+<th>Employee Name</th>
+
+<th>Department</th>
+
+<th>Mobile</th>
+
+<th>Email</th>
+
+<th>Shift</th>
+
+<th>Bus Stop</th>
+
+<th>Route</th>
+
+<th>Address</th>
+
+</tr>
+
+</thead>
+
+<tbody id="employeeTable">
+
+<tr>
+
+<td colspan="9" class="text-center p-8">
+
+Loading Employees...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<!-- ===========================
+NO DATA MESSAGE
+=========================== -->
+
+<div
+id="noData"
+class="hidden mt-6 bg-yellow-50 border border-yellow-300 rounded-xl p-6 text-center">
+
+<h2 class="text-xl font-bold text-yellow-700">
+
+No Employee Found
+
+</h2>
+
+<p class="text-gray-500 mt-2">
+
+There are no employees matching your search.
+
+</p>
+
+</div>
+
+<!-- ===========================
+LOADER
+=========================== -->
+
+<div
+id="loader"
+class="hidden fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+
+<div class="bg-white rounded-2xl shadow-xl px-8 py-6">
+
+<div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
+
+<p class="mt-4 text-lg font-semibold text-blue-700">
+
+Loading Employees...
+
+</p>
+
+</div>
+
+</div>
+
+<script>
+
+// ==========================================
+// GLOBAL VARIABLE
+// ==========================================
+
+let allEmployees = [];
+
+// ==========================================
+// SHOW LOADER
+// ==========================================
+
+function showLoader(){
+
+    document.getElementById("loader").classList.remove("hidden");
+
+}
+
+// ==========================================
+// HIDE LOADER
+// ==========================================
+
+function hideLoader(){
+
+    document.getElementById("loader").classList.add("hidden");
+
+}
+
+// ==========================================
+// LOAD EMPLOYEES
+// ==========================================
+
+async function loadEmployees(){
+
+    showLoader();
+
+    try{
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/employees-json"
+        );
+
+        const employees = await response.json();
+
+        allEmployees = employees;
+
+        displayEmployees(allEmployees);
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+        document.getElementById("employeeTable").innerHTML=`
+
+        <tr>
+
+            <td colspan="9"
+                class="text-center text-red-600 p-6">
+
+                Unable to Load Employees
+
+            </td>
+
+        </tr>
+
+        `;
+
+    }
+
+    hideLoader();
+
+}
+
+// ==========================================
+// DISPLAY EMPLOYEES
+// ==========================================
+
+function displayEmployees(employeeList){
+
+    let html="";
+
+    if(employeeList.length===0){
+
+        document
+        .getElementById("noData")
+        .classList.remove("hidden");
+
+    }
+
+    else{
+
+        document
+        .getElementById("noData")
+        .classList.add("hidden");
+
+    }
+
+    employeeList.forEach(emp=>{
+
+        html+=`
+
+        <tr>
+
+            <td>${emp.employeeCode || ""}</td>
+
+            <td>${emp.employeeName || ""}</td>
+
+            <td>${emp.department || ""}</td>
+
+            <td>${emp.mobile || ""}</td>
+
+            <td>${emp.email || ""}</td>
+
+            <td>${emp.shift || ""}</td>
+
+            <td>${emp.busStop || ""}</td>
+
+            <td>${emp.route || ""}</td>
+
+            <td>${emp.address || ""}</td>
+
+        </tr>
+
+        `;
+
+    });
+
+    if(employeeList.length===0){
+
+        html=`
+
+        <tr>
+
+            <td colspan="9"
+                class="text-center p-6">
+
+                No Employee Found
+
+            </td>
+
+        </tr>
+
+        `;
+
+    }
+
+    document.getElementById("employeeTable").innerHTML=html;
+
+}
+
+// ==========================================
+// SEARCH EMPLOYEE
+// ==========================================
+
+function searchEmployee(){
+
+    const keyword=document
+    .getElementById("searchEmployee")
+    .value
+    .toLowerCase();
+
+    const filtered=allEmployees.filter(emp=>
+
+        String(emp.employeeCode || "")
+        .toLowerCase()
+        .includes(keyword)
+
+        ||
+
+        String(emp.employeeName || "")
+        .toLowerCase()
+        .includes(keyword)
+
+        ||
+
+        String(emp.department || "")
+        .toLowerCase()
+        .includes(keyword)
+
+        ||
+
+        String(emp.route || "")
+        .toLowerCase()
+        .includes(keyword)
+
+    );
+
+    displayEmployees(filtered);
+
+}
+
+// ==========================================
+// LOAD SUMMARY
+// ==========================================
+
+async function loadSummary(){
+
+    try{
+
+        const response=await fetch(
+            "http://127.0.0.1:5000/employee-summary"
+        );
+
+        const data=await response.json();
+
+        document.getElementById("totalEmployees").innerHTML =
+        data.totalEmployees;
+
+        document.getElementById("totalDepartments").innerHTML =
+        data.totalDepartments;
+
+        document.getElementById("totalRoutes").innerHTML =
+        data.totalRoutes;
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+    }
+
+}
+
+// ==========================================
+// AUTO LOAD
+// ==========================================
+
+loadEmployees();
+
+loadSummary();
+
+// ==========================================
+// AUTO REFRESH EVERY 30 SECONDS
+// ==========================================
+
+setInterval(()=>{
+
+    loadEmployees();
+
+    loadSummary();
+
+},30000);
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Driver Panel</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+body{
+    font-family:Arial, sans-serif;
+    background:#f1f5f9;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="min-h-screen flex items-center justify-center p-5">
+
+<div class="bg-white shadow-xl rounded-3xl p-8 w-full max-w-lg">
+
+<h1 class="text-3xl font-bold text-blue-700 text-center mb-6">
+🚌 Driver Panel
+</h1>
+
+<div class="space-y-4">
+
+<div>
+<label class="font-semibold">Driver Name</label>
+<input
+id="driverName"
+type="text"
+value="Santosh Patil"
+class="w-full border p-3 rounded-xl mt-1">
+</div>
+
+<div>
+<label class="font-semibold">Bus Number</label>
+<input
+id="busNumber"
+type="text"
+value="MH14 AB1234"
+class="w-full border p-3 rounded-xl mt-1">
+</div>
+
+<div>
+<label class="font-semibold">Route Number</label>
+<input
+id="routeNumber"
+type="text"
+value="Route01"
+class="w-full border p-3 rounded-xl mt-1">
+</div>
+
+</div>
+
+<div class="grid grid-cols-2 gap-4 mt-6">
+
+<button
+onclick="startTracking()"
+class="bg-green-600 hover:bg-green-700 text-white p-3 rounded-xl font-bold">
+
+▶ Start Tracking
+
+</button>
+
+<button
+onclick="stopTracking()"
+class="bg-red-600 hover:bg-red-700 text-white p-3 rounded-xl font-bold">
+
+■ Stop Tracking
+
+</button>
+
+</div>
+
+<div class="mt-6 bg-slate-100 rounded-2xl p-4">
+
+<p class="text-gray-500 text-sm">Tracking Status</p>
+
+<h3
+id="status"
+class="text-xl font-bold text-red-600">
+
+Stopped
+
+</h3>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- Firebase -->
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script>
+
+
+/* ==========================
+   FIREBASE CONFIG
+========================== */
+
+const firebaseConfig = {
+
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "YOUR_DATABASE_URL",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+/* ==========================
+   TRACKING
+========================== */
+
+let trackingInterval = null;
+
+/* SAVE LOCATION */
+
+function saveLocation(position){
+
+    const driver = document.getElementById("driverName").value;
+    const bus = document.getElementById("busNumber").value;
+    const route = document.getElementById("routeNumber").value;
+
+    db.ref("livebus/" + route).set({
+
+        driver: driver,
+        bus: bus,
+        route: route,
+
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+
+        speed: position.coords.speed || 0,
+
+        updatedAt: new Date().toLocaleString()
+
+    })
+    .then(() => {
+
+        console.log("Location Updated");
+
+    })
+    .catch((error) => {
+
+        console.log(error);
+
+    });
+
+}
+
+/* START TRACKING */
+function startTracking(){
+
+    navigator.geolocation.getCurrentPosition(
+
+        function(position){
+
+            saveLocation(position);
+
+            console.log(position.coords.latitude);
+            console.log(position.coords.longitude);
+
+            alert("Location Received");
+
+        },
+
+        function(error){
+
+            alert(error.message);
+
+        }
+
+    );
+
+}
+/* STOP TRACKING */
+
+function stopTracking(){
+
+    if(trackingInterval){
+
+        clearInterval(trackingInterval);
+        trackingInterval = null;
+
+    }
+
+    document.getElementById("status").innerText = "Stopped";
+    document.getElementById("status").className =
+    "text-xl font-bold text-red-600";
+
+    alert("Tracking Stopped");
+
+}
+
+</script>
+</body>
+</html>

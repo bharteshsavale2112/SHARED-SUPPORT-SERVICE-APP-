@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Emergency Contacts</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Inter',sans-serif;
+
+    /* FIXED BACKGROUND */
+    background: url('download (1).png') no-repeat center center fixed;
+    background-size: cover;
+
+    min-height: 100vh;
+}
+
+/* DARK OVERLAY */
+.overlay{
+    min-height:100vh;
+    width:100%;
+    background:rgba(0,0,0,0.65);
+}
+
+/* GLASS CARD */
+.glass-card{
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(15px);
+    -webkit-backdrop-filter:blur(15px);
+    border:1px solid rgba(255,255,255,0.2);
+    transition:all 0.3s ease;
+}
+
+/* HOVER EFFECT */
+.glass-card:hover{
+    transform:translateY(-5px);
+}
+
+/* CALL BUTTON */
+.call-btn{
+    transition:all 0.3s ease;
+}
+
+.call-btn:hover{
+    transform:scale(1.05);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="overlay">
+
+    <div class="container mx-auto px-6 py-8">
+
+        <!-- Back Button -->
+        <div class="flex justify-end mb-6">
+            <a href="index.html"
+               class="bg-blue-600/20 hover:bg-white/30 backdrop-blur-md text-white px-6 py-3 rounded-xl font-semibold shadow-lg">
+                ← Back
+            </a>
+        </div>
+
+        <!-- Bajaj Logo -->
+        <div class="flex justify-center mb-4">
+            <img src="download (1).png"
+                 alt="Bajaj Logo"
+                 class="h-24 object-contain">
+        </div>
+
+        <!-- Title -->
+        <div class="text-center mb-12">
+
+            <h1 class="text-5xl font-extrabold text-white mb-3">
+                🚨 Emergency Contacts
+            </h1>
+
+            <p class="text-gray-200 text-lg">
+                Quick access to important contacts during emergencies
+            </p>
+
+        </div>
+
+        <!-- Contact Cards -->
+        <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+
+            <!-- Supervisor -->
+            <div class="glass-card rounded-3xl p-6 shadow-2xl flex items-center justify-between">
+
+                <div>
+                    <h2 class="text-2xl font-bold text-white">
+                        Supervisor
+                    </h2>
+
+                    <p class="text-gray-200 mt-2">
+                        +91 9876543210
+                    </p>
+                </div>
+
+                <a href="tel:+919876543210"
+                   class="call-btn bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">
+                    📞 Call
+                </a>
+
+            </div>
+
+            <!-- Transport Department -->
+            <div class="glass-card rounded-3xl p-6 shadow-2xl flex items-center justify-between">
+
+                <div>
+                    <h2 class="text-2xl font-bold text-white">
+                        Transport Department
+                    </h2>
+
+                    <p class="text-gray-200 mt-2">
+                        +91 9876543211
+                    </p>
+                </div>
+
+                <a href="tel:+919876543211"
+                   class="call-btn bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">
+                    📞 Call
+                </a>
+
+            </div>
+
+            <!-- Police -->
+            <div class="glass-card rounded-3xl p-6 shadow-2xl flex items-center justify-between">
+
+                <div>
+                    <h2 class="text-2xl font-bold text-white">
+                        Police
+                    </h2>
+
+                    <p class="text-gray-200 mt-2">
+                        100
+                    </p>
+                </div>
+
+                <a href="tel:100"
+                   class="call-btn bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">
+                    🚨 Call
+                </a>
+
+            </div>
+
+            <!-- Time Office -->
+            <div class="glass-card rounded-3xl p-6 shadow-2xl flex items-center justify-between">
+
+                <div>
+                    <h2 class="text-2xl font-bold text-white">
+                        Time Office
+                    </h2>
+
+                    <p class="text-gray-200 mt-2">
+                        +91 9876543213
+                    </p>
+                </div>
+
+                <a href="tel:+919876543213"
+                   class="call-btn bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">
+                    📞 Call
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
