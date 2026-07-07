@@ -711,7 +711,7 @@ async function loadDashboard(){
     try{
 
         const res = await fetch(
-            "http://127.0.0.1:5000/dashboard-summary"
+            "/dashboard-summary"
         );
 
         const data = await res.json();
@@ -747,7 +747,7 @@ async function loadEmployees(){
     try{
 
         const res = await fetch(
-            "http://127.0.0.1:5000/employees-json"
+            "/employees-json"
         );
 
         const employees = await res.json();
@@ -795,7 +795,7 @@ async function loadPendingRequests(){
     try{
 
         const res = await fetch(
-            "http://127.0.0.1:5000/pending-pass-requests"
+            "/pending-pass-requests"
         );
 
         const requests = await res.json();
@@ -865,7 +865,7 @@ async function loadPendingRequests(){
 
     const res = await fetch(
 
-        "http://127.0.0.1:5000/approve-pass",
+        "/approve-pass",
 
         {
 
@@ -914,7 +914,7 @@ async function rejectPass(id){
 
     const res = await fetch(
 
-        "http://127.0.0.1:5000/reject-pass",
+        "/reject-pass",
 
         {
 
@@ -1089,7 +1089,7 @@ async function footerData(){
 try{
 
 const res=await fetch(
-"http://127.0.0.1:5000/dashboard-summary"
+"/dashboard-summary"
 );
 
 const data=await res.json();

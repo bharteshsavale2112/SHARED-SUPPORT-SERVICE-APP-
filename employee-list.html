@@ -441,7 +441,7 @@ async function loadEmployees(){
     try{
 
         const response = await fetch(
-            "http://127.0.0.1:5000/employees-json"
+            "/employees-json"
         );
 
         const employees = await response.json();
@@ -604,7 +604,7 @@ async function loadSummary(){
     try{
 
         const response=await fetch(
-            "http://127.0.0.1:5000/employee-summary"
+            "/employee-summary"
         );
 
         const data=await response.json();

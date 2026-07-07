@@ -240,7 +240,7 @@ async function loadPass(){
     try{
 
         const res = await fetch(
-            "http://127.0.0.1:5000/my-pass/" + employeeCode
+            "/my-pass/" + employeeCode
         );
 
         const data = await res.json();

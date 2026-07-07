@@ -111,7 +111,7 @@ async function loadRequests(){
     try{
 
         const response = await fetch(
-            "http://127.0.0.1:5000/admin/pass-requests"
+            "/admin/pass-requests"
         );
 
         const data = await response.json();
@@ -225,7 +225,7 @@ async function approvePass(requestId){
 
         const response = await fetch(
 
-            "http://127.0.0.1:5000/approve-pass",
+            "/approve-pass",
 
             {
 
@@ -281,7 +281,7 @@ async function rejectPass(requestId){
 
         const response = await fetch(
 
-            "http://127.0.0.1:5000/reject-pass",
+            "/reject-pass",
 
             {
 
