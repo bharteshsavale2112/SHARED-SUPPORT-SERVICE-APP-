@@ -36,6 +36,28 @@ transform:translateY(-5px);
 
 </style>
 
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "employeelogin.html";
+            }
+        } catch(e){
+            window.location.href = "employeelogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
+
 </head>
 
 <body>
@@ -209,6 +231,14 @@ Generate 12 Hour Temporary Pass.
 
 <button class="w-full bg-green-600 text-white py-3 rounded-2xl font-bold">
 Generate Pass
+</button>
+
+</a>
+
+<a href="my-temp-pass.html">
+
+<button class="w-full bg-slate-700 text-white py-2 rounded-2xl font-semibold mt-3">
+View / Download My Temp Pass
 </button>
 
 </a>
@@ -436,12 +466,45 @@ function openMyPass(){
 
 function logout(){
 
-    localStorage.clear();
-
-    window.location.href="employeelogin.html";
+    fetch("/logout", { method: "POST" })
+    .finally(function(){
+        localStorage.clear();
+        window.location.href="employeelogin.html";
+    });
 
 }
 
 </script>
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
+#globalBackBtn{
+    position:fixed;
+    top:14px;
+    left:14px;
+    z-index:99999;
+    background:#1e293b;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    cursor:pointer;
+}
+#globalBackBtn:hover{ background:#0f172a; }
+@media (max-width:600px){
+    #globalBackBtn{
+        top:8px;
+        left:8px;
+        padding:8px 14px;
+        font-size:13px;
+    }
+}
+</style>
+<!-- ============ END BACK BUTTON ============ -->
+
 </body>
 </html>

@@ -81,6 +81,28 @@ body{
 
 </style>
 
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "employeelogin.html";
+            }
+        } catch(e){
+            window.location.href = "employeelogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
+
 </head>
 
 <body>

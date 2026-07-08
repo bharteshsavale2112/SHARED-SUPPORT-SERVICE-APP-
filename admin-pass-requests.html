@@ -42,6 +42,28 @@ button{
 
 </style>
 
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "adminlogin.html";
+            }
+        } catch(e){
+            window.location.href = "adminlogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
+
 </head>
 
 <body>
@@ -54,7 +76,7 @@ Permanent Pass Requests
 
 </h1>
 
-<div class="bg-white shadow rounded-2xl overflow-hidden">
+<div class="bg-white shadow rounded-2xl overflow-hidden" style="overflow-x:auto;">
 
 <table>
 
@@ -85,6 +107,60 @@ Permanent Pass Requests
 </thead>
 
 <tbody id="requestTable">
+
+<tr>
+
+<td colspan="9">
+
+Loading...
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<h1 class="text-3xl font-extrabold text-red-700 mb-6 mt-12">
+
+Temporary Pass Requests
+
+</h1>
+
+<div class="bg-white shadow rounded-2xl overflow-hidden" style="overflow-x:auto;">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Request ID</th>
+
+<th>Employee Code</th>
+
+<th>Employee Name</th>
+
+<th>Department</th>
+
+<th>Mobile</th>
+
+<th>Reason</th>
+
+<th>Travel Time</th>
+
+<th>Request Date</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tempRequestTable">
 
 <tr>
 
@@ -330,7 +406,253 @@ setInterval(function(){
 
 },5000);
 
+
+// =========================
+// TEMPORARY PASS REQUESTS
+// =========================
+
+async function loadTempRequests(){
+
+    try{
+
+        const response = await fetch(
+            "/admin/temp-pass-requests"
+        );
+
+        const data = await response.json();
+
+        const table =
+        document.getElementById("tempRequestTable");
+
+        table.innerHTML = "";
+
+        if(data.length==0){
+
+            table.innerHTML=`
+
+            <tr>
+
+            <td colspan="9">
+
+            No Temporary Pass Requests
+
+            </td>
+
+            </tr>
+
+            `;
+
+            return;
+
+        }
+
+        data.forEach(function(item){
+
+            table.innerHTML += `
+
+            <tr>
+
+                <td>${item.requestId}</td>
+
+                <td>${item.employeeCode}</td>
+
+                <td>${item.employeeName}</td>
+
+                <td>${item.department}</td>
+
+                <td>${item.mobile}</td>
+
+                <td>${item.reason}</td>
+
+                <td>${item.travelDateTime}</td>
+
+                <td>${item.requestDate}</td>
+
+                <td>
+
+                    ${
+                        item.status=="Pending"
+                        ?
+                        `
+                        <button
+                        onclick="approveTempPass('${item.requestId}')"
+                        style="background:green">
+
+                        Approve
+
+                        </button>
+
+                        <button
+                        onclick="rejectTempPass('${item.requestId}')"
+                        style="background:red">
+
+                        Reject
+
+                        </button>
+                        `
+                        :
+                        `<b>${item.status}</b>`
+                    }
+
+                </td>
+
+            </tr>
+
+            `;
+
+        });
+
+    }
+
+    catch(error){
+
+        console.log(error);
+        alert("Unable To Load Temporary Pass Requests");
+
+    }
+
+}
+
+
+async function approveTempPass(requestId){
+
+    if(!confirm("Approve this Temporary Pass?")){
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+
+            "/approve-temp-pass",
+
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":"application/json"
+
+                },
+
+                body:JSON.stringify({
+
+                    requestId:requestId
+
+                })
+
+            }
+
+        );
+
+        const data = await response.json();
+
+        alert(data.message);
+        loadTempRequests();
+
+    }
+
+    catch(error){
+
+        console.log(error);
+        alert("Server Error");
+
+    }
+
+}
+
+
+async function rejectTempPass(requestId){
+
+    if(!confirm("Reject this Temporary Pass?")){
+        return;
+    }
+
+    try{
+
+        const response = await fetch(
+
+            "/reject-temp-pass",
+
+            {
+
+                method:"POST",
+
+                headers:{
+
+                    "Content-Type":"application/json"
+
+                },
+
+                body:JSON.stringify({
+
+                    requestId:requestId
+
+                })
+
+            }
+
+        );
+
+        const data = await response.json();
+
+        alert(data.message);
+        loadTempRequests();
+
+    }
+
+    catch(error){
+
+        console.log(error);
+        alert("Server Error");
+
+    }
+
+}
+
+
+loadTempRequests();
+
+setInterval(function(){
+
+    loadTempRequests();
+
+},5000);
+
 </script>
+
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
+#globalBackBtn{
+    position:fixed;
+    top:14px;
+    left:14px;
+    z-index:99999;
+    background:#1e293b;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    cursor:pointer;
+}
+#globalBackBtn:hover{ background:#0f172a; }
+@media (max-width:600px){
+    #globalBackBtn{
+        top:8px;
+        left:8px;
+        padding:8px 14px;
+        font-size:13px;
+    }
+}
+</style>
+<button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
+<!-- ============ END BACK BUTTON ============ -->
 
 </body>
 </html>

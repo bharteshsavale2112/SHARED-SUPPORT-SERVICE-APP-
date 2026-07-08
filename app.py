@@ -1,10 +1,57 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
+from flask import Flask, request, jsonify, send_from_directory, session
+from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 import os
 
 app = Flask(__name__)
-CORS(app)
+
+# ==========================
+# SECURITY CONFIG
+# ==========================
+# Secret key used to sign session cookies. Set SECRET_KEY as an
+# environment variable on Render (Settings -> Environment) in production.
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+
+# ---- Cookie / Session hardening ----
+# HTTPONLY: JavaScript can't read the session cookie (protects against XSS
+#           stealing the login session)
+# SAMESITE: cookie is not sent on cross-site requests (protects against CSRF)
+# SECURE:   cookie is only sent over HTTPS. Render serves the site over
+#           HTTPS, so this is safe to enable in production. If you ever
+#           test locally over plain http://127.0.0.1, set
+#           FLASK_DEBUG=True (which also flips this off automatically).
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "False") != "True"
+
+# Auto logout after 2 hours of inactivity
+from datetime import timedelta as _timedelta
+app.config["PERMANENT_SESSION_LIFETIME"] = _timedelta(hours=2)
+
+# Admin credentials now come from environment variables instead of being
+# hardcoded in the source code (which is visible to anyone with repo access).
+# Set ADMIN_EMAIL and ADMIN_PASSWORD as environment variables on Render.
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@bajaj.com")
+ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH") or generate_password_hash(
+    os.environ.get("ADMIN_PASSWORD", "admin123")
+)
+
+
+def login_required(role=None):
+    """Blocks access to a route unless the user is logged in
+    (and, if `role` is given, logged in as that specific role)."""
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if "role" not in session:
+                return jsonify({"status": "error", "message": "Login Required"}), 401
+            if role and session.get("role") != role:
+                return jsonify({"status": "error", "message": "Not Authorized"}), 403
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
 
 EMPLOYEE_FILE = "employees.xlsx"
 
@@ -140,6 +187,9 @@ def register():
         # Default Route
         data["route"] = ""
 
+        # Hash the password before saving so it's never stored in plain text
+        data["password"] = generate_password_hash(str(data["password"]))
+
         # Save Employee
         df = pd.concat(
             [df, pd.DataFrame([data])],
@@ -208,16 +258,30 @@ def employee_login():
         # Employee Record
         row = user.iloc[0]
 
-        # Password Check
+        # Password Check (supports old plain-text passwords too, and
+        # upgrades them to a secure hash automatically on next login)
         db_password = str(row["password"]).strip()
 
-        if db_password != password:
+        if db_password.startswith(("pbkdf2:", "scrypt:")):
+            password_ok = check_password_hash(db_password, password)
+        else:
+            password_ok = (db_password == password)
+            if password_ok:
+                # Legacy plain-text password found; upgrade it to a hash now
+                df.loc[user.index, "password"] = generate_password_hash(password)
+                df.to_excel(EMPLOYEE_FILE, index=False)
+
+        if not password_ok:
             return jsonify({
                 "status": "error",
                 "message": "Wrong Password"
             })
 
-        # Login Success
+        # Login Success - mark this browser session as logged in
+        session.permanent = True
+        session["role"] = "employee"
+        session["employeeCode"] = employee_id
+
         return jsonify({
 
             "status": "success",
@@ -255,7 +319,9 @@ def admin_login():
     email = str(data.get("email", "")).strip()
     password = str(data.get("password", "")).strip()
 
-    if email == "admin@bajaj.com" and password == "admin123":
+    if email == ADMIN_EMAIL and check_password_hash(ADMIN_PASSWORD_HASH, password):
+        session.permanent = True
+        session["role"] = "admin"
         return jsonify({
             "status": "success",
             "message": "Login Successful"
@@ -267,6 +333,34 @@ def admin_login():
     })
 
 
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"status": "success", "message": "Logged Out"})
+
+
+@app.route("/check-session", methods=["GET"])
+def check_session():
+    """Used by pages to verify the login session is still valid
+    (e.g. after using the browser Back/Forward buttons post-logout)."""
+    if "role" not in session:
+        return jsonify({"status": "error", "message": "Not Logged In"}), 401
+    return jsonify({
+        "status": "success",
+        "role": session.get("role"),
+        "employeeCode": session.get("employeeCode", "")
+    })
+
+
+@app.after_request
+def add_no_cache_headers(response):
+    """Stops the browser from serving a cached copy of protected pages
+    from its Back/Forward cache after the user has logged out."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    return response
+
+
 
 
 
@@ -275,6 +369,7 @@ def admin_login():
 # ==========================
 
 @app.route("/dashboard-stats")
+@login_required("admin")
 def dashboard_stats():
 
     try:
@@ -330,6 +425,7 @@ def dashboard_stats():
 # ==========================
 
 @app.route("/recent-employees")
+@login_required("admin")
 def recent_employees():
 
     try:
@@ -370,11 +466,15 @@ def recent_employees():
 # ==========================
 
 @app.route("/employees")
+@login_required("admin")
 def employees():
 
     try:
 
         df = load_df()
+
+        if "password" in df.columns:
+            df = df.drop(columns=["password"])
 
         return df.to_html(index=False)
 
@@ -388,6 +488,7 @@ def employees():
 # ==========================
 
 @app.route("/assign-route", methods=["POST"])
+@login_required("admin")
 def assign():
 
     try:
@@ -580,6 +681,7 @@ create_pass_file()
 # ==========================
 
 @app.route("/bus-pass", methods=["POST"])
+@login_required("employee")
 def bus_pass():
 
     try:
@@ -587,6 +689,9 @@ def bus_pass():
         data = request.get_json()
 
         employeeCode = data.get("employeeCode")
+
+        if session.get("employeeCode") != str(employeeCode):
+            return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
         df = load_df()
 
@@ -654,7 +759,11 @@ def bus_pass():
 
 
 @app.route("/check-pass/<employeeCode>")
+@login_required("employee")
 def check_pass(employeeCode):
+
+    if session.get("employeeCode") != str(employeeCode):
+        return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
     df = pd.read_excel(PASS_FILE)
 
@@ -694,6 +803,7 @@ PASS_REQUEST_FILE = "pass_requests.xlsx"
 # ==========================
 
 @app.route("/approve-pass", methods=["POST"])
+@login_required("admin")
 def approve_pass():
 
     try:
@@ -775,7 +885,11 @@ def approve_pass():
 # GET MY PASS
 # ==========================
 @app.route("/my-pass/<employeeCode>", methods=["GET"])
+@login_required("employee")
 def my_pass(employeeCode):
+
+    if session.get("employeeCode") != str(employeeCode):
+        return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
     try:
 
@@ -866,6 +980,7 @@ create_pass_file()
 # ==========================
 
 @app.route("/request-pass", methods=["POST"])
+@login_required("employee")
 def request_pass():
 
     try:
@@ -882,6 +997,9 @@ def request_pass():
                 "status": "error",
                 "message": "Employee Code Required"
             })
+
+        if session.get("employeeCode") != employeeCode:
+            return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
         # Employee Data
         df = load_df()
@@ -1000,6 +1118,7 @@ def request_pass():
 # ==========================
 
 @app.route("/pending-pass-requests")
+@login_required("admin")
 def pending_pass_requests():
 
     try:
@@ -1045,6 +1164,7 @@ def pending_pass_requests():
 # ==========================
 
 @app.route("/reject-pass", methods=["POST"])
+@login_required("admin")
 def reject_pass():
 
     try:
@@ -1105,6 +1225,7 @@ def reject_pass():
 # ==========================
 
 @app.route("/dashboard-summary")
+@login_required("admin")
 def dashboard_summary():
 
     try:
@@ -1161,6 +1282,7 @@ def dashboard_summary():
 # ==========================
 
 @app.route("/admin/pass-requests", methods=["GET"])
+@login_required("admin")
 def admin_pass_requests():
 
     try:
@@ -1190,6 +1312,7 @@ def admin_pass_requests():
 # ==========================
 
 @app.route("/generated-passes")
+@login_required("admin")
 def generated_passes():
 
     try:
@@ -1226,6 +1349,7 @@ def generated_passes():
 # ==========================
 
 @app.route("/employees-json")
+@login_required("admin")
 def employees_json():
 
     try:
@@ -1235,6 +1359,10 @@ def employees_json():
 
         # रिकामे values "" करा
         df = df.fillna("")
+
+        # password column कधीही API response मध्ये पाठवायचा नाही
+        if "password" in df.columns:
+            df = df.drop(columns=["password"])
 
         # JSON मध्ये return करा
         return jsonify(
@@ -1250,11 +1378,211 @@ def employees_json():
     
 
 
+# ==========================
+# TEMPORARY PASS SYSTEM
+# ==========================
+
+from datetime import timedelta
+
+TEMP_PASS_FILE = "temp_pass_requests.xlsx"
+
+
+def create_temp_pass_file():
+    if not os.path.exists(TEMP_PASS_FILE):
+        df = pd.DataFrame(columns=[
+            "requestId", "employeeCode", "employeeName", "department",
+            "mobile", "reason", "pickupLocation", "dropLocation",
+            "travelDateTime", "requestDate", "status",
+            "tempPassId", "validUntil"
+        ])
+        df.to_excel(TEMP_PASS_FILE, index=False)
+
+
+create_temp_pass_file()
+
+
+# ---- Employee: submit a temporary pass request ----
+@app.route("/request-temp-pass", methods=["POST"])
+@login_required("employee")
+def request_temp_pass():
+
+    try:
+        data = request.get_json()
+
+        employeeCode = str(data.get("employeeCode", "")).strip()
+
+        if session.get("employeeCode") != employeeCode:
+            return jsonify({"status": "error", "message": "Not Authorized"}), 403
+
+        if employeeCode == "":
+            return jsonify({"status": "error", "message": "Employee Code Required"})
+
+        df = pd.read_excel(TEMP_PASS_FILE)
+
+        request_id = "TMP" + str(int(datetime.now().timestamp()))
+
+        new_row = {
+            "requestId": request_id,
+            "employeeCode": employeeCode,
+            "employeeName": data.get("employeeName", ""),
+            "department": data.get("department", ""),
+            "mobile": data.get("mobile", ""),
+            "reason": data.get("reason", ""),
+            "pickupLocation": data.get("pickupLocation", ""),
+            "dropLocation": data.get("dropLocation", "Bajaj Chakan Plant 1"),
+            "travelDateTime": data.get("travelDateTime", ""),
+            "requestDate": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "status": "Pending",
+            "tempPassId": "",
+            "validUntil": ""
+        }
+
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_excel(TEMP_PASS_FILE, index=False)
+
+        return jsonify({
+            "status": "success",
+            "message": "Temporary Pass Request Submitted Successfully",
+            "requestId": request_id
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ---- Admin: view all temporary pass requests ----
+@app.route("/admin/temp-pass-requests", methods=["GET"])
+@login_required("admin")
+def admin_temp_pass_requests():
+
+    try:
+        df = pd.read_excel(TEMP_PASS_FILE)
+        df = df.fillna("")
+        return jsonify(df.to_dict(orient="records"))
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ---- Admin: approve a temporary pass request ----
+@app.route("/approve-temp-pass", methods=["POST"])
+@login_required("admin")
+def approve_temp_pass():
+
+    try:
+        data = request.get_json()
+        request_id = str(data.get("requestId", ""))
+
+        df = pd.read_excel(TEMP_PASS_FILE)
+        match = df["requestId"].astype(str) == request_id
+
+        if not match.any():
+            return jsonify({"status": "error", "message": "Request Not Found"})
+
+        temp_pass_id = "TP-" + str(int(datetime.now().timestamp()))
+        valid_until = (datetime.now() + timedelta(hours=12)).strftime("%Y-%m-%d %H:%M")
+
+        df.loc[match, "status"] = "Approved"
+        df.loc[match, "tempPassId"] = temp_pass_id
+        df.loc[match, "validUntil"] = valid_until
+
+        df.to_excel(TEMP_PASS_FILE, index=False)
+
+        return jsonify({
+            "status": "success",
+            "message": "Temporary Pass Approved"
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ---- Admin: reject a temporary pass request ----
+@app.route("/reject-temp-pass", methods=["POST"])
+@login_required("admin")
+def reject_temp_pass():
+
+    try:
+        data = request.get_json()
+        request_id = str(data.get("requestId", ""))
+
+        df = pd.read_excel(TEMP_PASS_FILE)
+        match = df["requestId"].astype(str) == request_id
+
+        if not match.any():
+            return jsonify({"status": "error", "message": "Request Not Found"})
+
+        df.loc[match, "status"] = "Rejected"
+        df.to_excel(TEMP_PASS_FILE, index=False)
+
+        return jsonify({
+            "status": "success",
+            "message": "Temporary Pass Rejected"
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ---- Employee: view / download their approved temporary pass ----
+@app.route("/my-temp-pass/<employeeCode>", methods=["GET"])
+@login_required("employee")
+def my_temp_pass(employeeCode):
+
+    if session.get("employeeCode") != str(employeeCode):
+        return jsonify({"status": "error", "message": "Not Authorized"}), 403
+
+    try:
+        df = pd.read_excel(TEMP_PASS_FILE)
+
+        user_passes = df[
+            (df["employeeCode"].astype(str) == str(employeeCode)) &
+            (df["status"] == "Approved")
+        ]
+
+        if user_passes.empty:
+            return jsonify({
+                "status": "error",
+                "message": "No Approved Temporary Pass Found"
+            })
+
+        latest = user_passes.iloc[-1]
+
+        valid_until_str = str(latest.get("validUntil", ""))
+        is_expired = False
+
+        try:
+            vu = datetime.strptime(valid_until_str, "%Y-%m-%d %H:%M")
+            if datetime.now() > vu:
+                is_expired = True
+        except Exception:
+            pass
+
+        return jsonify({
+            "status": "success",
+            "employeeCode": str(latest["employeeCode"]),
+            "employeeName": str(latest["employeeName"]),
+            "department": str(latest["department"]),
+            "mobile": str(latest["mobile"]),
+            "reason": str(latest["reason"]),
+            "pickupLocation": str(latest["pickupLocation"]),
+            "dropLocation": str(latest["dropLocation"]),
+            "travelDateTime": str(latest["travelDateTime"]),
+            "tempPassId": str(latest["tempPassId"]),
+            "validUntil": valid_until_str,
+            "isExpired": is_expired
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 
 # ==========================
 # RUN SERVER
 # ==========================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # debug mode should NEVER be on when the site is public (it leaks
+    # internal code/data on errors). Set FLASK_DEBUG=True locally if needed.
+    app.run(debug=os.environ.get("FLASK_DEBUG", "False") == "True")
 

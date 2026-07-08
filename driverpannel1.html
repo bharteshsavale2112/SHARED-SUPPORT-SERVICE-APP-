@@ -61,7 +61,7 @@ class="w-full border p-3 rounded-xl mt-1">
 
 </div>
 
-<div class="grid grid-cols-2 gap-4 mt-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
 
 <button
 onclick="startTracking()"
@@ -213,5 +213,37 @@ function stopTracking(){
 }
 
 </script>
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
+#globalBackBtn{
+    position:fixed;
+    top:14px;
+    left:14px;
+    z-index:99999;
+    background:#1e293b;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    cursor:pointer;
+}
+#globalBackBtn:hover{ background:#0f172a; }
+@media (max-width:600px){
+    #globalBackBtn{
+        top:8px;
+        left:8px;
+        padding:8px 14px;
+        font-size:13px;
+    }
+}
+</style>
+<button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
+<!-- ============ END BACK BUTTON ============ -->
+
 </body>
 </html>

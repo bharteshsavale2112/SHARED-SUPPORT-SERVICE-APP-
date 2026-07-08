@@ -11,7 +11,7 @@
 body{
 margin:0;
 padding:40px;
-background:#edf2f7;
+background:#87ceeb;
 font-family:Inter, sans-serif;
 }
 
@@ -22,7 +22,7 @@ background:white;
 border-radius:25px;
 overflow:hidden;
 border:4px solid #0047ab;
-box-shadow:0 20px 45px rgba(0,0,0,0.18);
+box-shadow:0 20px 45px rgba(0,0,0,0.25);
 }
 
 .header{
@@ -31,7 +31,19 @@ color:white;
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:25px;
+padding:25px 30px;
+}
+
+.header h1{
+margin:0;
+font-size:28px;
+}
+
+.header img{
+height:90px;
+background:white;
+padding:8px 14px;
+border-radius:12px;
 }
 
 .title{
@@ -50,12 +62,13 @@ display:grid;
 grid-template-columns:1fr 1fr;
 padding:30px;
 gap:20px;
+align-items:start;
 }
 
 .row{
 display:grid;
-grid-template-columns:200px 20px auto;
-margin-bottom:12px;
+grid-template-columns:150px 20px auto;
+margin-bottom:14px;
 font-size:18px;
 }
 
@@ -73,8 +86,13 @@ text-align:center;
 }
 
 .signature{
-width:250px;
-margin-top:20px;
+width:220px;
+margin-top:10px;
+}
+
+.status-wrap{
+text-align:center;
+margin-bottom:10px;
 }
 
 .status{
@@ -83,8 +101,9 @@ color:white;
 padding:10px 40px;
 border-radius:30px;
 display:inline-block;
-margin-top:30px;
+margin-top:10px;
 font-weight:bold;
+font-size:18px;
 }
 
 .buttons{
@@ -95,25 +114,31 @@ margin:20px;
 
 button{
 flex:1;
-padding:15px;
-font-size:18px;
+padding:16px;
+font-size:17px;
 font-weight:bold;
 border:none;
 border-radius:10px;
 cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+opacity:.9;
 }
 
 .print{background:#0056b3;color:white;}
 .pdf{background:#16a34a;color:white;}
-.back{background:#334155;color:white;width:calc(100% - 40px);margin:0 20px 20px;}
+.back{background:#334155;color:white;width:calc(100% - 40px);margin:0 20px 20px;padding:14px;font-size:16px;}
 
 .footer{
 background:#0047ab;
 color:white;
 text-align:center;
 padding:15px;
-font-size:18px;
+font-size:16px;
 font-weight:bold;
+letter-spacing:.5px;
 }
 
 @media print{
@@ -137,7 +162,16 @@ border-radius:15px;
 .header{
 flex-direction:column;
 text-align:center;
-gap:10px;
+gap:12px;
+padding:20px;
+}
+
+.header h1{
+font-size:22px;
+}
+
+.header img{
+height:70px;
 }
 
 .title{
@@ -162,19 +196,41 @@ flex-direction:column;
 
 button{
 font-size:16px;
-padding:12px;
+padding:14px;
 }
 
 .signature{
-width:180px;
+width:160px;
 }
 
 .status{
-font-size:18px;
+font-size:16px;
 padding:8px 25px;
 }
 }
 </style>
+
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "employeelogin.html";
+            }
+        } catch(e){
+            window.location.href = "employeelogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
 
 </head>
 
@@ -184,7 +240,7 @@ padding:8px 25px;
 
 <div class="header">
 <h1>Bajaj Auto</h1>
-<img src="Bajaj.png" height="60">
+<img src="Bajaj.png" alt="Bajaj Logo">
 </div>
 
 <div class="title">Permanent Bus Pass</div>
@@ -204,25 +260,21 @@ padding:8px 25px;
 
 </div>
 
-<div class="row">
-    <div class="label">Status</div>
-    <div>:</div>
-    <div id="status">Loading...</div>
-</div>
-
 <div class="right">
 <img class="signature" src="sign.png">
-
+<div class="status-wrap">
+<div id="status" class="status">Loading...</div>
+</div>
 </div>
 
 </div>
 
 <div class="buttons">
-<button class="print" onclick="window.print()">Print</button>
-<button class="pdf" onclick="window.print()">Download PDF</button>
+<button class="print" onclick="window.print()">🖨️ Print</button>
+<button class="pdf" onclick="window.print()">⬇️ Download PDF</button>
 </div>
 
-<button class="back" onclick="goBack()">Back To Dashboard</button>
+<button class="back" onclick="goBack()">← Back To Dashboard</button>
 
 <div class="footer">BAJAJ AUTO TRANSPORT SYSTEM</div>
 

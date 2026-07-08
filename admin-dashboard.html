@@ -351,6 +351,28 @@ justify-content:space-between;
 
 </style>
 
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "adminlogin.html";
+            }
+        } catch(e){
+            window.location.href = "adminlogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
+
 </head>
 
 <body>
@@ -387,7 +409,7 @@ Transport Admin Panel
 
 <a href="settings.html">⚙ Settings</a>
 
-<a href="index.html">🚪 Logout</a>
+<a href="#" onclick="fetch('/logout',{method:'POST'}).finally(()=>{window.location.href='index.html';});return false;">🚪 Logout</a>
 
 </div>
 
@@ -882,6 +904,7 @@ async function loadPendingRequests(){
             })
 
         }
+        
 
     );
 
@@ -1117,6 +1140,38 @@ footerData();
 setInterval(footerData,30000);
 
 </script>
+
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
+#globalBackBtn{
+    position:fixed;
+    top:14px;
+    left:14px;
+    z-index:99999;
+    background:#1e293b;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    cursor:pointer;
+}
+#globalBackBtn:hover{ background:#0f172a; }
+@media (max-width:600px){
+    #globalBackBtn{
+        top:8px;
+        left:8px;
+        padding:8px 14px;
+        font-size:13px;
+    }
+}
+</style>
+<button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
+<!-- ============ END BACK BUTTON ============ -->
 
 </body>
 

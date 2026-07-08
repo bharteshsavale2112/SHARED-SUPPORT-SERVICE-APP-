@@ -38,6 +38,7 @@ body{
     position:fixed;
     top:20px;
     right:20px;
+    z-index:99999;
     background:#007bff;
     color:white;
     text-decoration:none;
@@ -48,6 +49,15 @@ body{
 
 .back-btn:hover{
     background:#0056b3;
+}
+
+@media (max-width:600px){
+    .back-btn{
+        top:10px;
+        right:10px;
+        padding:8px 14px;
+        font-size:13px;
+    }
 }
 
 </style>

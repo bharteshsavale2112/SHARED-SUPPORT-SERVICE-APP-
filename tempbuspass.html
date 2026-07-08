@@ -1,290 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Bajaj Auto - Temporary Bus Pass</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Bajaj Auto | Temporary Bus Pass</title>
 
 <style>
 
 body{
-    font-family:'Inter',sans-serif;
-    background:#f1f5f9;
+margin:0;
+padding:40px;
+background:#87ceeb;
+font-family:Inter, sans-serif;
 }
 
-.card{
-    max-width:900px;
-    margin:30px auto;
-    background:white;
-    border-radius:25px;
-    overflow:hidden;
-    box-shadow:0 10px 30px rgba(0,0,0,.1);
+.pass{
+max-width:1000px;
+margin:auto;
+background:white;
+border-radius:25px;
+overflow:hidden;
+border:4px solid #dc2626;
+box-shadow:0 20px 45px rgba(0,0,0,0.25);
 }
 
 .header{
-    background:linear-gradient(135deg,#dc2626,#991b1b);
-    color:white;
-    padding:30px;
+background:#dc2626;
+color:white;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:25px 30px;
 }
 
-.input-box{
-    width:100%;
-    padding:14px;
-    border:1px solid #d1d5db;
-    border-radius:12px;
-    margin-top:5px;
+.header h1{
+margin:0;
+font-size:28px;
 }
 
-.input-box:focus{
-    outline:none;
-    border-color:#dc2626;
-    box-shadow:0 0 0 3px rgba(220,38,38,.15);
+.header img{
+height:90px;
+background:white;
+padding:8px 14px;
+border-radius:12px;
 }
 
-.readonly{
-    background:#f3f4f6;
-    cursor:not-allowed;
+.title{
+text-align:center;
+padding:20px;
+font-size:32px;
+font-weight:bold;
+background:#dc2626;
+color:white;
+margin:20px;
+border-radius:10px;
 }
 
-.btn{
-    width:100%;
-    background:#dc2626;
-    color:white;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    font-weight:bold;
-    transition:.3s;
+.content{
+display:grid;
+grid-template-columns:1fr 1fr;
+padding:30px;
+gap:20px;
+align-items:start;
 }
 
-.btn:hover{
-    background:#b91c1c;
+.row{
+display:grid;
+grid-template-columns:150px 20px auto;
+margin-bottom:14px;
+font-size:18px;
 }
 
-.notice{
-    background:#fef3c7;
-    border-left:5px solid #f59e0b;
-    color:#92400e;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:20px;
-    font-weight:600;
+.label{
+font-weight:700;
+color:#991b1b;
 }
 
-.success{
-    display:none;
-    background:#dcfce7;
-    color:#166534;
-    padding:12px;
-    border-radius:10px;
-    text-align:center;
-    margin-top:15px;
-    font-weight:bold;
+.value{
+font-weight:600;
 }
 
+.right{
+text-align:center;
+}
+
+.signature{
+width:220px;
+margin-top:10px;
+}
+
+.status-wrap{
+text-align:center;
+margin-bottom:10px;
+}
+
+.status{
+background:#0a8f2f;
+color:white;
+padding:10px 40px;
+border-radius:30px;
+display:inline-block;
+margin-top:10px;
+font-weight:bold;
+font-size:18px;
+}
+
+.status.expired{
+background:#dc2626;
+}
+
+.buttons{
+display:flex;
+gap:15px;
+margin:20px;
+}
+
+button{
+flex:1;
+padding:16px;
+font-size:17px;
+font-weight:bold;
+border:none;
+border-radius:10px;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+opacity:.9;
+}
+
+.print{background:#dc2626;color:white;}
+.pdf{background:#16a34a;color:white;}
+.back{background:#334155;color:white;width:calc(100% - 40px);margin:0 20px 20px;padding:14px;font-size:16px;}
+
+.footer{
+background:#dc2626;
+color:white;
+text-align:center;
+padding:15px;
+font-size:16px;
+font-weight:bold;
+letter-spacing:.5px;
+}
+
+.emptyState{
+text-align:center;
+padding:60px 20px;
+}
+
+.emptyState a{
+display:inline-block;
+margin-top:20px;
+background:#dc2626;
+color:white;
+padding:14px 30px;
+border-radius:10px;
+text-decoration:none;
+font-weight:bold;
+}
+
+@media print{
+button{display:none;}
+body{background:white;padding:0;}
+.pass{border:none;box-shadow:none;}
+}
+
+/* ================= MOBILE RESPONSIVE FIX ================= */
+
+@media (max-width: 768px) {
+
+body{
+padding:10px;
+}
+
+.pass{
+border-radius:15px;
+}
+
+.header{
+flex-direction:column;
+text-align:center;
+gap:12px;
+padding:20px;
+}
+
+.header h1{
+font-size:22px;
+}
+
+.header img{
+height:70px;
+}
+
+.title{
+font-size:20px;
+padding:15px;
+margin:10px;
+}
+
+.content{
+grid-template-columns:1fr;
+padding:15px;
+}
+
+.row{
+grid-template-columns:120px 10px auto;
+font-size:14px;
+}
+
+.buttons{
+flex-direction:column;
+}
+
+button{
+font-size:16px;
+padding:14px;
+}
+
+.signature{
+width:160px;
+}
+
+.status{
+font-size:16px;
+padding:8px 25px;
+}
+}
 </style>
+
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "employeelogin.html";
+            }
+        } catch(e){
+            window.location.href = "employeelogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
+
 </head>
 
 <body>
 
-<div class="card">
+<div class="pass" id="passCard">
 
-    <div class="header">
+<div class="header">
+<h1>Bajaj Auto</h1>
+<img src="Bajaj.png" alt="Bajaj Logo">
+</div>
 
-        <h1 class="text-3xl font-extrabold">
-            BAJAJ AUTO
-        </h1>
+<div class="title">Temporary Bus Pass</div>
 
-        <p class="text-red-100 mt-2">
-            Temporary Bus Pass Request
-        </p>
+<div id="passContent">
 
-    </div>
+<div class="content">
 
-    <div class="p-6">
+<div class="left">
 
-        <div class="notice">
-            ⚠ Temporary Bus Pass is valid for only 12 Hours.
-        </div>
+<div class="row"><div class="label">Name</div><div>:</div><div id="employeeName">Loading...</div></div>
+<div class="row"><div class="label">ID</div><div>:</div><div id="employeeCode">Loading...</div></div>
+<div class="row"><div class="label">Dept</div><div>:</div><div id="department">Loading...</div></div>
+<div class="row"><div class="label">Mobile</div><div>:</div><div id="mobile">Loading...</div></div>
+<div class="row"><div class="label">Reason</div><div>:</div><div id="reason">Loading...</div></div>
+<div class="row"><div class="label">Pickup</div><div>:</div><div id="pickupLocation">Loading...</div></div>
+<div class="row"><div class="label">Drop</div><div>:</div><div id="dropLocation">Loading...</div></div>
+<div class="row"><div class="label">Travel Time</div><div>:</div><div id="travelDateTime">Loading...</div></div>
+<div class="row"><div class="label">Pass ID</div><div>:</div><div id="tempPassId">Loading...</div></div>
+<div class="row"><div class="label">Valid Until</div><div>:</div><div id="validUntil">Loading...</div></div>
 
-        <form id="tempPassForm" class="space-y-4">
+</div>
 
-            <div class="grid md:grid-cols-2 gap-4">
+<div class="right">
+<img class="signature" src="sign.png">
+<div class="status-wrap">
+<div id="status" class="status">Loading...</div>
+</div>
+</div>
 
-                <div>
-                    <label class="font-semibold">
-                        Employee Code
-                    </label>
-                    <input type="text"
-                           class="input-box"
-                           required>
-                </div>
+</div>
 
-                <div>
-                    <label class="font-semibold">
-                        Employee Name
-                    </label>
-                    <input type="text"
-                           class="input-box"
-                           required>
-                </div>
+<div class="buttons">
+<button class="print" onclick="window.print()">🖨️ Print</button>
+<button class="pdf" onclick="window.print()">⬇️ Download PDF</button>
+</div>
 
-            </div>
+</div>
 
-            <div class="grid md:grid-cols-2 gap-4">
+<div id="emptyState" class="emptyState" style="display:none;">
+<h2>No Approved Temporary Pass Found</h2>
+<p>You don't have an active temporary bus pass right now.</p>
+<a href="tempbuspass.html">Request a Temporary Pass</a>
+</div>
 
-                <div>
-                    <label class="font-semibold">
-                        Department
-                    </label>
+<button class="back" onclick="goBack()">← Back To Dashboard</button>
 
-                    <select class="input-box" required>
-                        <option value="">Select Department</option>
-                        <option>Production</option>
-                        <option>Assembly</option>
-                        <option>Paint Shop</option>
-                        <option>Weld Shop</option>
-                        <option>Quality</option>
-                        <option>Maintenance</option>
-                        <option>Logistics</option>
-                        <option>Stores</option>
-                        <option>Purchase</option>
-                        <option>Finance</option>
-                        <option>HR</option>
-                        <option>IT</option>
-                        <option>Administration</option>
-                    </select>
-
-                </div>
-
-                <div>
-                    <label class="font-semibold">
-                        Mobile Number
-                    </label>
-
-                    <input type="tel"
-                           class="input-box"
-                           required>
-                </div>
-
-            </div>
-
-            <div>
-
-                <label class="font-semibold">
-                    Reason For Temporary Pass
-                </label>
-
-                <select class="input-box" required>
-                    <option value="">Select Reason</option>
-                    <option>Forgot Bus Pass</option>
-                    <option>Lost Bus Pass</option>
-                    <option>New Employee</option>
-                    <option>Emergency Travel</option>
-                    <option>Visitor</option>
-                    <option>Other</option>
-                </select>
-
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-4">
-
-                <div>
-                    <label class="font-semibold">
-                        Pickup Location
-                    </label>
-
-                    <input type="text"
-                           class="input-box"
-                           placeholder="Enter Pickup Location"
-                           required>
-                </div>
-
-                <div>
-                    <label class="font-semibold">
-                        Drop Location
-                    </label>
-
-                    <input type="text"
-                           value="Bajaj Chakan Plant 1"
-                           class="input-box readonly"
-                           readonly>
-                </div>
-
-            </div>
-
-            <div>
-
-                <label class="font-semibold">
-                    Travel Date & Time
-                </label>
-
-                <input type="datetime-local"
-                       id="travelTime"
-                       class="input-box"
-                       required>
-
-            </div>
-
-            <button type="submit" class="btn">
-                Submit Temporary Pass Request
-            </button>
-
-        </form>
-
-        <div id="successMsg" class="success">
-            Temporary Bus Pass Request Submitted Successfully!
-        </div>
-
-    </div>
+<div class="footer">BAJAJ AUTO TRANSPORT SYSTEM</div>
 
 </div>
 
 <script>
 
-const travelTime = document.getElementById("travelTime");
+const employeeCode = localStorage.getItem("employeeCode");
 
-const now = new Date();
+async function loadTempPass(){
 
-const maxTime = new Date(
-    now.getTime() + (12 * 60 * 60 * 1000)
-);
+    try{
 
-travelTime.min = now.toISOString().slice(0,16);
-travelTime.max = maxTime.toISOString().slice(0,16);
-
-document.getElementById("tempPassForm")
-.addEventListener("submit", function(e){
-
-    const selectedTime = new Date(travelTime.value);
-
-    if(selectedTime > maxTime){
-
-        e.preventDefault();
-
-        alert(
-        "Temporary Pass cannot be issued for more than 12 hours."
+        const res = await fetch(
+            "/my-temp-pass/" + employeeCode
         );
 
-        return;
+        const data = await res.json();
+
+        if(data.status !== "success"){
+
+            document.getElementById("passContent").style.display = "none";
+            document.getElementById("emptyState").style.display = "block";
+            return;
+
+        }
+
+        document.getElementById("employeeName").innerText = data.employeeName || "";
+        document.getElementById("employeeCode").innerText = data.employeeCode || "";
+        document.getElementById("department").innerText = data.department || "";
+        document.getElementById("mobile").innerText = data.mobile || "";
+        document.getElementById("reason").innerText = data.reason || "";
+        document.getElementById("pickupLocation").innerText = data.pickupLocation || "";
+        document.getElementById("dropLocation").innerText = data.dropLocation || "";
+        document.getElementById("travelDateTime").innerText = data.travelDateTime || "";
+        document.getElementById("tempPassId").innerText = data.tempPassId || "";
+        document.getElementById("validUntil").innerText = data.validUntil || "";
+
+        const statusEl = document.getElementById("status");
+
+        if(data.isExpired){
+            statusEl.innerText = "EXPIRED";
+            statusEl.classList.add("expired");
+        } else {
+            statusEl.innerText = "ACTIVE";
+        }
+
     }
 
-    e.preventDefault();
+    catch(err){
 
-    document.getElementById("successMsg").style.display = "block";
+        console.log(err);
+        document.getElementById("passContent").style.display = "none";
+        document.getElementById("emptyState").style.display = "block";
 
-    setTimeout(() => {
+    }
 
-        document.getElementById("successMsg").style.display = "none";
+}
 
-    },3000);
+function goBack(){
+    window.location.href = "employee-dashboard.html";
+}
 
-});
+window.onload = loadTempPass;
 
 </script>
 
