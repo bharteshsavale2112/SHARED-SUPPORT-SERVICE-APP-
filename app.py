@@ -288,7 +288,7 @@ def employee_login():
             "message": "Login Successful",
 
             "passNumber": str(row.get("passNumber", "")),
-            "employeeCode": str(row.get("employeeCode", "")),
+            "employeeCode": str(row.get("employeeCode", "")).strip(),
             "employeeName": str(row.get("employeeName", "")),
             "department": str(row.get("department", "")),
             "mobile": str(row.get("mobile", "")),
@@ -690,7 +690,7 @@ def bus_pass():
 
         employeeCode = data.get("employeeCode")
 
-        if session.get("employeeCode") != str(employeeCode):
+        if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
             return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
         df = load_df()
@@ -762,7 +762,7 @@ def bus_pass():
 @login_required("employee")
 def check_pass(employeeCode):
 
-    if session.get("employeeCode") != str(employeeCode):
+    if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
         return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
     df = pd.read_excel(PASS_FILE)
@@ -888,7 +888,7 @@ def approve_pass():
 @login_required("employee")
 def my_pass(employeeCode):
 
-    if session.get("employeeCode") != str(employeeCode):
+    if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
         return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
     try:
@@ -998,7 +998,7 @@ def request_pass():
                 "message": "Employee Code Required"
             })
 
-        if session.get("employeeCode") != employeeCode:
+        if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
             return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
         # Employee Data
@@ -1411,7 +1411,7 @@ def request_temp_pass():
 
         employeeCode = str(data.get("employeeCode", "")).strip()
 
-        if session.get("employeeCode") != employeeCode:
+        if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
             return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
         if employeeCode == "":
@@ -1529,7 +1529,7 @@ def reject_temp_pass():
 @login_required("employee")
 def my_temp_pass(employeeCode):
 
-    if session.get("employeeCode") != str(employeeCode):
+    if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
         return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
     try:
