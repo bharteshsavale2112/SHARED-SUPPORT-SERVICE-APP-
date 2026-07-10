@@ -53,6 +53,54 @@ body{
     transform:translateY(-2px);
 }
 
+/* ===== SEARCHABLE SELECT (Route Number / Bus Stop) ===== */
+
+.searchable-select{
+    position:relative;
+}
+
+.searchable-select.disabled .ss-input{
+    background:#f1f5f9;
+    cursor:not-allowed;
+}
+
+.ss-options{
+    display:none;
+    position:absolute;
+    top:calc(100% + 6px);
+    left:0;
+    right:0;
+    background:white;
+    border:1px solid #dbeafe;
+    border-radius:14px;
+    max-height:220px;
+    overflow-y:auto;
+    box-shadow:0 15px 35px rgba(0,0,0,.15);
+    z-index:50;
+}
+
+.searchable-select.open .ss-options{
+    display:block;
+}
+
+.ss-option{
+    padding:12px 14px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+.ss-option:hover,
+.ss-option.active{
+    background:#eff6ff;
+    color:#1d4ed8;
+}
+
+.ss-no-result{
+    padding:12px 14px;
+    font-size:14px;
+    color:#94a3b8;
+}
+
 </style>
 
 </head>
@@ -157,8 +205,52 @@ body{
                         <option>Quality</option>
                         <option>Maintenance</option>
                         <option>HR</option>
-                        <option>IT</option>
-                        <option>Finance</option>
+                        <option>Administration</option>
+                        <option>Alluminium Shop</option>
+                        <option>BU HR -Operations</option>
+                        <option>Central Maintenance</option>
+                        <option>Assembly Planned Maint</option>
+                        <option>Chassis Sub Assembly Center</option>
+                        <option>Civil</option>
+                        <option>Dispensary</option>
+                        <option>Civil & Utility</option>
+                        <option>Engine Assembly Line-KTM</option>
+                        <option>Engine Assembly</option>
+                        <option>Export</option>
+                        <option>Exoprt Assembly CKD</option>
+                        <option>Export Open</option>
+                        <option>Facility Engineering</option>
+                        <option>Flying Start GT-OP</option>
+                        <option>HRD</option>
+                        <option>Machining</option>
+                        <option>Maintenance</option>
+                        <option>Manufacturing Check</option>
+                        <option>Manufacturing Engine</option>
+                        <option>ME (E&T)</option>
+                        <option>ME(Vehicle)</option>
+                        <option>Paint Shop</option>
+                        <option>Personnel</option>
+                        <option>PPC</option>
+                        <option>Production</option>
+                        <option>Production Planning</option>
+                        <option>Vehicel Assembly-Pulsar</option>
+                        <option>Quality</option>
+                        <option>Quality Assurance</option>
+                        <option>Reliability Sub Vehicle</option>
+                        <option>Reliability Supply Vehicle</option>
+                        <option>Safety</option>
+                        <option>Security</option>
+                        <option>Steel Shop</option>
+                        <option>Steel Shop (C-10)</option>
+                        <option>Time Office</option>
+                        <option>Tool Room</option>
+                        <option>TPM</option>
+                        <option>Utilities & Services</option>
+                        <option>Vehicle Assembly Electric</option>
+                        <option>Vehicle Dispatch </option>
+                        <option>Vehicle Assembly</option>
+                        <option>Works Admin (C-01)</option>
+
 
                     </select>
                 </div>
@@ -190,8 +282,11 @@ body{
 
                     <select
                     name="shift"
-                    class="form-control">
+                    class="form-control"
+                    id="shiftSelect"
+                    required>
 
+                        <option value="">Select Shift</option>
                         <option>1st Shift</option>
                         <option>2nd Shift</option>
                         <option>3rd Shift</option>
@@ -204,14 +299,19 @@ body{
                 <div>
 
                     <label class="block text-sm font-semibold mb-2">
-                        Bus Stop
+                        Route Number
                     </label>
 
-                    <input
-                    type="text"
-                    name="busStop"
-                    class="form-control"
-                    placeholder="Bus Stop">
+                    <div class="searchable-select disabled" data-name="routeNumber" id="routeNumberSelect">
+                        <input
+                        type="text"
+                        class="form-control ss-input"
+                        placeholder="Select Shift first"
+                        autocomplete="off"
+                        disabled>
+                        <input type="hidden" name="routeNumber" class="ss-value" required>
+                        <div class="ss-options"></div>
+                    </div>
 
                 </div>
 
@@ -219,35 +319,41 @@ body{
 
             <div class="grid md:grid-cols-2 gap-4">
 
-    <div>
+                <div>
 
-        <label class="block text-sm font-semibold mb-2">
-            Route Number
-        </label>
+                    <label class="block text-sm font-semibold mb-2">
+                        Bus Stop
+                    </label>
 
-        <input
-        type="number"
-        name="routeNumber"
-        class="form-control"
-        placeholder="Enter Route Number"
-        required>
+                    <div class="searchable-select disabled" data-name="busStop" id="busStopSelect">
+                        <input
+                        type="text"
+                        class="form-control ss-input"
+                        placeholder="Select Route Number first"
+                        autocomplete="off"
+                        disabled>
+                        <input type="hidden" name="busStop" class="ss-value">
+                        <div class="ss-options"></div>
+                    </div>
 
-    </div>
+                </div>
 
-            <div>
+                <div>
 
-<label class="block text-sm font-semibold mb-2">
-Password
-</label>
+                    <label class="block text-sm font-semibold mb-2">
+                        Password
+                    </label>
 
-<input
-type="password"
-name="password"
-class="form-control"
-placeholder="Create Password"
-required>
+                    <input
+                    type="password"
+                    name="password"
+                    class="form-control"
+                    placeholder="Create Password"
+                    required>
 
-</div>
+                </div>
+
+            </div>
 
             <div>
 
@@ -319,6 +425,236 @@ required>
 </style>
 <button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
 <!-- ============ END BACK BUTTON ============ -->
+
+<script>
+
+/* =========================================================
+   SHIFT -> ROUTE NUMBER -> BUS STOP (3-level cascading)
+   ---------------------------------------------------------
+   NOTE: This is SAMPLE/PLACEHOLDER data. Replace the object
+   below with your actual routes and bus stops for each shift.
+   ========================================================= */
+
+const SHIFT_ROUTES = {
+
+    "1st Shift": {
+        "Route 1": ["Chakan Phata", "Talegaon", "Vadgaon"],
+        "Route 2": ["Nigdi", "Bhosari", "Chikhali"],
+        "Route 3": ["Moshi", "Alandi", "Dighi"]
+    },
+
+    "2nd Shift": {
+        "Route 4": ["Dehu Road", "Kiwale", "Ravet"],
+        "Route 5": ["Rajgurunagar", "Khed Shivapur"],
+        "Route 6": ["Wagholi", "Lohegaon"]
+    },
+
+    "3rd Shift": {
+        "Route 7": ["Hinjewadi", "Wakad"],
+        "Route 8": ["Chinchwad", "Pimpri"]
+    },
+
+    "General Shift": {
+        "Route 9": ["Akurdi", "Nigdi Pradhikaran"],
+        "Route 10": ["Manchar", "Narayangaon"]
+    }
+
+};
+
+const shiftSelectEl = document.getElementById("shiftSelect");
+
+const routeWrapper = document.getElementById("routeNumberSelect");
+const busStopWrapper = document.getElementById("busStopSelect");
+
+const routeInput = routeWrapper.querySelector(".ss-input");
+const routeHidden = routeWrapper.querySelector(".ss-value");
+const routeOptionsBox = routeWrapper.querySelector(".ss-options");
+
+const stopInput = busStopWrapper.querySelector(".ss-input");
+const stopHidden = busStopWrapper.querySelector(".ss-value");
+const stopOptionsBox = busStopWrapper.querySelector(".ss-options");
+
+
+function renderRouteOptions(filterText){
+
+    const selectedShift = shiftSelectEl.value;
+    const routes = selectedShift ? Object.keys(SHIFT_ROUTES[selectedShift] || {}) : [];
+
+    const filtered = routes.filter(function(route){
+        return route.toLowerCase().includes((filterText || "").toLowerCase());
+    });
+
+    if(filtered.length === 0){
+        routeOptionsBox.innerHTML = `<div class="ss-no-result">No route found for this shift</div>`;
+        return;
+    }
+
+    routeOptionsBox.innerHTML = filtered.map(function(route){
+        return `<div class="ss-option">${route}</div>`;
+    }).join("");
+
+}
+
+function renderStopOptions(filterText){
+
+    const selectedShift = shiftSelectEl.value;
+    const selectedRoute = routeHidden.value;
+
+    const shiftData = SHIFT_ROUTES[selectedShift] || {};
+    const stops = shiftData[selectedRoute] || [];
+
+    const filtered = stops.filter(function(stop){
+        return stop.toLowerCase().includes((filterText || "").toLowerCase());
+    });
+
+    if(filtered.length === 0){
+        stopOptionsBox.innerHTML = `<div class="ss-no-result">No bus stop found for this route</div>`;
+        return;
+    }
+
+    stopOptionsBox.innerHTML = filtered.map(function(stop){
+        return `<div class="ss-option">${stop}</div>`;
+    }).join("");
+
+}
+
+function enableRoute(){
+    routeInput.disabled = false;
+    routeInput.placeholder = "Type to search Route Number";
+    routeWrapper.classList.remove("disabled");
+}
+
+function resetRoute(){
+    routeInput.value = "";
+    routeHidden.value = "";
+    routeInput.disabled = true;
+    routeInput.placeholder = "Select Shift first";
+    routeWrapper.classList.add("disabled");
+    routeWrapper.classList.remove("open");
+}
+
+function enableBusStop(){
+    stopInput.disabled = false;
+    stopInput.placeholder = "Type to search Bus Stop";
+    busStopWrapper.classList.remove("disabled");
+}
+
+function resetBusStop(){
+    stopInput.value = "";
+    stopHidden.value = "";
+    stopInput.disabled = true;
+    stopInput.placeholder = "Select Route Number first";
+    busStopWrapper.classList.add("disabled");
+    busStopWrapper.classList.remove("open");
+}
+
+// ---- Shift events (level 1) ----
+
+shiftSelectEl.addEventListener("change", function(){
+
+    resetRoute();
+    resetBusStop();
+
+    if(shiftSelectEl.value){
+        enableRoute();
+    }
+
+});
+
+// ---- Route Number events (level 2) ----
+
+routeInput.addEventListener("focus", function(){
+
+    if(routeInput.disabled){
+        return;
+    }
+
+    routeWrapper.classList.add("open");
+    renderRouteOptions(routeInput.value);
+
+});
+
+routeInput.addEventListener("input", function(){
+    routeHidden.value = "";
+    resetBusStop();
+    renderRouteOptions(routeInput.value);
+    routeWrapper.classList.add("open");
+});
+
+routeOptionsBox.addEventListener("click", function(e){
+
+    if(!e.target.classList.contains("ss-option")){
+        return;
+    }
+
+    const selected = e.target.textContent;
+    routeInput.value = selected;
+    routeHidden.value = selected;
+    routeWrapper.classList.remove("open");
+
+    resetBusStop();
+    enableBusStop();
+
+});
+
+// ---- Bus Stop events (level 3) ----
+
+stopInput.addEventListener("focus", function(){
+
+    if(stopInput.disabled){
+        return;
+    }
+
+    busStopWrapper.classList.add("open");
+    renderStopOptions(stopInput.value);
+
+});
+
+stopInput.addEventListener("input", function(){
+    stopHidden.value = "";
+    renderStopOptions(stopInput.value);
+    busStopWrapper.classList.add("open");
+});
+
+stopOptionsBox.addEventListener("click", function(e){
+
+    if(!e.target.classList.contains("ss-option")){
+        return;
+    }
+
+    const selected = e.target.textContent;
+    stopInput.value = selected;
+    stopHidden.value = selected;
+    busStopWrapper.classList.remove("open");
+
+});
+
+// ---- Close dropdowns when clicking outside ----
+
+document.addEventListener("click", function(e){
+
+    if(!routeWrapper.contains(e.target)){
+        routeWrapper.classList.remove("open");
+    }
+
+    if(!busStopWrapper.contains(e.target)){
+        busStopWrapper.classList.remove("open");
+    }
+
+});
+
+// ---- Validate Route Number was actually picked before submit ----
+
+document.querySelector("form").addEventListener("submit", function(e){
+
+    if(!routeHidden.value){
+        e.preventDefault();
+        alert("कृपया यादीतून Route Number निवडा.");
+    }
+
+});
+
+</script>
 
 </body>
 </html>
