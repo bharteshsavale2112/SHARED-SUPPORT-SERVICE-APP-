@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_from_directory, session
 from functools import wraps
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 import os
@@ -1577,6 +1578,77 @@ def my_temp_pass(employeeCode):
         return jsonify({"status": "error", "message": str(e)})
 
 
+# ==========================
+# SUBMIT OT
+# ==========================
+
+OT_FILE = "ot_requests.xlsx"
+
+def create_ot_excel():
+
+    if not os.path.exists(OT_FILE):
+
+        df = pd.DataFrame(columns=[
+            "Date",
+            "Time",
+            "Submitted By",
+            "Department",
+            "Shift",
+            "Route Number",
+            "Route Name",
+            "Bus Stops",
+            "2 Hours",
+            "3 Hours"
+        ])
+
+        df.to_excel(OT_FILE,index=False)
+
+create_ot_excel()
+
+
+@app.route("/submit-ot",methods=["POST"])
+def submit_ot():
+
+    create_ot_excel()
+
+    df = pd.read_excel(OT_FILE)
+
+    new_data={
+
+        "Date":datetime.now().strftime("%d-%m-%Y"),
+
+        "Time":datetime.now().strftime("%I:%M %p"),
+
+        "Submitted By":request.form.get("submittedBy"),
+
+        "Department":request.form.get("department"),
+
+        "Shift":request.form.get("shift"),
+
+        "Route Number":request.form.get("routeNumber"),
+
+        "Route Name":request.form.get("routeName"),
+
+        "Bus Stops":request.form.get("busStops"),
+
+        "2 Hours":request.form.get("twoHours"),
+
+        "3 Hours":request.form.get("threeHours")
+
+    }
+
+    df=pd.concat([df,pd.DataFrame([new_data])],ignore_index=True)
+
+    df.to_excel(OT_FILE,index=False)
+
+    return jsonify({
+
+        "status":"success",
+
+        "message":"OT Request Submitted Successfully"
+
+    })
+    
 # ==========================
 # RUN SERVER
 # ==========================
