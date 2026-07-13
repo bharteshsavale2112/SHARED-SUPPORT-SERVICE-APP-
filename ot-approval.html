@@ -583,11 +583,7 @@ const routes = {
 // BUS STOP DATA
 // ==============================
 
-// ==============================
-// COMPLETE BUS STOP MAPPING
-// ==============================
-
-const busStops = {
+const busStops={
 
 "Route 01":"Loni Gaon",
 "Route 02":"Hotel Shravani",
@@ -599,85 +595,9 @@ const busStops = {
 "Route 08":"Pabal",
 "Route 09":"Vishrantwadi Chowk",
 "Route 10":"Sangavi Bus Stop",
-"Route 11":"Cosmos Bank",
-
-// Update these with actual first pickup stops
-
-"Route 12":"Pickup Stop Route 12",
-"Route 13":"Pickup Stop Route 13",
-"Route 14":"Pickup Stop Route 14",
-"Route 15":"Pickup Stop Route 15",
-"Route 16":"Pickup Stop Route 16",
-"Route 17":"Pickup Stop Route 17",
-"Route 18":"Pickup Stop Route 18",
-"Route 19":"Pickup Stop Route 19",
-"Route 20":"Pickup Stop Route 20",
-"Route 21":"Pickup Stop Route 21",
-"Route 22":"Pickup Stop Route 22",
-"Route 23":"Pickup Stop Route 23",
-"Route 24":"Pickup Stop Route 24",
-"Route 25":"Pickup Stop Route 25",
-"Route 26":"Pickup Stop Route 26",
-"Route 27":"Pickup Stop Route 27",
-"Route 28":"Pickup Stop Route 28",
-"Route 29":"Pickup Stop Route 29",
-"Route 30":"Pickup Stop Route 30",
-"Route 31":"Pickup Stop Route 31",
-"Route 32":"Pickup Stop Route 32",
-"Route 33":"Pickup Stop Route 33",
-"Route 34":"Pickup Stop Route 34",
-"Route 35":"Pickup Stop Route 35",
-"Route 36":"Pickup Stop Route 36",
-"Route 37":"Pickup Stop Route 37",
-"Route 38":"Pickup Stop Route 38"
+"Route 11":"Cosmos Bank"
 
 };
-
-// ==============================
-// AUTO FILL BUS STOP
-// ==============================
-
-function loadBusStop(){
-
-const route=document.getElementById("routeNumber").value;
-
-const stop=busStops[route] || "";
-
-document.getElementById("busStop").value=stop;
-
-}
-
-// ==============================
-// AUTO LOAD AFTER LOGIN
-// ==============================
-
-window.addEventListener("load",function(){
-
-const shift=localStorage.getItem("employee_shift");
-
-if(shift){
-
-document.getElementById("shift").value=shift;
-
-loadRoutes();
-
-setTimeout(function(){
-
-const route=localStorage.getItem("employee_route");
-
-if(route){
-
-document.getElementById("routeNumber").value=route;
-
-loadBusStop();
-
-}
-
-},100);
-
-}
-
-});
 
 // ==============================
 // LOAD ROUTES
