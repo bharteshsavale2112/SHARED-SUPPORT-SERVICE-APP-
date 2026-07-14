@@ -271,7 +271,7 @@ padding:8px 25px;
 </div>
 
 <div class="buttons">
-<button class="print" onclick="window.print()">🖨️ Print</button>
+
 <button class="pdf" onclick="window.print()">⬇️ Download PDF</button>
 </div>
 
@@ -321,6 +321,9 @@ async function loadPass(){
 
         document.getElementById("routeNumber").innerText =
         data.routeNumber || "";
+
+         document.getElementById("Route").innerText =
+        data.route || "";
 
         document.getElementById("busStop").innerText =
         data.busStop || "";
