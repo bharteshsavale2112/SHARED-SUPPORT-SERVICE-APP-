@@ -802,6 +802,7 @@ PASS_REQUEST_FILE = "pass_requests.xlsx"
 # ==========================
 # APPROVE PASS
 # ==========================
+
 @app.route("/approve-pass", methods=["POST"])
 @login_required("admin")
 def approve_pass():
@@ -837,6 +838,7 @@ def approve_pass():
         passes = pd.read_excel(PASS_FILE)
         passes = passes.fillna("")
 
+        # FIXED COLUMN NAME (IMPORTANT)
         newPass = {
 
     "passNumber":"PP"+datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -879,8 +881,8 @@ def approve_pass():
             "message":str(e)
 
         })
-        
-# ==========================
+
+ # ==========================
 # GET MY PASS
 # ==========================
 @app.route("/my-pass/<employeeCode>", methods=["GET"])
@@ -1146,6 +1148,7 @@ def pending_pass_requests():
                 "route": str(row["routeNumber"]),
 
                 "requestDate": str(row["requestDate"])
+
             })
 
         return jsonify(requests)
@@ -1275,9 +1278,8 @@ def dashboard_summary():
         })
 
 
-
 # ==========================
-# GET ALL PASS REQUESTS
+# EMPLOYEE SUMMARY (for employee-list.html)
 # ==========================
 
 @app.route("/employee-summary")
@@ -1312,7 +1314,39 @@ def employee_summary():
 
             "message":str(e)
 
-        })    
+        })
+
+
+
+# ==========================
+# GET ALL PASS REQUESTS
+# ==========================
+
+@app.route("/admin/pass-requests", methods=["GET"])
+@login_required("admin")
+def admin_pass_requests():
+
+    try:
+
+        if not os.path.exists(PASS_REQUEST_FILE):
+
+            return jsonify([])
+
+        df = pd.read_excel(PASS_REQUEST_FILE)
+
+        df = df.fillna("")
+
+        return jsonify(
+            df.to_dict(orient="records")
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "status":"error",
+            "message":str(e)
+        })
+    
 
     # ==========================
 # GENERATED PASSES
