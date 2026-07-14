@@ -243,7 +243,7 @@ padding:8px 25px;
 <img src="Bajaj.png" alt="Bajaj Logo">
 </div>
 
-<div class="title">Bus Pass</div>
+<div class="title">Permanent Bus Pass</div>
 
 <div class="content">
 
@@ -253,8 +253,7 @@ padding:8px 25px;
 <div class="row"><div class="label">ID</div><div>:</div><div id="employeeCode">Loading...</div></div>
 <div class="row"><div class="label">Dept</div><div>:</div><div id="department">Loading...</div></div>
 <div class="row"><div class="label">Shift</div><div>:</div><div id="shift">Loading...</div></div>
-<div class="row"><div class="label">Route No</div><div>:</div><div id="routeNumber">Loading...</div></div>
-<div class="row"><div class="label">Route </div><div>:</div><div id="route">Loading...</div></div>
+<div class="row"><div class="label">Route</div><div>:</div><div id="routeNumber">Loading...</div></div>
 <div class="row"><div class="label">Stop</div><div>:</div><div id="busStop">Loading...</div></div>
 <div class="row"><div class="label">Mobile</div><div>:</div><div id="mobile">Loading...</div></div>
 <div class="row"><div class="label">Issue Date</div><div>:</div><div id="issueDate">Loading...</div></div>
@@ -271,7 +270,7 @@ padding:8px 25px;
 </div>
 
 <div class="buttons">
-
+<button class="print" onclick="window.print()">🖨️ Print</button>
 <button class="pdf" onclick="window.print()">⬇️ Download PDF</button>
 </div>
 
@@ -321,9 +320,6 @@ async function loadPass(){
 
         document.getElementById("routeNumber").innerText =
         data.routeNumber || "";
-
-         document.getElementById("Route").innerText =
-        data.route || "";
 
         document.getElementById("busStop").innerText =
         data.busStop || "";
