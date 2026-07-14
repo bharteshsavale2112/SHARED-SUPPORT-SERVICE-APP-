@@ -854,6 +854,8 @@ def approve_pass():
     "shift":row.iloc[0]["shift"],
 
     "routeNumber":row.iloc[0]["routeNumber"],
+    
+    "routeNumber":row.iloc[0]["route"],
 
     "busStop":row.iloc[0]["busStop"],
 
@@ -924,6 +926,7 @@ def my_pass(employeeCode):
             "mobile": str(row["mobile"]),
             "shift": str(row["shift"]),
             "routeNumber": str(row["routeNumber"]),
+            "route": str(row["route"]),
             "busStop": str(row["busStop"]),
             "issueDate": str(row["issueDate"]),
             "passStatus": str(row["status"])
