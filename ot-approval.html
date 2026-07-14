@@ -391,157 +391,119 @@ select.innerHTML+=`<option value="${dep}">${dep}</option>`;
             return tr;
         }
 
-        function createTransportRow(route = null) {
-            const div = document.createElement('div');
-            div.className = 'route-row';
-            const isOther = !route;
-            div.innerHTML = `
-                <div class="row g-3">
-                    <div class="col-lg-4">
-                        <label class="form-label fw-semibold">Route Name</label>
-                        <input type="text" class="form-control route-name" value="${route ? route.name : ''}" ${!isOther ? 'readonly' : ''} placeholder="Enter route name">
+      function createTransportRow(route = null) {
+
+    const div = document.createElement("div");
+    div.className = "route-row";
+
+    let routeOptions = `<option value="">-- Select Route --</option>`;
+
+    defaultRoutes.forEach((r, index) => {
+        routeOptions += `<option value="${index}">${r.name}</option>`;
+    });
+
+    div.innerHTML = `
+        <div class="row g-3">
+
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold">Route Name</label>
+
+                <select class="form-select route-name">
+                    ${routeOptions}
+                </select>
+
+            </div>
+
+            <div class="col-lg-5">
+
+                <label class="form-label fw-semibold">Bus Stops</label>
+
+                <textarea
+                    class="form-control bus-stops"
+                    rows="3"
+                    readonly
+                    placeholder="Bus Stops will appear automatically">
+                </textarea>
+
+            </div>
+
+            <div class="col-lg-3">
+
+                <label class="form-label fw-semibold">
+                    Personnel Required
+                </label>
+
+                <div class="row g-2">
+
+                    <div class="col-6">
+                        <small>2 Hours</small>
+
+                        <input
+                            type="number"
+                            class="form-control trans-qty text-center"
+                            data-hours="2"
+                            value="0"
+                            min="0">
                     </div>
-                    <div class="col-lg-5">
-                        <label class="form-label fw-semibold">Bus Stops</label>
-                        <textarea class="form-control bus-stops" ${!isOther ? 'readonly' : ''} placeholder="Type stops / shop names">${route ? route.stops : ''}</textarea>
+
+                    <div class="col-6">
+                        <small>3 Hours</small>
+
+                        <input
+                            type="number"
+                            class="form-control trans-qty text-center"
+                            data-hours="3"
+                            value="0"
+                            min="0">
                     </div>
-                    <div class="col-lg-3">
-                        <label class="form-label fw-semibold">Personnel Required</label>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <small class="text-muted">2 Hours</small>
-                                <input type="number" class="form-control trans-qty text-center" data-hours="2" value="0" min="0">
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">3 Hours</small>
-                                <input type="number" class="form-control trans-qty text-center" data-hours="3" value="0" min="0">
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-            div.querySelectorAll('input, textarea').forEach(el => el.addEventListener('input', updateTotals));
-            return div;
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    // ======= हा तुझा code =======
+
+    const routeSelect = div.querySelector(".route-name");
+    const stopsBox = div.querySelector(".bus-stops");
+
+    if (route) {
+
+        const index = defaultRoutes.findIndex(r => r.name === route.name);
+
+        if (index >= 0) {
+
+            routeSelect.value = index;
+            stopsBox.value = route.stops;
+
         }
 
-        async function handleSubmit() {
-            if (!$('#submittedBy').value.trim()) {
-                alert("⚠️ Please enter your name.");
-                return;
-            }
+    }
 
-            if (!$('#departmentSelect').value) {
-                alert("⚠️ Please select a Department.");
-                return;
-            }
+    routeSelect.addEventListener("change", function () {
 
-            const now = new Date();
-            const approval_date = now.toISOString().split('T')[0];
-            const approval_time = now.toTimeString().split(' ')[0];
+        if (this.value === "") {
 
-            const canteenData = [];
-            $$('#manpowerBody tr').forEach(tr => {
-                let category = tr.cells[0].querySelector('strong')?.textContent ||
-                               tr.cells[0].querySelector('select')?.value || 'Unknown';
-                const h2 = parseInt(tr.querySelector('[data-hours="2"]').value) || 0;
-                const h3 = parseInt(tr.querySelector('[data-hours="3"]').value) || 0;
-                if (h2 > 0 || h3 > 0) {
-                    canteenData.push({category, hours_2: h2, hours_3: h3});
-                }
-            });
+            stopsBox.value = "";
+            return;
 
-            const transportData = [];
-            $$('.route-row').forEach(row => {
-                const routeName = row.querySelector('.route-name').value.trim();
-                const h2 = parseInt(row.querySelector('[data-hours="2"]').value) || 0;
-                const h3 = parseInt(row.querySelector('[data-hours="3"]').value) || 0;
-                if ((h2 > 0 || h3 > 0) && routeName) {
-                    transportData.push({
-                        route_name: routeName,
-                        bus_stops: row.querySelector('.bus-stops').value.trim(),
-                        hours_2: h2,
-                        hours_3: h3
-                    });
-                }
-            });
-
-            const formData = new FormData();
-            formData.append('shift', $('#shiftSelect').value);
-            formData.append('department', $('#departmentSelect').value);
-            formData.append('other_department', $('#otherDepartment').value.trim());
-            formData.append('approval_date', approval_date);
-            formData.append('approval_time', approval_time);
-            formData.append('canteen_data', JSON.stringify(canteenData));
-            formData.append('transport_data', JSON.stringify(transportData));
-            formData.append('user_name', $('#submittedBy').value.trim());
-            formData.append('is_sudden_requirement', $('#emergencyCheck').checked ? '1' : '0');
-
-            try {
-                const response = await fetch('/submit-ot', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-
-                if (result.status === "success") {
-                    showToast(result.message || "Request submitted successfully!");
-
-                    let mailtoLink = `mailto:${encodeURIComponent(result.to || '')}`;
-                    mailtoLink += `?subject=${encodeURIComponent(result.email_subject || '')}`;
-                    mailtoLink += `&body=${encodeURIComponent(result.email_body || '')}`;
-
-                    if (result.cc) {
-                        mailtoLink += `&cc=${encodeURIComponent(result.cc)}`;
-                    }
-
-                    setTimeout(() => window.location.href = mailtoLink, 700);
-                } else {
-                    alert(result.message || "Failed to process request");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Server connection failed. Please try again.");
-            }
         }
 
-        function showToast(message) {
-            $('#toastBody').textContent = message;
-            new bootstrap.Toast($('#toast'), { delay: 2800 }).show();
-        }
+        stopsBox.value = defaultRoutes[this.value].stops;
 
-        function init() {
-            loadDepartments();
+    });
 
-            $('#departmentSelect').addEventListener('change', function () {
-                $('#otherDepartment').style.display = (this.value === "Other") ? 'block' : 'none';
-            });
+    div.querySelectorAll(".trans-qty").forEach(el => {
+        el.addEventListener("input", updateTotals);
+    });
 
-            const tbody = $('#manpowerBody');
-            tbody.appendChild(createBajajRow());
-            tbody.appendChild(createProviderRow());
+    return div;
 
-            const transportContainer = $('#transportList');
-            defaultRoutes.forEach(route => transportContainer.appendChild(createTransportRow(route)));
+}   
 
-            const addOtherBtn = document.createElement('button');
-            addOtherBtn.type = 'button';
-            addOtherBtn.className = 'btn btn-outline-primary btn-sm mb-3';
-            addOtherBtn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Add Other Route / Shop';
-            addOtherBtn.onclick = () => transportContainer.appendChild(createTransportRow(null));
-            transportContainer.parentNode.insertBefore(addOtherBtn, transportContainer);
-
-            $('#addProviderBtn').addEventListener('click', () => {
-                tbody.appendChild(createProviderRow());
-                updateTotals();
-            });
-
-            $('#submitBtn').addEventListener('click', handleSubmit);
-            updateTotals();
-            updateDateTime();
-            setInterval(updateDateTime, 60000);
-        }
-
-        window.addEventListener('DOMContentLoaded', init);
-    </script>
+</script>
 
 </body>
 </html>
