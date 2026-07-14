@@ -129,9 +129,6 @@ body{
 
         <form
             id="busPassForm"
-            action="/bus-pass"
-            method="POST"
-            enctype="multipart/form-data"
             class="space-y-4">
 
             <!-- Employee Details -->
@@ -359,6 +356,61 @@ body{
     </div>
 
 </div>
+
+<script>
+const savedEmployeeCode = localStorage.getItem("employeeCode");
+if (savedEmployeeCode) {
+    document.querySelector('[name="employeeCode"]').value = savedEmployeeCode;
+}
+
+document.getElementById("busPassForm")
+.addEventListener("submit", async function(e){
+
+    e.preventDefault();
+
+    const resultBox = document.getElementById("result");
+
+    const employeeCode = document
+        .querySelector('[name="employeeCode"]')
+        .value.trim();
+
+    try {
+
+        const response = await fetch("/request-pass", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ employeeCode: employeeCode })
+        });
+
+        const data = await response.json();
+
+        if (data.status !== "success") {
+            resultBox.innerHTML =
+                '<p class="text-red-600 font-semibold">' +
+                (data.message || "Something went wrong") +
+                "</p>";
+            return;
+        }
+
+        resultBox.innerHTML =
+            '<p class="text-green-600 font-semibold">' +
+            data.message +
+            "</p>";
+
+        document.getElementById("busPassForm").reset();
+
+        if (savedEmployeeCode) {
+            document.querySelector('[name="employeeCode"]').value = savedEmployeeCode;
+        }
+
+    } catch (err) {
+        console.log(err);
+        resultBox.innerHTML =
+            '<p class="text-red-600 font-semibold">Server Error. Please try again.</p>';
+    }
+
+});
+</script>
 
 </body>
 </html>
