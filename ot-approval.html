@@ -180,55 +180,7 @@
                             <div class="row mb-5 g-3">
                                 <div class="col-md-8">
                                     <select id="departmentSelect" class="form-select form-select-lg"><option value="">-- Select Department --</option>
-                                     <option>Production</option>
-                        <option>Quality</option>
-                        <option>Maintenance</option>
-                        <option>HR</option>
-                        <option>Administration</option>
-                        <option>Alluminium Shop</option>
-                        <option>BU HR -Operations</option>
-                        <option>Central Maintenance</option>
-                        <option>Assembly Planned Maint</option>
-                        <option>Chassis Sub Assembly Center</option>
-                        <option>Civil</option>
-                        <option>Dispensary</option>
-                        <option>Civil & Utility</option>
-                        <option>Engine Assembly Line-KTM</option>
-                        <option>Engine Assembly</option>
-                        <option>Export</option>
-                        <option>Exoprt Assembly CKD</option>
-                        <option>Export Open</option>
-                        <option>Facility Engineering</option>
-                        <option>Flying Start GT-OP</option>
-                        <option>HRD</option>
-                        <option>Machining</option>
-                        <option>Maintenance</option>
-                        <option>Manufacturing Check</option>
-                        <option>Manufacturing Engine</option>
-                        <option>ME (E&T)</option>
-                        <option>ME(Vehicle)</option>
-                        <option>Paint Shop</option>
-                        <option>Personnel</option>
-                        <option>PPC</option>
-                        <option>Production</option>
-                        <option>Production Planning</option>
-                        <option>Vehicel Assembly-Pulsar</option>
-                        <option>Quality</option>
-                        <option>Quality Assurance</option>
-                        <option>Reliability Sub Vehicle</option>
-                        <option>Reliability Supply Vehicle</option>
-                        <option>Safety</option>
-                        <option>Security</option>
-                        <option>Steel Shop</option>
-                        <option>Steel Shop (C-10)</option>
-                        <option>Time Office</option>
-                        <option>Tool Room</option>
-                        <option>TPM</option>
-                        <option>Utilities & Services</option>
-                        <option>Vehicle Assembly Electric</option>
-                        <option>Vehicle Dispatch </option>
-                        <option>Vehicle Assembly</option>
-                        <option>Works Admin (C-01)</option>
+                      
                     
                     </select>
                                 </div>
@@ -323,29 +275,70 @@
             { name: "BHOSARI - ALANDI", stops: "Moshi, Gandharavnagari, Pmt Chowk, Charoli Phata, Dehu Phata, Alandi" }
         ];
 
-        async function loadDepartments() {
-            try {
-                const res = await fetch('/get-departments');
-                const data = await res.json();
-                if (data.status === "success") {
-                    const select = $('#departmentSelect');
-                    select.innerHTML = '<option value="">-- Select Department --</option>';
-                    data.departments.forEach(dep => {
-                        const opt = document.createElement('option');
-                        opt.value = dep;
-                        opt.textContent = dep;
-                        select.appendChild(opt);
-                    });
-                    const otherOpt = document.createElement('option');
-                    otherOpt.value = "Other";
-                    otherOpt.textContent = "Other (Please Specify)";
-                    select.appendChild(otherOpt);
-                }
-            } catch (e) {
-                $('#departmentSelect').innerHTML = '<option value="">Error loading departments</option>';
-            }
-        }
+        const departments = [
 
+"Production",
+"Quality",
+"Maintenance",
+"HR",
+"Administration",
+"Alluminium Shop",
+"BU HR -Operations",
+"Central Maintenance",
+"Assembly Planned Maint",
+"Chassis Sub Assembly Center",
+"Civil",
+"Dispensary",
+"Civil & Utility",
+"Engine Assembly Line-KTM",
+"Engine Assembly",
+"Export",
+"Export Assembly CKD",
+"Export Open",
+"Facility Engineering",
+"Flying Start GT-OP",
+"HRD",
+"Machining",
+"Manufacturing Check",
+"Manufacturing Engine",
+"ME (E&T)",
+"ME (Vehicle)",
+"Paint Shop",
+"Personnel",
+"PPC",
+"Production Planning",
+"Vehicle Assembly-Pulsar",
+"Quality Assurance",
+"Reliability Sub Vehicle",
+"Reliability Supply Vehicle",
+"Safety",
+"Security",
+"Steel Shop",
+"Steel Shop (C-10)",
+"Time Office",
+"Tool Room",
+"TPM",
+"Utilities & Services",
+"Vehicle Assembly Electric",
+"Vehicle Dispatch",
+"Vehicle Assembly",
+"Works Admin (C-01)"
+
+];
+
+function loadDepartments(){
+
+const select=document.getElementById("departmentSelect");
+
+select.innerHTML="<option value=''>Select Department</option>";
+
+departments.forEach(dep=>{
+
+select.innerHTML+=`<option value="${dep}">${dep}</option>`;
+
+});
+
+}
         function updateDateTime() {
             const now = new Date();
             $('#liveDate').textContent = now.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
