@@ -1,281 +1,1028 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OT Manpower Approval • Bajaj Auto</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #0047ab;
-            --primary-dark: #003b82;
-            --success: #16a34a;
-            --danger: #dc2626;
-        }
-        body {
-            background-color: #f1f5f9;
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-            padding-top: 2.5rem;
-            padding-bottom: 3rem;
-            line-height: 1.6;
-        }
-        .main-card {
-            border-radius: 22px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-            overflow: hidden;
-            border: none;
-        }
-        .header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 2.25rem 2rem;
-            text-align: center;
-        }
-        .header .logo-badge{
-            width: 64px;
-            height: 64px;
-            background: rgba(255,255,255,.15);
-            border-radius: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            margin: 0 auto 12px;
-        }
-        .btn-primary {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            border-color: var(--primary-dark);
-        }
-        .btn-outline-primary {
-            color: var(--primary);
-            border-color: var(--primary);
-        }
-        .btn-outline-primary:hover {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-        .section-header {
-            font-weight: 700;
-            color: #334155;
-            border-bottom: 3px solid #e2e8f0;
-            padding-bottom: 0.75rem;
-            margin-bottom: 1.75rem;
-            font-size: 1.18rem;
-        }
-        .other-input { display: none; }
-        .bus-stops {
-            font-size: 0.85rem;
-            line-height: 1.45;
-            min-height: 72px;
-            resize: vertical;
-            background: #f8f9fa !important;
-        }
-        .total-card {
-            transition: all 0.3s ease;
-            border: 1px solid #e2e8f0;
-        }
-        .total-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-        }
-        .total-card h2 { color: var(--primary) !important; }
-        .total-card.success h2 { color: var(--success) !important; }
-        .route-row {
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin-bottom: 1.25rem;
-        }
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 9999;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-        .emergency-box {
-            background-color: #fff3cd;
-            border: 1px solid #ffeba2;
-            border-radius: 10px;
-            padding: 1rem;
-        }
-        #globalBackBtn{
-            position:fixed;
-            top:14px;
-            left:14px;
-            z-index:99999;
-            background:#1e293b;
-            color:#fff;
-            border:none;
-            padding:10px 18px;
-            border-radius:10px;
-            font-weight:700;
-            font-family:'Inter',sans-serif;
-            font-size:14px;
-            box-shadow:0 4px 12px rgba(0,0,0,.2);
-            cursor:pointer;
-        }
-        #globalBackBtn:hover{ background:#0f172a; }
-        @media (max-width:600px){
-            #globalBackBtn{ top:8px; left:8px; padding:8px 14px; font-size:13px; }
-        }
-    </style>
+
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>OT Manpower Approval | Bajaj Auto</title>
+
+<!-- Bootstrap -->
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+rel="stylesheet">
+
+<!-- Google Font -->
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
+
+body{
+
+background:#f1f5f9;
+padding-top:30px;
+padding-bottom:40px;
+
+}
+
+.container-fluid{
+
+max-width:1400px;
+
+}
+
+/* ================= CARD ================= */
+
+.main-card{
+
+border:none;
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 15px 40px rgba(0,0,0,.12);
+
+}
+
+/* ================= HEADER ================= */
+
+.header{
+
+background:linear-gradient(135deg,#003399,#0056d6);
+color:#fff;
+padding:35px;
+text-align:center;
+
+}
+
+.logo-badge{
+
+width:70px;
+height:70px;
+margin:auto;
+margin-bottom:15px;
+display:flex;
+justify-content:center;
+align-items:center;
+border-radius:18px;
+background:rgba(255,255,255,.15);
+font-size:32px;
+
+}
+
+.header h2{
+
+font-weight:700;
+
+}
+
+.header p{
+
+opacity:.95;
+margin-bottom:5px;
+
+}
+
+/* ================= SECTION ================= */
+
+.section-header{
+
+font-size:22px;
+font-weight:700;
+color:#334155;
+margin-top:35px;
+margin-bottom:20px;
+padding-bottom:10px;
+border-bottom:3px solid #e2e8f0;
+
+}
+
+/* ================= FORM ================= */
+
+.form-control,
+.form-select{
+
+border-radius:10px;
+
+}
+
+.form-control:focus,
+.form-select:focus{
+
+box-shadow:none;
+border-color:#0047ab;
+
+}
+
+/* ================= BUTTON ================= */
+
+.btn-primary{
+
+background:#0047ab;
+border:none;
+
+}
+
+.btn-primary:hover{
+
+background:#003580;
+
+}
+
+/* ================= TABLE ================= */
+
+.table{
+
+margin-bottom:0;
+
+}
+
+.table th{
+
+background:#f8fafc;
+
+}
+
+.table td,
+.table th{
+
+vertical-align:middle;
+
+}
+
+/* ================= TOTAL CARD ================= */
+
+.total-card{
+
+background:#fff;
+border-radius:15px;
+padding:25px;
+text-align:center;
+border:1px solid #dee2e6;
+
+}
+
+.total-card h2{
+
+font-weight:700;
+margin-top:10px;
+color:#0047ab;
+
+}
+
+.total-card.success h2{
+
+color:#16a34a;
+
+}
+
+/* ================= ROUTE ================= */
+
+.route-row{
+
+background:#fff;
+padding:20px;
+margin-bottom:20px;
+border-radius:15px;
+border:1px solid #e5e7eb;
+
+}
+
+.bus-stops{
+
+resize:none;
+background:#f8f9fa!important;
+
+}
+
+/* ================= BACK BUTTON ================= */
+
+#globalBackBtn{
+
+position:fixed;
+top:15px;
+left:15px;
+z-index:99999;
+border:none;
+background:#0f172a;
+color:#fff;
+padding:10px 18px;
+font-weight:600;
+border-radius:10px;
+
+}
+
+#globalBackBtn:hover{
+
+background:#020617;
+
+}
+
+/* ================= EMERGENCY ================= */
+
+.emergency-box{
+
+background:#fff3cd;
+border:1px solid #ffe69c;
+padding:15px;
+border-radius:10px;
+
+}
+
+/* ================= TOAST ================= */
+
+.toast{
+
+position:fixed;
+right:20px;
+bottom:20px;
+z-index:9999;
+
+}
+
+/* ================= MOBILE ================= */
+
+@media(max-width:992px){
+
+.header{
+
+padding:25px;
+
+}
+
+.card-body{
+
+padding:25px!important;
+
+}
+
+.section-header{
+
+font-size:20px;
+
+}
+
+}
+
+@media(max-width:768px){
+
+.container-fluid{
+
+padding-left:10px;
+padding-right:10px;
+
+}
+
+.header{
+
+padding:20px;
+
+}
+
+.logo-badge{
+
+width:55px;
+height:55px;
+font-size:26px;
+
+}
+
+.header h2{
+
+font-size:22px;
+
+}
+
+.header p{
+
+font-size:14px;
+
+}
+
+.card-body{
+
+padding:18px!important;
+
+}
+
+.form-control-lg,
+.form-select-lg{
+
+font-size:15px;
+
+}
+
+.total-card{
+
+margin-bottom:15px;
+
+}
+
+.total-card h2{
+
+font-size:28px;
+
+}
+
+.route-row{
+
+padding:15px;
+
+}
+
+.btn-lg{
+
+width:100%;
+
+}
+
+.table-responsive{
+
+overflow-x:auto;
+
+}
+
+table{
+
+min-width:650px;
+
+}
+
+#globalBackBtn{
+
+top:10px;
+left:10px;
+padding:8px 14px;
+font-size:13px;
+
+}
+
+}
+
+@media(max-width:576px){
+
+.header h2{
+
+font-size:19px;
+
+}
+
+.logo-badge{
+
+width:48px;
+height:48px;
+font-size:22px;
+
+}
+
+.section-header{
+
+font-size:18px;
+
+}
+
+.header p{
+
+font-size:13px;
+
+}
+
+}
+
+</style>
 </head>
+
 <body>
 
-<button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
+<button id="globalBackBtn"
+onclick="history.length>1 ? history.back() : location.href='index.html'">
 
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-11 col-xl-10">
-                <div class="main-card card">
-                    <div class="header">
-                        <div class="logo-badge">🚌</div>
-                        <h1 class="h3 mb-1 fw-bold">Bajaj Auto — OT Manpower Approval</h1>
-                        <p class="mb-2 opacity-90">Daily Canteen &amp; Transport Coordination</p>
-                        <div class="mt-3 fs-5">
-                            <span id="liveDate">Mon, 13 Jul, 2026</span>
-                            <span class="mx-2">•</span>
-                            <span id="liveTime">07:28 am</span>
-                        </div>
-                    </div>
-                    <div class="card-body p-5">
-                        <form id="otForm">
+    <i class="bi bi-arrow-left"></i> Back
 
-                            <div class="mb-4">
-                                <label class="form-label fw-semibold">Submitted By</label>
-                                <input type="text" id="submittedBy" class="form-control form-control-lg" placeholder="Enter your name" required>
-                            </div>
+</button>
 
-                            <div class="row mb-4 align-items-center g-3">
-                                <div class="col-md-5">
-                                    <label class="form-label fw-semibold">Shift</label>
-                                    <select id="shiftSelect" class="form-select form-select-lg">
-                                        <option value="I Shift" selected>I Shift</option>
-                                        <option value="II Shift">II Shift</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-7">
-                                    <div class="emergency-box mt-4">
-                                        <div class="form-check form-switch mb-0">
-                                            <input class="form-check-input" type="checkbox" id="emergencyCheck">
-                                            <label class="form-check-label fw-bold text-danger" for="emergencyCheck">
-                                                ⚠ Sudden Requirement / Additional OT Request
-                                            </label>
-                                        </div>
-                                        <small class="text-muted d-block mt-1">Check this box if you have already submitted today's list but need to request immediate additional manpower.</small>
-                                    </div>
-                                </div>
-                            </div>
+<div class="container-fluid">
 
-                            <h5 class="section-header">Department</h5>
-                            <div class="row mb-5 g-3">
-                                <div class="col-md-8">
-                                    <select id="departmentSelect" class="form-select form-select-lg"><option value="">-- Select Department --</option>
-                      
-                    
-                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="text" id="otherDepartment" class="form-control other-input form-control-lg" placeholder="Enter department name">
-                                </div>
-                            </div>
+<div class="row justify-content-center">
 
-                            <h5 class="section-header">1. Canteen Facility Requirement</h5>
-                            <div class="d-flex justify-content-end mb-3">
-                                <button type="button" id="addProviderBtn" class="btn btn-primary btn-lg">
-                                    <i class="bi bi-plus-circle me-2"></i>Add Service Provider
-                                </button>
-                            </div>
-                            <div class="table-responsive mb-4">
-                                <table class="table table-bordered align-middle" id="manpowerTable">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th style="width: 45%;">Category / Service Provider</th>
-                                            <th class="text-center" style="width: 27.5%;">2 Hours</th>
-                                            <th class="text-center" style="width: 27.5%;">3 Hours</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="manpowerBody"></tbody>
-                                </table>
-                            </div>
+<div class="col-12 col-xl-10">
 
-                            <div class="row g-4 mb-5">
-                                <div class="col-md-6">
-                                    <div class="total-card p-4 border rounded-3 bg-white text-center h-100">
-                                        <strong class="text-muted">2 Hours Canteen Total</strong>
-                                        <h2 class="mb-0 mt-2 fw-bold" id="canteen2h">0</h2>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="total-card p-4 border rounded-3 bg-white text-center h-100">
-                                        <strong class="text-muted">3 Hours Canteen Total</strong>
-                                        <h2 class="mb-0 mt-2 fw-bold" id="canteen3h">0</h2>
-                                    </div>
-                                </div>
-                            </div>
+<div class="card main-card">
 
-                            <h5 class="section-header">2. Transportation Requirements</h5>
-                            <div id="transportList" class="mb-4"></div>
+<!-- ================= HEADER ================= -->
 
-                            <div class="row g-4 mb-5">
-                                <div class="col-md-6">
-                                    <div class="total-card success p-4 border rounded-3 bg-white text-center h-100">
-                                        <strong class="text-muted">2 Hours Transport Total</strong>
-                                        <h2 class="mb-0 mt-2 fw-bold" id="transport2h">0</h2>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="total-card success p-4 border rounded-3 bg-white text-center h-100">
-                                        <strong class="text-muted">3 Hours Transport Total</strong>
-                                        <h2 class="mb-0 mt-2 fw-bold" id="transport3h">0</h2>
-                                    </div>
-                                </div>
-                            </div>
+<div class="header">
 
-                            <button type="button" id="submitBtn" class="btn btn-primary btn-lg w-100 py-3 fw-bold fs-5">
-                                <i class="bi bi-envelope-paper-fill me-2"></i>
-                                Save &amp; Send Request
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="logo-badge">
 
-    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert">
-        <div class="d-flex">
-            <div class="toast-body fw-medium" id="toastBody"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>
+🚌
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const $ = sel => document.querySelector(sel);
-        const $$ = sel => document.querySelectorAll(sel);
+</div>
 
-        const vendorList = ["Aarogyam Hospital","Ansec Hr Services","AG Enterprises","Arms India Pvt. Ltd.","Entire Facility Management Services Pvt. Ltd.","Kunal Facilities India Pvt Ltd","Mahesh Industrial Facility Pvt. Ltd.","Reliable Pest Control.","Raj News Paper","Saibaba Industrial Services Pvt. Ltd.","Sharvi Enterprises.","Shriniwas Solution Ind Pvt. Ltd.","Shivanshi Solution Pvt Ltd","Sodexo India Services Pvt Ltd","Success 9 Facility Services Pvt. Ltd.","Teamlease Education Foundation","V.S.I. Enterprises.","Vaishnavi Enterprises.","Bakul Multiforce","Supreme Transport","Venkatramana Transport"];
+<h2>
 
-        const defaultRoutes = [
-            { name: "CHAKAN - KHED", stops: "IEI Company, Indian Oil Pump, Chakan Chowk, Dhadge Mala, Am Bethan Chowk, Swapanagari, Ekatangar, Waki Phata, Shiroli Phata, Khed ST Stand" },
-            { name: "MAHALUNGE - KADACHIWADI", stops: "Jambukarwasti, Arogyam Hospital, Eiffel City, Kharabwadi, Chakan Chowk, Manik Chowk, Kadachiwadi" },
-            { name: "DEHUGAON - WADGAON", stops: "Vitthalwadi, Dehukaman, Yelwadi, Dehuphata, Manoharnagar, Indori, Talegaon, Wadgaon" },
-            { name: "KALEWADI", stops: "Tower line, LIC Corner, Pawale Bridge, Mhalasakant, Khandoba Mal / Mandir, Dalvinagar, Chapekar chowk, Rahatani Phata, Kalewadi Phata" },
-            { name: "AJMERA", stops: "Chikali Chowk, Sane Chowk, Kasturi Market, Sambhajinagar, Amruteshwar Colony, Ajmera" },
-            { name: "BHOSARI - ALANDI", stops: "Moshi, Gandharavnagari, Pmt Chowk, Charoli Phata, Dehu Phata, Alandi" }
-        ];
+Bajaj Auto - OT Manpower Approval
 
-        const departments = [
+</h2>
+
+<p>
+
+Daily Canteen & Transport Coordination
+
+</p>
+
+<div class="mt-3">
+
+<span id="liveDate"></span>
+
+<span class="mx-2">|</span>
+
+<span id="liveTime"></span>
+
+</div>
+
+</div>
+
+<!-- ================= BODY ================= -->
+
+<div class="card-body">
+
+<form id="otForm">
+
+<!-- Submitted By -->
+
+<div class="row mb-4">
+
+<div class="col-lg-6 col-md-12">
+
+<label class="form-label fw-bold">
+
+Submitted By
+
+</label>
+
+<input
+type="text"
+id="submittedBy"
+class="form-control form-control-lg"
+placeholder="Enter your name"
+required>
+
+</div>
+
+<div class="col-lg-6 col-md-12">
+
+<label class="form-label fw-bold">
+
+Submission Date
+
+</label>
+
+<input
+type="text"
+id="submissionDate"
+class="form-control form-control-lg"
+readonly>
+
+</div>
+
+</div>
+
+<!-- Shift -->
+
+<div class="row mb-4">
+
+<div class="col-lg-6 col-md-12">
+
+<label class="form-label fw-bold">
+
+Shift
+
+</label>
+
+<select
+id="shiftSelect"
+class="form-select form-select-lg">
+
+<option value="1st Shift">
+
+1st Shift
+
+</option>
+
+<option value="2nd Shift">
+
+2nd Shift
+
+</option>
+
+<option value="3rd Shift">
+
+3rd Shift
+
+</option>
+
+<option value="General Shift">
+
+General Shift
+
+</option>
+
+</select>
+
+</div>
+
+<div class="col-lg-6 col-md-12">
+
+<div class="emergency-box mt-lg-4 mt-3">
+
+<div class="form-check form-switch">
+
+<input
+class="form-check-input"
+type="checkbox"
+id="emergencyCheck">
+
+<label
+class="form-check-label fw-bold text-danger"
+for="emergencyCheck">
+
+⚠ Sudden Requirement / Additional OT Request
+
+</label>
+
+</div>
+
+<small class="text-muted d-block mt-2">
+
+Enable this option if today's manpower request has already been submitted and additional manpower is required.
+
+</small>
+
+</div>
+
+</div>
+
+</div>
+<!-- ================= DEPARTMENT ================= -->
+
+<h4 class="section-header">
+
+Department Information
+
+</h4>
+
+<div class="row mb-4">
+
+<div class="col-lg-8 col-md-12">
+
+<label class="form-label fw-bold">
+
+Department
+
+</label>
+
+<select
+id="departmentSelect"
+class="form-select form-select-lg"
+required>
+
+<option value="">
+
+Select Department
+
+</option>
+
+</select>
+
+</div>
+
+<div class="col-lg-4 col-md-12">
+
+<label class="form-label fw-bold">
+
+Other Department
+
+</label>
+
+<input
+type="text"
+id="otherDepartment"
+class="form-control form-control-lg"
+placeholder="Enter Department"
+style="display:none;">
+
+</div>
+
+</div>
+
+<!-- ================= CANTEEN ================= -->
+
+<h4 class="section-header">
+
+1. Canteen Facility Requirement
+
+</h4>
+
+<div class="d-flex justify-content-end mb-3">
+
+<button
+type="button"
+id="addProviderBtn"
+class="btn btn-primary btn-lg">
+
+<i class="bi bi-plus-circle"></i>
+
+Add Service Provider
+
+</button>
+
+</div>
+
+<div class="table-responsive">
+
+<table
+class="table table-bordered table-hover align-middle"
+id="manpowerTable">
+
+<thead class="table-primary">
+
+<tr>
+
+<th width="45%">
+
+Category / Service Provider
+
+</th>
+
+<th class="text-center">
+
+2 Hours
+
+</th>
+
+<th class="text-center">
+
+3 Hours
+
+</th>
+
+<th class="text-center">
+
+Action
+
+</th>
+
+</tr>
+
+</thead>
+
+<tbody id="manpowerBody">
+
+<!-- Bajaj Employees Row -->
+
+<tr>
+
+<td>
+
+<strong>Bajaj Employees</strong>
+
+</td>
+
+<td>
+
+<input
+type="number"
+class="form-control ot-qty text-center"
+data-hours="2"
+value="0"
+min="0">
+
+</td>
+
+<td>
+
+<input
+type="number"
+class="form-control ot-qty text-center"
+data-hours="3"
+value="0"
+min="0">
+
+</td>
+
+<td class="text-center">
+
+<span class="text-success fw-bold">
+
+Default
+
+</span>
+
+</td>
+
+</tr>
+
+<!-- First Service Provider -->
+
+<tr>
+
+<td>
+
+<select
+class="form-select provider-select">
+
+<option value="">
+
+Select Service Provider
+
+</option>
+
+</select>
+
+<input
+type="text"
+class="form-control mt-2 other-vendor"
+placeholder="Enter Service Provider"
+style="display:none;">
+
+</td>
+
+<td>
+
+<input
+type="number"
+class="form-control ot-qty text-center"
+data-hours="2"
+value="0"
+min="0">
+
+</td>
+
+<td>
+
+<input
+type="number"
+class="form-control ot-qty text-center"
+data-hours="3"
+value="0"
+min="0">
+
+</td>
+
+<td class="text-center">
+
+<button
+type="button"
+class="btn btn-danger btn-sm remove-provider">
+
+<i class="bi bi-trash"></i>
+
+</button>
+
+</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+<!-- ================= TOTAL ================= -->
+
+<div class="row mt-4">
+
+<div class="col-md-6">
+
+<div class="total-card">
+
+<h6>
+
+2 Hours Total
+
+</h6>
+
+<h2 id="canteen2h">
+
+0
+
+</h2>
+
+</div>
+
+</div>
+
+<div class="col-md-6">
+
+<div class="total-card">
+
+<h6>
+
+3 Hours Total
+
+</h6>
+
+<h2 id="canteen3h">
+
+0
+
+</h2>
+
+</div>
+
+</div>
+
+</div>
+<!-- ===========================
+     TRANSPORTATION REQUIREMENT
+=========================== -->
+
+<h4 class="section-header">
+
+2. Transportation Requirement
+
+</h4>
+
+<div id="transportList">
+
+<!-- Transport Routes will be added automatically -->
+
+</div>
+
+<!-- ===========================
+     TRANSPORT TOTAL
+=========================== -->
+
+<div class="row mt-4">
+
+<div class="col-md-6">
+
+<div class="total-card success">
+
+<h6>
+
+2 Hours Transport Total
+
+</h6>
+
+<h2 id="transport2h">
+
+0
+
+</h2>
+
+</div>
+
+</div>
+
+<div class="col-md-6">
+
+<div class="total-card success">
+
+<h6>
+
+3 Hours Transport Total
+
+</h6>
+
+<h2 id="transport3h">
+
+0
+
+</h2>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===========================
+     SUBMIT BUTTON
+=========================== -->
+
+<div class="row mt-5">
+
+<div class="col-12">
+
+<button
+type="button"
+id="submitBtn"
+class="btn btn-primary btn-lg w-100 py-3">
+
+<i class="bi bi-send-fill me-2"></i>
+
+Save & Send Request
+
+</button>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- ===========================
+        TOAST MESSAGE
+=========================== -->
+
+<div
+class="toast align-items-center text-bg-success border-0"
+id="toast"
+role="alert">
+
+<div class="d-flex">
+
+<div
+class="toast-body"
+id="toastBody">
+
+Saved Successfully
+
+</div>
+
+<button
+type="button"
+class="btn-close btn-close-white me-2 m-auto"
+data-bs-dismiss="toast">
+
+</button>
+
+</div>
+
+</div>
+
+<!-- ===========================
+      JAVASCRIPT
+=========================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+const $ = (e)=>document.querySelector(e);
+
+const $$ = (e)=>document.querySelectorAll(e);
+
+/* =====================================
+   SERVICE PROVIDERS
+===================================== */
+
+const vendorList=[
+
+"Aarogyam Hospital",
+"Ansec HR Services",
+"AG Enterprises",
+"Arms India Pvt Ltd",
+"Entire Facility Management",
+"Kunal Facilities",
+"Mahesh Industrial Facility",
+"Reliable Pest Control",
+"Raj News Paper",
+"Saibaba Industrial Services",
+"Sharvi Enterprises",
+"Shriniwas Solution",
+"Shivanshi Solution",
+"Sodexo India Services",
+"Success 9 Facility",
+"Teamlease",
+"VSI Enterprises",
+"Vaishnavi Enterprises",
+"Bakul Multiforce",
+"Supreme Transport",
+"Venkatramana Transport"
+
+];
+
+/* =====================================
+   DEPARTMENTS
+===================================== */
+
+const departments=[
 
 "Production",
 "Quality",
@@ -283,227 +1030,677 @@
 "HR",
 "Administration",
 "Alluminium Shop",
-"BU HR -Operations",
+"BU HR - Operations",
 "Central Maintenance",
-"Assembly Planned Maint",
-"Chassis Sub Assembly Center",
+"Assembly Planned Maintenance",
 "Civil",
 "Dispensary",
 "Civil & Utility",
-"Engine Assembly Line-KTM",
 "Engine Assembly",
 "Export",
-"Export Assembly CKD",
-"Export Open",
 "Facility Engineering",
-"Flying Start GT-OP",
+"Flying Start",
 "HRD",
 "Machining",
-"Manufacturing Check",
-"Manufacturing Engine",
-"ME (E&T)",
-"ME (Vehicle)",
+"Manufacturing",
 "Paint Shop",
 "Personnel",
 "PPC",
 "Production Planning",
-"Vehicle Assembly-Pulsar",
+"Vehicle Assembly",
+"Vehicle Dispatch",
 "Quality Assurance",
-"Reliability Sub Vehicle",
-"Reliability Supply Vehicle",
+"Reliability",
 "Safety",
 "Security",
 "Steel Shop",
-"Steel Shop (C-10)",
 "Time Office",
 "Tool Room",
 "TPM",
 "Utilities & Services",
-"Vehicle Assembly Electric",
-"Vehicle Dispatch",
-"Vehicle Assembly",
-"Works Admin (C-01)"
+"Works Admin",
+"Other"
 
 ];
 
-function loadDepartments(){
+/* =====================================
+   SHIFT ROUTES
+===================================== */
 
-const select=document.getElementById("departmentSelect");
+/* Paste your complete SHIFT_ROUTES
+   object here exactly as in your
+   original file.
+*/
 
-select.innerHTML="<option value=''>Select Department</option>";
+const SHIFT_ROUTES={
 
-departments.forEach(dep=>{
+};
 
-select.innerHTML+=`<option value="${dep}">${dep}</option>`;
+//
+//
+//
+//
+/* ==========================================
+   GLOBAL VARIABLES
+========================================== */
 
-});
+let transportRoutes = [];
 
-}
-        function updateDateTime() {
-            const now = new Date();
-            $('#liveDate').textContent = now.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-            $('#liveTime').textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
-        }
+const manpowerBody = document.getElementById("manpowerBody");
+const transportList = document.getElementById("transportList");
 
-        function updateTotals() {
-            let c2 = 0, c3 = 0, t2 = 0, t3 = 0;
-            $$('.ot-qty[data-hours="2"]').forEach(i => c2 += parseInt(i.value) || 0);
-            $$('.ot-qty[data-hours="3"]').forEach(i => c3 += parseInt(i.value) || 0);
-            $$('.trans-qty[data-hours="2"]').forEach(i => t2 += parseInt(i.value) || 0);
-            $$('.trans-qty[data-hours="3"]').forEach(i => t3 += parseInt(i.value) || 0);
+/* ==========================================
+   LOAD DEPARTMENTS
+========================================== */
 
-            $('#canteen2h').textContent = c2;
-            $('#canteen3h').textContent = c3;
-            $('#transport2h').textContent = t2;
-            $('#transport3h').textContent = t3;
-        }
+function loadDepartments() {
 
-        function createBajajRow() {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td><strong>Bajaj Employees</strong></td>
-                <td class="text-center"><input type="number" class="form-control ot-qty text-center" data-hours="2" value="0" min="0"></td>
-                <td class="text-center"><input type="number" class="form-control ot-qty text-center" data-hours="3" value="0" min="0"></td>`;
-            tr.querySelectorAll('input').forEach(i => i.addEventListener('input', updateTotals));
-            return tr;
-        }
+    const department = document.getElementById("departmentSelect");
 
-        function createProviderRow() {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>
-                    <select class="form-select provider-select">
-                        <option value="">-- Select Vendor --</option>
-                        ${vendorList.map(v => `<option value="${v}">${v}</option>`).join('')}
-                        <option value="Other">Other (Please Specify)</option>
-                    </select>
-                    <input type="text" class="form-control mt-2 other-vendor" placeholder="Enter vendor name" style="display:none;">
-                </td>
-                <td class="text-center"><input type="number" class="form-control ot-qty text-center" data-hours="2" value="0" min="0"></td>
-                <td class="text-center"><input type="number" class="form-control ot-qty text-center" data-hours="3" value="0" min="0"></td>`;
+    department.innerHTML =
+        '<option value="">Select Department</option>';
 
-            const select = tr.querySelector('.provider-select');
-            const otherInput = tr.querySelector('.other-vendor');
-            select.addEventListener('change', () => {
-                otherInput.style.display = (select.value === "Other") ? 'block' : 'none';
-                updateTotals();
-            });
-            tr.querySelectorAll('input.ot-qty').forEach(i => i.addEventListener('input', updateTotals));
-            return tr;
-        }
+    departments.forEach(dep => {
 
-      function createTransportRow(route = null) {
+        const option = document.createElement("option");
+        option.value = dep;
+        option.textContent = dep;
 
-    const div = document.createElement("div");
-    div.className = "route-row";
+        department.appendChild(option);
 
-    let routeOptions = `<option value="">-- Select Route --</option>`;
-
-    defaultRoutes.forEach((r, index) => {
-        routeOptions += `<option value="${index}">${r.name}</option>`;
     });
 
-    div.innerHTML = `
-        <div class="row g-3">
+}
 
-            <div class="col-lg-4">
-                <label class="form-label fw-semibold">Route Name</label>
+/* ==========================================
+   LOAD SERVICE PROVIDERS
+========================================== */
 
-                <select class="form-select route-name">
-                    ${routeOptions}
-                </select>
+function loadProviders(select) {
 
-            </div>
+    select.innerHTML =
+        '<option value="">Select Service Provider</option>';
 
-            <div class="col-lg-5">
+    vendorList.forEach(vendor => {
 
-                <label class="form-label fw-semibold">Bus Stops</label>
+        const option = document.createElement("option");
 
-                <textarea
-                    class="form-control bus-stops"
-                    rows="3"
-                    readonly
-                    placeholder="Bus Stops will appear automatically">
-                </textarea>
+        option.value = vendor;
+        option.textContent = vendor;
 
-            </div>
+        select.appendChild(option);
 
-            <div class="col-lg-3">
+    });
 
-                <label class="form-label fw-semibold">
-                    Personnel Required
-                </label>
+    const other = document.createElement("option");
 
-                <div class="row g-2">
+    other.value = "Other";
+    other.textContent = "Other";
 
-                    <div class="col-6">
-                        <small>2 Hours</small>
+    select.appendChild(other);
 
-                        <input
-                            type="number"
-                            class="form-control trans-qty text-center"
-                            data-hours="2"
-                            value="0"
-                            min="0">
-                    </div>
+}
 
-                    <div class="col-6">
-                        <small>3 Hours</small>
+/* ==========================================
+   LIVE DATE & TIME
+========================================== */
 
-                        <input
-                            type="number"
-                            class="form-control trans-qty text-center"
-                            data-hours="3"
-                            value="0"
-                            min="0">
-                    </div>
+function updateDateTime() {
 
-                </div>
+    const now = new Date();
 
-            </div>
+    document.getElementById("liveDate").innerHTML =
+        now.toLocaleDateString("en-IN", {
 
-        </div>
-    `;
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
 
-    // ======= हा तुझा code =======
+        });
 
-    const routeSelect = div.querySelector(".route-name");
-    const stopsBox = div.querySelector(".bus-stops");
+    document.getElementById("liveTime").innerHTML =
+        now.toLocaleTimeString("en-IN");
 
-    if (route) {
+    const submission =
+        document.getElementById("submissionDate");
 
-        const index = defaultRoutes.findIndex(r => r.name === route.name);
+    if (submission) {
 
-        if (index >= 0) {
-
-            routeSelect.value = index;
-            stopsBox.value = route.stops;
-
-        }
+        submission.value =
+            now.toLocaleString("en-IN");
 
     }
 
-    routeSelect.addEventListener("change", function () {
+}
 
-        if (this.value === "") {
+/* ==========================================
+   TOAST
+========================================== */
 
-            stopsBox.value = "";
-            return;
+function showToast(message) {
+
+    document.getElementById("toastBody").innerHTML = message;
+
+    new bootstrap.Toast(
+
+        document.getElementById("toast")
+
+    ).show();
+
+}
+
+/* ==========================================
+   DEPARTMENT CHANGE
+========================================== */
+
+document
+.getElementById("departmentSelect")
+.addEventListener("change", function(){
+
+    const other =
+        document.getElementById("otherDepartment");
+
+    if(this.value==="Other"){
+
+        other.style.display="block";
+
+    }else{
+
+        other.style.display="none";
+        other.value="";
+
+    }
+
+});
+
+/* ==========================================
+   UPDATE CLOCK
+========================================== */
+
+updateDateTime();
+
+setInterval(updateDateTime,1000);
+/* ==========================================
+   CREATE SERVICE PROVIDER ROW
+========================================== */
+
+function createProviderRow() {
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+
+    <td>
+
+        <select class="form-select provider-select">
+
+        </select>
+
+        <input
+            type="text"
+            class="form-control mt-2 other-vendor"
+            placeholder="Enter Service Provider"
+            style="display:none;">
+
+    </td>
+
+    <td>
+
+        <input
+            type="number"
+            class="form-control ot-qty text-center"
+            data-hours="2"
+            value="0"
+            min="0">
+
+    </td>
+
+    <td>
+
+        <input
+            type="number"
+            class="form-control ot-qty text-center"
+            data-hours="3"
+            value="0"
+            min="0">
+
+    </td>
+
+    <td class="text-center">
+
+        <button
+            type="button"
+            class="btn btn-danger btn-sm remove-provider">
+
+            <i class="bi bi-trash"></i>
+
+        </button>
+
+    </td>
+
+    `;
+
+    const select = tr.querySelector(".provider-select");
+
+    loadProviders(select);
+
+    select.addEventListener("change", function () {
+
+        const other = tr.querySelector(".other-vendor");
+
+        if (this.value === "Other") {
+
+            other.style.display = "block";
+
+        } else {
+
+            other.style.display = "none";
+            other.value = "";
 
         }
 
-        stopsBox.value = defaultRoutes[this.value].stops;
+    });
+
+    tr.querySelector(".remove-provider")
+        .addEventListener("click", function () {
+
+            tr.remove();
+
+            updateTotals();
+
+        });
+
+    tr.querySelectorAll(".ot-qty")
+        .forEach(input => {
+
+            input.addEventListener("input", updateTotals);
+
+        });
+
+    return tr;
+
+}
+
+/* ==========================================
+   CREATE TRANSPORT ROUTE CARD
+========================================== */
+
+function createTransportRow(routeName, stops) {
+
+    const card = document.createElement("div");
+
+    card.className = "route-row";
+
+    card.innerHTML = `
+
+<div class="row g-3">
+
+<div class="col-lg-4">
+
+<label class="fw-bold">
+
+${routeName}
+
+</label>
+
+<textarea
+class="form-control bus-stops"
+rows="4"
+readonly>${stops.join(", ")}</textarea>
+
+</div>
+
+<div class="col-lg-3">
+
+<label>2 Hours</label>
+
+<input
+type="number"
+class="form-control transport-input"
+data-hours="2"
+value="0"
+min="0">
+
+</div>
+
+<div class="col-lg-3">
+
+<label>3 Hours</label>
+
+<input
+type="number"
+class="form-control transport-input"
+data-hours="3"
+value="0"
+min="0">
+
+</div>
+
+<div class="col-lg-2 d-flex align-items-end">
+
+<button
+type="button"
+class="btn btn-outline-primary w-100">
+
+<i class="bi bi-bus-front"></i>
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+    card.querySelectorAll(".transport-input")
+        .forEach(input => {
+
+            input.addEventListener("input", updateTotals);
+
+        });
+
+    return card;
+
+}
+
+/* ==========================================
+   LOAD ROUTES
+========================================== */
+
+function loadRoutes() {
+
+    transportList.innerHTML = "";
+
+    const shift =
+        document.getElementById("shiftSelect").value;
+
+    const routes = SHIFT_ROUTES[shift];
+
+    if (!routes) return;
+
+    Object.keys(routes).forEach(route => {
+
+        transportList.appendChild(
+
+            createTransportRow(route, routes[route])
+
+        );
 
     });
 
-    div.querySelectorAll(".trans-qty").forEach(el => {
-        el.addEventListener("input", updateTotals);
+    updateTotals();
+
+}
+
+/* ==========================================
+   ADD SERVICE PROVIDER
+========================================== */
+
+document
+.getElementById("addProviderBtn")
+.addEventListener("click", function () {
+
+    manpowerBody.appendChild(
+
+        createProviderRow()
+
+    );
+
+});
+
+/* ==========================================
+   SHIFT CHANGE
+========================================== */
+
+document
+.getElementById("shiftSelect")
+.addEventListener("change", loadRoutes);
+/* ==========================================
+   UPDATE TOTALS
+========================================== */
+
+function updateTotals() {
+
+    let canteen2 = 0;
+    let canteen3 = 0;
+
+    document.querySelectorAll(".ot-qty").forEach(input => {
+
+        const value = Number(input.value) || 0;
+
+        if (input.dataset.hours === "2") {
+
+            canteen2 += value;
+
+        } else {
+
+            canteen3 += value;
+
+        }
+
     });
 
-    return div;
+    document.getElementById("canteen2h").textContent = canteen2;
+    document.getElementById("canteen3h").textContent = canteen3;
 
-}   
+    let transport2 = 0;
+    let transport3 = 0;
+
+    document.querySelectorAll(".transport-input").forEach(input => {
+
+        const value = Number(input.value) || 0;
+
+        if (input.dataset.hours === "2") {
+
+            transport2 += value;
+
+        } else {
+
+            transport3 += value;
+
+        }
+
+    });
+
+    document.getElementById("transport2h").textContent = transport2;
+    document.getElementById("transport3h").textContent = transport3;
+
+}
+
+/* ==========================================
+   SAVE REQUEST
+========================================== */
+
+document.getElementById("submitBtn")
+.addEventListener("click", function () {
+
+    const submittedBy =
+        document.getElementById("submittedBy").value.trim();
+
+    if (submittedBy === "") {
+
+        alert("Please enter Submitted By.");
+
+        return;
+
+    }
+
+    const department =
+        document.getElementById("departmentSelect").value;
+
+    if (department === "") {
+
+        alert("Please select Department.");
+
+        return;
+
+    }
+
+    const providers = [];
+
+    manpowerBody.querySelectorAll("tr").forEach(row => {
+
+        const select = row.querySelector(".provider-select");
+
+        let provider = "Bajaj Employees";
+
+        if (select) {
+
+            provider = select.value;
+
+            if (provider === "Other") {
+
+                provider =
+                    row.querySelector(".other-vendor").value;
+
+            }
+
+        }
+
+        const qty2 =
+            Number(row.querySelector('[data-hours="2"]').value);
+
+        const qty3 =
+            Number(row.querySelector('[data-hours="3"]').value);
+
+        providers.push({
+
+            provider,
+            twoHours: qty2,
+            threeHours: qty3
+
+        });
+
+    });
+
+    const transport = [];
+
+    document.querySelectorAll(".route-row")
+    .forEach(route => {
+
+        transport.push({
+
+            route:
+                route.querySelector("label").innerText,
+
+            stops:
+                route.querySelector("textarea").value,
+
+            twoHours:
+                Number(route.querySelector('[data-hours="2"]').value),
+
+            threeHours:
+                Number(route.querySelector('[data-hours="3"]').value)
+
+        });
+
+    });
+
+   const request={
+
+    submittedBy,
+
+    department,
+
+    shift:document.getElementById("shiftSelect").value,
+
+    emergency:document.getElementById("emergencyCheck").checked,
+
+    manpower:providers,
+
+    transport:transport,
+
+    createdOn:new Date().toISOString()
+
+};
+
+fetch("/save-ot-request",{
+
+    method:"POST",
+
+    headers:{
+        "Content-Type":"application/json"
+    },
+
+    body:JSON.stringify(request)
+
+})
+
+.then(response=>response.json())
+
+.then(data=>{
+
+    showToast(data.message);
+
+})
+
+.catch(error=>{
+
+    console.error(error);
+
+    alert("Unable to Save OT Request");
+
+});
+});
+
+/* ==========================================
+   INITIALIZATION
+========================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    loadDepartments();
+
+    loadRoutes();
+
+    updateDateTime();
+
+    setInterval(updateDateTime, 1000);
+
+    /* Load first provider row */
+
+    const firstProvider =
+        document.querySelector(".provider-select");
+
+    if (firstProvider) {
+
+        loadProviders(firstProvider);
+
+        firstProvider.addEventListener("change", function () {
+
+            const other =
+                this.parentElement.querySelector(".other-vendor");
+
+            if (this.value === "Other") {
+
+                other.style.display = "block";
+
+            } else {
+
+                other.style.display = "none";
+                other.value = "";
+
+            }
+
+        });
+
+    }
+
+    /* Totals */
+
+    document.querySelectorAll(".ot-qty")
+    .forEach(input => {
+
+        input.addEventListener("input", updateTotals);
+
+    });
+
+    updateTotals();
+
+});
 
 </script>
 
 </body>
+
 </html>

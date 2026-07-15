@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, send_from_directory, session
 from functools import wraps
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import request, jsonify
+import openpyxl
 import pandas as pd
 import os
 
@@ -1689,6 +1691,94 @@ def submit_ot():
 
     })
     
+    
+# ==========================
+# OT REQUEST
+# ==========================
+
+@app.route("/save-ot-request", methods=["POST"])
+def save_ot_request():
+
+    data = request.get_json()
+
+    file_path = os.path.join("database", "ot_requests.xlsx")
+
+    os.makedirs("database", exist_ok=True)
+
+    if not os.path.exists(file_path):
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "OT Requests"
+
+        ws.append([
+            "Date",
+            "Time",
+            "Submitted By",
+            "Department",
+            "Shift",
+            "Emergency",
+            "Service Provider",
+            "2 Hours",
+            "3 Hours",
+            "Route",
+            "Stops",
+            "Transport 2 Hours",
+            "Transport 3 Hours"
+        ])
+
+        wb.save(file_path)
+
+    wb = openpyxl.load_workbook(file_path)
+    ws = wb["OT Requests"]
+
+    today = datetime.now().strftime("%d-%m-%Y")
+    current_time = datetime.now().strftime("%H:%M:%S")
+
+    manpower = data.get("manpower", [])
+    transport = data.get("transport", [])
+
+    for provider in manpower:
+
+        for route in transport:
+
+            ws.append([
+
+                today,
+
+                current_time,
+
+                data.get("submittedBy"),
+
+                data.get("department"),
+
+                data.get("shift"),
+
+                "Yes" if data.get("emergency") else "No",
+
+                provider.get("provider"),
+
+                provider.get("twoHours"),
+
+                provider.get("threeHours"),
+
+                route.get("route"),
+
+                route.get("stops"),
+
+                route.get("twoHours"),
+
+                route.get("threeHours")
+
+            ])
+
+    wb.save(file_path)
+
+    return jsonify({
+        "success": True,
+        "message": "OT Request Saved Successfully"
+    })
+
 # ==========================
 # RUN SERVER
 # ==========================
