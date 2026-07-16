@@ -667,6 +667,54 @@ Loading...
 
 </div>
 
+<!-- Share Live Tracking Link (shift + route wise) -->
+
+<div class="mt-6 p-5 rounded-2xl" style="background:#f8fafc;border:1px solid #e2e8f0;">
+
+<h3 class="text-lg font-bold mb-4" style="color:#0056b3;">🔗 Share Live Tracking Link (Shift-wise / Route-wise)</h3>
+
+<div class="grid md:grid-cols-3 gap-4">
+
+<select id="ltShiftSelect" class="p-3 rounded-xl border" style="border-color:#cbd5e1;">
+<option value="">-- Select Shift --</option>
+<option value="1st Shift">1st Shift</option>
+<option value="2nd Shift">2nd Shift</option>
+<option value="3rd Shift">3rd Shift</option>
+<option value="General Shift">General Shift</option>
+</select>
+
+<select id="ltRouteSelect" class="p-3 rounded-xl border" style="border-color:#cbd5e1;" disabled>
+<option value="">-- Select Shift First --</option>
+</select>
+
+<button onclick="generateTrackingLink()" class="bg-blue-600 text-white p-3 rounded-xl font-semibold">
+Generate Link
+</button>
+
+</div>
+
+<div id="ltLinkBox" style="display:none;" class="mt-4">
+
+<div class="flex flex-col md:flex-row gap-3">
+
+<input id="ltLinkInput" readonly class="p-3 rounded-xl border flex-1" style="border-color:#cbd5e1;background:white;">
+
+<button onclick="copyTrackingLink()" class="bg-slate-700 text-white px-4 py-3 rounded-xl font-semibold">
+📋 Copy Link
+</button>
+
+<a id="ltWhatsappBtn" href="#" target="_blank" class="bg-green-600 text-white px-4 py-3 rounded-xl font-semibold text-center">
+📲 Share on WhatsApp
+</a>
+
+</div>
+
+<p class="text-sm text-gray-500 mt-2">Yeh link open karte hi employee ko seedha us shift + route ki live tracking dikhegi — koi manual selection nahi karni padegi.</p>
+
+</div>
+
+</div>
+
 </div>
 
 <!-- Reports -->
@@ -720,6 +768,74 @@ function toggleMenu(){
     .getElementById("sidebar")
     .classList.toggle("show");
 
+}
+
+// ==============================
+// LIVE TRACKING - SHARE LINK
+// (route names must match the keys used in viewroots.html's SHIFT_ROUTES)
+// ==============================
+
+const ROUTE_NAMES_BY_SHIFT = {
+    "1st Shift": ["Route 1 (LONI KALBHOR)","Route 2 (NARAYANGAON)","Route 3 (SINHAGAD ROAD)","Route 4 (WARJE)","Route 5 (WAGHOLI)","Route 6 (KATRAJ)","Route 7 (MENGDEWADI)","Route 8 (PABAL)","Route 9 (VISHRANTWADI)","Route 10 (OLD SANGAVI)","Route 11 (ALANDI)","Route 12 (RAVET)","Route 13 (KALE WADI)","Route 14 (SHASTRI CHOWK)","Route 15 (DEHU ROAD)","Route 16 (SHEETAL BAGH)","Route 17 (WADGAON)","Route 18 (BHOSARI EXTRA)","Route 19 (SHARAD NAGAR)","Route 20 (RAJGURU NAGAR - KHED)","Route 21 (YCM)","Route 22 (LINK ROAD)","Route 23 (TALEGAON)","Route 24 (SHAHU NAGAR)","Route 25 (AUTO GAS TALEGAON)","Route 26 (WALHEKARWADI)","Route 27 (MOHAN NAGAR)","Route 28 (BAJAJ SCHOOL)","Route 29 (DEHUGAON)","Route 30 (WAKI PHATA)","Route 31 (MEDANKARWADI)","Route 32 (BALAJI NAGAR CHAKAN)","Route 33 (CHAKAN CHOWK)","Route 33 (DANGE CHOWK)","Route 35 (NIGDI)","Route 36 (MEDANKARWADI EXTRA)","Route 37 (IAI COMPANY)","Route 38 (KHANDO MANDIR CHAKAN)","Route 40 (CHAKAN CHOWK)"],
+    "2nd Shift": ["Route 1 (SINHGAD)","Route 2 (WAGHOLI)","Route 3 (DEHU GAON)","Route 4 (MEDANKARWADI)","Route 5 (WAKI PHATA)","Route 6 (RAVET-WALHEKARWADI)","Route 7 (ALANDI)","Route 8 (SHASTRI CHOWK)","Route 9 (DEHUROAD)","Route 10 (PIMPLE GURAV)","Route 11 (JADHAVWADI)","Route 12 (TALEGAON)","Route 13 (WADGAON)","Route 14 (KHED)","Route 15 (KALEWADI)","Route 16 (SHAHU NAGAR)","Route 17 (CHAKAN CHOWK)","Route 18 (MOHAN NAGAR)","Route 19 (ANKUSH CHOWK)","Route 20 (NARAYANGAON)","Route 21 (NIGDI)"],
+    "3rd Shift": ["Route 1 (NIGDI)","Route 2 (TALEGAON)","Route 3 (DEHU GAON)","Route 4 (SHASTRI CHOWK)","Route 5 (RAJGURU NAGAR)","Route 6 (MEDANKARWADI)","Route 7 (BALAJI NAGAR)","Route 8 (CHIKHALI)","Route 9 (DEHUROAD)","Route 10 (PCMC)"],
+    "General Shift": ["Route 1 (SINHGAD)","Route 2 (WAGHOLI)","Route 3 (DEHU GAON)","Route 4 (MEDANKARWADI)","Route 5 (WAKI PHATA)","Route 6 (RAVET-WALHEKARWADI)","Route 7 (ALANDI)","Route 8 (SHASTRI CHOWK)","Route 9 (DEHUROAD)","Route 10 (PIMPLE GURAV)","Route 11 (JADHAVWADI)","Route 12 (TALEGAON)","Route 13 (WADGAON)","Route 14 (KHED)","Route 15 (KALEWADI)","Route 16 (SHAHU NAGAR)","Route 17 (CHAKAN CHOWK)","Route 18 (MOHAN NAGAR)","Route 19 (ANKUSH CHOWK)","Route 20 (NARAYANGAON)","Route 21 (NIGDI)"]
+};
+
+const ltShiftSelect = document.getElementById("ltShiftSelect");
+const ltRouteSelect = document.getElementById("ltRouteSelect");
+const ltLinkBox = document.getElementById("ltLinkBox");
+const ltLinkInput = document.getElementById("ltLinkInput");
+const ltWhatsappBtn = document.getElementById("ltWhatsappBtn");
+
+ltShiftSelect.addEventListener("change", function(){
+
+    const shift = ltShiftSelect.value;
+    const routes = ROUTE_NAMES_BY_SHIFT[shift] || [];
+
+    if(routes.length === 0){
+        ltRouteSelect.innerHTML = '<option value="">-- Select Shift First --</option>';
+        ltRouteSelect.disabled = true;
+    } else {
+        ltRouteSelect.innerHTML = '<option value="">-- Select Route --</option>' +
+            routes.map(r => `<option value="${r}">${r}</option>`).join("");
+        ltRouteSelect.disabled = false;
+    }
+
+    ltLinkBox.style.display = "none";
+});
+
+function generateTrackingLink(){
+
+    const shift = ltShiftSelect.value;
+    const route = ltRouteSelect.value;
+
+    if(!shift || !route){
+        alert("Pehle Shift aur Route dono select karo");
+        return;
+    }
+
+    const url = window.location.origin + "/viewroots.html?shift=" +
+        encodeURIComponent(shift) + "&route=" + encodeURIComponent(route);
+
+    ltLinkInput.value = url;
+    ltLinkBox.style.display = "block";
+
+    ltWhatsappBtn.href = "https://wa.me/?text=" +
+        encodeURIComponent("Live Bus Tracking - " + route + " (" + shift + "):\n" + url);
+}
+
+function copyTrackingLink(){
+
+    ltLinkInput.select();
+    ltLinkInput.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(ltLinkInput.value).then(()=>{
+        alert("Link Copied!");
+    }).catch(()=>{
+        document.execCommand("copy");
+        alert("Link Copied!");
+    });
 }
 
 // ==============================
@@ -905,7 +1021,7 @@ async function loadPendingRequests(){
 
     );
 
-    const text = await response.text();
+    const text = await res.text();
 
 console.log("Server Response:", text);
 
@@ -915,11 +1031,15 @@ try {
 
     alert(data.message || JSON.stringify(data));
 
-    loadRequests();
+    loadPendingRequests();
+
+    loadDashboard();
 
 } catch (e) {
 
     alert(text);
+
+}
 
 }
 
@@ -1172,4 +1292,4 @@ setInterval(footerData,30000);
 
 </body>
 
-</html> 
+</html>
