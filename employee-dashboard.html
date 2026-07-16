@@ -287,13 +287,9 @@ Live Tracking
 Track your bus in real time.
 </p>
 
-<a href="https://vms-livetrack.pragatiutrack.com/home?id=f5ab49e7-7964-4e69-b174-23cdaf7ad0b2" target="_blank">
-
-<button class="w-full bg-red-600 text-white py-3 rounded-2xl font-bold">
+<button id="trackBusBtn" class="w-full bg-red-600 text-white py-3 rounded-2xl font-bold">
 Track Bus
 </button>
-
-</a>
 
 </div>
 
@@ -405,6 +401,24 @@ localStorage.getItem("busStop");
 document.getElementById("empRoute").innerHTML =
 "Route No : " +
 localStorage.getItem("routeNumber");
+
+// =========================
+// TRACK BUS (connects straight to live tracking for MY shift + route)
+// =========================
+
+document.getElementById("trackBusBtn").addEventListener("click", function(){
+
+    const shift = localStorage.getItem("shift");
+    const route = localStorage.getItem("routeNumber");
+
+    if(!shift || !route){
+        alert("Shift/Route info not found. Please login again.");
+        return;
+    }
+
+    window.location.href = "viewroots.html?shift=" +
+        encodeURIComponent(shift) + "&route=" + encodeURIComponent(route);
+});
 
 
 

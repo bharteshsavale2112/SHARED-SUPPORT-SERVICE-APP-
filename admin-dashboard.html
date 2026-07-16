@@ -688,7 +688,7 @@ Loading...
 </select>
 
 <button onclick="generateTrackingLink()" class="bg-blue-600 text-white p-3 rounded-xl font-semibold">
-Generate Link
+Submit
 </button>
 
 </div>
@@ -709,7 +709,11 @@ Generate Link
 
 </div>
 
-<p class="text-sm text-gray-500 mt-2">Yeh link open karte hi employee ko seedha us shift + route ki live tracking dikhegi — koi manual selection nahi karni padegi.</p>
+<p class="text-sm text-gray-500 mt-2">✅ Submit hote hi neeche wahi live tracking map connect ho gaya hai — yehi view employee ko bhi apne dashboard ke "Track Bus" button se dikhega.</p>
+
+<div class="mt-4 rounded-xl overflow-hidden border" style="border-color:#cbd5e1;">
+<iframe id="ltMapFrame" src="" style="width:100%;height:480px;border:0;"></iframe>
+</div>
 
 </div>
 
@@ -820,6 +824,9 @@ function generateTrackingLink(){
 
     ltLinkInput.value = url;
     ltLinkBox.style.display = "block";
+
+    // connect the map preview right here, live
+    document.getElementById("ltMapFrame").src = url;
 
     ltWhatsappBtn.href = "https://wa.me/?text=" +
         encodeURIComponent("Live Bus Tracking - " + route + " (" + shift + "):\n" + url);
