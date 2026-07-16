@@ -1624,9 +1624,9 @@ def my_temp_pass(employeeCode):
 # SUBMIT OT
 # ==========================
 
-OT_FILE = "ot_requests.xlsx"
+# OT_FILE = "ot_requests.xlsx"
 
-def create_ot_excel():
+# # # def create_ot_excel():
 
     if not os.path.exists(OT_FILE):
 
@@ -1645,11 +1645,11 @@ def create_ot_excel():
 
         df.to_excel(OT_FILE,index=False)
 
-create_ot_excel()
+# create_ot_excel()
 
 
-@app.route("/submit-ot",methods=["POST"])
-def submit_ot():
+# @app.route("/submit-ot",methods=["POST"])
+# def submit_ot():
 
     create_ot_excel()
 
@@ -1701,84 +1701,26 @@ def save_ot_request():
 
     data = request.get_json()
 
-    file_path = os.path.join("database", "ot_requests.xlsx")
+    df = pd.read_excel("database/ot_requests.xlsx")
 
-    os.makedirs("database", exist_ok=True)
+    new_row = {
+        "Request ID": "OT" + datetime.now().strftime("%Y%m%d%H%M%S"),
+        "Submitted By": data["submittedBy"],
+        "Department": data["department"],
+        "Shift": data["shift"],
+        "Emergency": "Yes" if data["emergency"] else "No",
+        "Manpower": json.dumps(data["manpower"]),
+        "Transport": json.dumps(data["transport"]),
+        "Created On": datetime.now().strftime("%d-%m-%Y %H:%M")
+    }
 
-    if not os.path.exists(file_path):
-
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "OT Requests"
-
-        ws.append([
-            "Date",
-            "Time",
-            "Submitted By",
-            "Department",
-            "Shift",
-            "Emergency",
-            "Service Provider",
-            "2 Hours",
-            "3 Hours",
-            "Route",
-            "Stops",
-            "Transport 2 Hours",
-            "Transport 3 Hours"
-        ])
-
-        wb.save(file_path)
-
-    wb = openpyxl.load_workbook(file_path)
-    ws = wb["OT Requests"]
-
-    today = datetime.now().strftime("%d-%m-%Y")
-    current_time = datetime.now().strftime("%H:%M:%S")
-
-    manpower = data.get("manpower", [])
-    transport = data.get("transport", [])
-
-    for provider in manpower:
-
-        for route in transport:
-
-            ws.append([
-
-                today,
-
-                current_time,
-
-                data.get("submittedBy"),
-
-                data.get("department"),
-
-                data.get("shift"),
-
-                "Yes" if data.get("emergency") else "No",
-
-                provider.get("provider"),
-
-                provider.get("twoHours"),
-
-                provider.get("threeHours"),
-
-                route.get("route"),
-
-                route.get("stops"),
-
-                route.get("twoHours"),
-
-                route.get("threeHours")
-
-            ])
-
-    wb.save(file_path)
+    df.loc[len(df)] = new_row
+    df.to_excel("database/ot_requests.xlsx", index=False)
 
     return jsonify({
-        "success": True,
-        "message": "OT Request Saved Successfully"
+        "status": "success",
+        "message": "Request Saved Successfully"
     })
-
 # ==========================
 # RUN SERVER
 # ==========================

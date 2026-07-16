@@ -17,12 +17,26 @@ rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
 rel="stylesheet">
 
-<!-- Google Font -->
+<!-- Google Fonts: Oswald (plant-signage display), Inter (body/data), JetBrains Mono (digital readouts) -->
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
 rel="stylesheet">
 
 <style>
+
+:root{
+
+--bajaj-blue:#005DAC;
+--bajaj-blue-dark:#003E75;
+--navy:#00253F;
+--steel:#F0F3F8;
+--steel-line:#DCE3EC;
+--amber:#FFB100;
+--green:#1D8A5E;
+--white:#FFFFFF;
+
+}
 
 *{
 margin:0;
@@ -33,7 +47,7 @@ font-family:'Inter',sans-serif;
 
 body{
 
-background:#f1f5f9;
+background:var(--steel);
 padding-top:30px;
 padding-bottom:40px;
 
@@ -45,14 +59,27 @@ max-width:1400px;
 
 }
 
+.display{
+
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+
+}
+
+.mono{
+
+font-family:'JetBrains Mono',monospace;
+
+}
+
 /* ================= CARD ================= */
 
 .main-card{
 
 border:none;
-border-radius:20px;
+border-radius:14px;
 overflow:hidden;
-box-shadow:0 15px 40px rgba(0,0,0,.12);
+box-shadow:0 20px 45px rgba(0,37,63,.14);
 
 }
 
@@ -60,38 +87,167 @@ box-shadow:0 15px 40px rgba(0,0,0,.12);
 
 .header{
 
-background:linear-gradient(135deg,#003399,#0056d6);
-color:#fff;
-padding:35px;
-text-align:center;
+background:var(--white);
+padding:28px 35px 0;
+border-bottom:5px solid var(--bajaj-blue);
+position:relative;
 
 }
 
-.logo-badge{
+.header-top{
 
-width:70px;
-height:70px;
-margin:auto;
-margin-bottom:15px;
 display:flex;
-justify-content:center;
-align-items:center;
-border-radius:18px;
-background:rgba(255,255,255,.15);
-font-size:32px;
+align-items:flex-start;
+justify-content:space-between;
+flex-wrap:wrap;
+gap:18px;
+padding-bottom:22px;
 
 }
 
-.header h2{
+.brand-logo{
 
+height:52px;
+width:auto;
+display:block;
+
+}
+
+.header-title-block{
+
+flex:1;
+min-width:260px;
+
+}
+
+.header-title-block h2{
+
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
 font-weight:700;
+font-size:26px;
+letter-spacing:.5px;
+color:var(--navy);
+line-height:1.15;
 
 }
 
-.header p{
+.header-title-block p{
 
-opacity:.95;
-margin-bottom:5px;
+color:#5b6b7c;
+font-size:14px;
+font-weight:500;
+margin-top:3px;
+letter-spacing:.2px;
+
+}
+
+.clock-badge{
+
+background:var(--navy);
+color:var(--white);
+border-radius:10px;
+padding:10px 18px;
+display:flex;
+align-items:center;
+gap:12px;
+min-width:210px;
+
+}
+
+.clock-badge .live-dot{
+
+width:9px;
+height:9px;
+border-radius:50%;
+background:var(--amber);
+box-shadow:0 0 0 3px rgba(255,177,0,.25);
+flex-shrink:0;
+animation:pulse 1.6s infinite;
+
+}
+
+@keyframes pulse{
+
+0%,100%{opacity:1;}
+50%{opacity:.35;}
+
+}
+
+.clock-badge .clock-text{
+
+line-height:1.25;
+
+}
+
+.clock-badge #liveDate{
+
+display:block;
+font-size:11px;
+text-transform:uppercase;
+letter-spacing:.6px;
+color:#9fb3c8;
+
+}
+
+.clock-badge #liveTime{
+
+display:block;
+font-family:'JetBrains Mono',monospace;
+font-weight:700;
+font-size:17px;
+color:var(--white);
+
+}
+
+/* Chevron step rail — echoes the Bajaj mark's zig-zag "B" */
+
+.step-rail{
+
+display:flex;
+align-items:stretch;
+gap:2px;
+margin:0 -35px;
+
+}
+
+.step{
+
+flex:1;
+background:var(--steel);
+color:#7c8ba0;
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+font-size:12.5px;
+font-weight:600;
+letter-spacing:.6px;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:8px;
+padding:10px 10px;
+position:relative;
+clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+
+}
+
+.step:first-child{
+
+clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+
+}
+
+.step.active{
+
+background:var(--bajaj-blue);
+color:var(--white);
+
+}
+
+.step .step-chevron{
+
+font-size:13px;
+line-height:1;
 
 }
 
@@ -99,30 +255,72 @@ margin-bottom:5px;
 
 .section-header{
 
-font-size:22px;
-font-weight:700;
-color:#334155;
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+font-size:19px;
+font-weight:600;
+letter-spacing:.4px;
+color:var(--navy);
 margin-top:35px;
 margin-bottom:20px;
-padding-bottom:10px;
-border-bottom:3px solid #e2e8f0;
+padding-bottom:12px;
+border-bottom:3px solid var(--steel-line);
+display:flex;
+align-items:center;
+gap:10px;
 
 }
 
+.section-header .chev-mark{
+
+display:inline-flex;
+width:20px;
+height:20px;
+position:relative;
+flex-shrink:0;
+
+}
+
+.section-header .chev-mark span{
+
+position:absolute;
+left:0;
+width:12px;
+height:12px;
+border-right:4px solid var(--bajaj-blue);
+border-top:4px solid var(--bajaj-blue);
+transform:rotate(45deg);
+
+}
+
+.section-header .chev-mark span:first-child{ top:-2px; }
+.section-header .chev-mark span:last-child{ top:6px; }
+
 /* ================= FORM ================= */
+
+.form-label{
+
+font-size:13px;
+text-transform:uppercase;
+letter-spacing:.4px;
+color:#3c4a5a;
+font-weight:700;
+
+}
 
 .form-control,
 .form-select{
 
-border-radius:10px;
+border-radius:8px;
+border:1.5px solid var(--steel-line);
 
 }
 
 .form-control:focus,
 .form-select:focus{
 
-box-shadow:none;
-border-color:#0047ab;
+box-shadow:0 0 0 3px rgba(0,93,172,.12);
+border-color:var(--bajaj-blue);
 
 }
 
@@ -130,14 +328,53 @@ border-color:#0047ab;
 
 .btn-primary{
 
-background:#0047ab;
+background:var(--bajaj-blue);
 border:none;
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+letter-spacing:.5px;
+font-weight:600;
 
 }
 
 .btn-primary:hover{
 
-background:#003580;
+background:var(--bajaj-blue-dark);
+
+}
+
+.btn-outline-primary-soft{
+
+background:var(--white);
+border:1.5px solid var(--bajaj-blue);
+color:var(--bajaj-blue);
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+letter-spacing:.5px;
+font-weight:600;
+
+}
+
+.btn-outline-primary-soft:hover{
+
+background:var(--bajaj-blue);
+color:var(--white);
+
+}
+
+#submitBtn{
+
+background:var(--navy);
+letter-spacing:1.2px;
+font-size:17px;
+position:relative;
+overflow:hidden;
+
+}
+
+#submitBtn:hover{
+
+background:var(--bajaj-blue-dark);
 
 }
 
@@ -151,7 +388,14 @@ margin-bottom:0;
 
 .table th{
 
-background:#f8fafc;
+background:var(--navy);
+color:var(--white);
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+font-size:12.5px;
+letter-spacing:.5px;
+font-weight:600;
+border-color:var(--navy);
 
 }
 
@@ -162,29 +406,68 @@ vertical-align:middle;
 
 }
 
+.table-bordered{
+
+border:1px solid var(--steel-line);
+
+}
+
 /* ================= TOTAL CARD ================= */
 
 .total-card{
 
-background:#fff;
-border-radius:15px;
-padding:25px;
+background:var(--navy);
+border-radius:12px;
+padding:22px 25px;
 text-align:center;
-border:1px solid #dee2e6;
+border:none;
+position:relative;
+overflow:hidden;
+
+}
+
+.total-card::before{
+
+content:"";
+position:absolute;
+top:0;
+left:0;
+right:0;
+height:4px;
+background:var(--bajaj-blue);
+
+}
+
+.total-card.success::before{
+
+background:var(--green);
+
+}
+
+.total-card h6{
+
+color:#9fb3c8;
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+font-size:12.5px;
+letter-spacing:.8px;
+font-weight:600;
 
 }
 
 .total-card h2{
 
+font-family:'JetBrains Mono',monospace;
 font-weight:700;
-margin-top:10px;
-color:#0047ab;
+margin-top:8px;
+color:var(--white);
+font-size:34px;
 
 }
 
 .total-card.success h2{
 
-color:#16a34a;
+color:#4ADE8E;
 
 }
 
@@ -192,18 +475,52 @@ color:#16a34a;
 
 .route-row{
 
-background:#fff;
+background:var(--white);
 padding:20px;
 margin-bottom:20px;
-border-radius:15px;
-border:1px solid #e5e7eb;
+border-radius:12px;
+border:1px solid var(--steel-line);
+border-left:4px solid var(--bajaj-blue);
+position:relative;
+
+}
+
+.route-row.custom-route{
+
+border-left:4px solid var(--amber);
+background:#FFFDF6;
 
 }
 
 .bus-stops{
 
 resize:none;
-background:#f8f9fa!important;
+background:var(--steel)!important;
+font-size:13.5px;
+
+}
+
+.route-row label{
+
+font-size:13px;
+text-transform:uppercase;
+letter-spacing:.4px;
+color:#3c4a5a;
+font-weight:700;
+
+}
+
+.route-name-input{
+
+font-weight:700;
+
+}
+
+.remove-route-btn{
+
+position:absolute;
+top:10px;
+right:10px;
 
 }
 
@@ -216,17 +533,20 @@ top:15px;
 left:15px;
 z-index:99999;
 border:none;
-background:#0f172a;
+background:var(--navy);
 color:#fff;
 padding:10px 18px;
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+letter-spacing:.4px;
 font-weight:600;
-border-radius:10px;
+border-radius:8px;
 
 }
 
 #globalBackBtn:hover{
 
-background:#020617;
+background:var(--bajaj-blue-dark);
 
 }
 
@@ -234,10 +554,20 @@ background:#020617;
 
 .emergency-box{
 
-background:#fff3cd;
-border:1px solid #ffe69c;
+background:#FFF7E0;
+border:1.5px solid var(--amber);
 padding:15px;
 border-radius:10px;
+
+}
+
+.emergency-box .form-check-label{
+
+font-family:'Oswald',sans-serif;
+text-transform:uppercase;
+letter-spacing:.3px;
+font-size:14px;
+color:#8a5b00!important;
 
 }
 
@@ -252,13 +582,19 @@ z-index:9999;
 
 }
 
+.toast.text-bg-success{
+
+background:var(--green)!important;
+
+}
+
 /* ================= MOBILE ================= */
 
 @media(max-width:992px){
 
 .header{
 
-padding:25px;
+padding:22px 25px 0;
 
 }
 
@@ -270,7 +606,13 @@ padding:25px!important;
 
 .section-header{
 
-font-size:20px;
+font-size:17px;
+
+}
+
+.step-rail{
+
+margin:0 -25px;
 
 }
 
@@ -287,27 +629,32 @@ padding-right:10px;
 
 .header{
 
-padding:20px;
+padding:18px 18px 0;
 
 }
 
-.logo-badge{
+.brand-logo{
 
-width:55px;
-height:55px;
-font-size:26px;
+height:38px;
 
 }
 
-.header h2{
+.header-title-block h2{
 
-font-size:22px;
+font-size:20px;
 
 }
 
-.header p{
+.header-title-block p{
 
-font-size:14px;
+font-size:12.5px;
+
+}
+
+.clock-badge{
+
+min-width:0;
+width:100%;
 
 }
 
@@ -332,7 +679,7 @@ margin-bottom:15px;
 
 .total-card h2{
 
-font-size:28px;
+font-size:27px;
 
 }
 
@@ -365,7 +712,21 @@ min-width:650px;
 top:10px;
 left:10px;
 padding:8px 14px;
-font-size:13px;
+font-size:12px;
+
+}
+
+.step-rail{
+
+margin:0 -18px;
+
+}
+
+.step{
+
+font-size:10.5px;
+padding:9px 4px;
+letter-spacing:.3px;
 
 }
 
@@ -373,29 +734,27 @@ font-size:13px;
 
 @media(max-width:576px){
 
-.header h2{
-
-font-size:19px;
-
-}
-
-.logo-badge{
-
-width:48px;
-height:48px;
-font-size:22px;
-
-}
-
-.section-header{
+.header-title-block h2{
 
 font-size:18px;
 
 }
 
-.header p{
+.section-header{
 
-font-size:13px;
+font-size:16px;
+
+}
+
+.header-title-block p{
+
+font-size:12px;
+
+}
+
+.step span.step-label-full{
+
+display:none;
 
 }
 
@@ -425,31 +784,38 @@ onclick="history.length>1 ? history.back() : location.href='index.html'">
 
 <div class="header">
 
-<div class="logo-badge">
+<div class="header-top">
 
-🚌
+<img src="" alt="Bajaj Auto - The World's Favourite Indian" class="brand-logo">
+
+<div class="header-title-block">
+
+<h2>OT Manpower Approval</h2>
+
+<p>  </p>
 
 </div>
 
-<h2>
+<div class="clock-badge">
 
-Bajaj Auto - OT Manpower Approval
+<span class="live-dot"></span>
 
-</h2>
-
-<p>
-
-Daily Canteen & Transport Coordination
-
-</p>
-
-<div class="mt-3">
+<span class="clock-text">
 
 <span id="liveDate"></span>
 
-<span class="mx-2">|</span>
-
 <span id="liveTime"></span>
+
+</span>
+
+</div>
+
+</div>
+
+<div class="step-rail">
+
+<div class="step active"><span class="step-chevron"></span><span class="step-label-full">Transport</span></div>
+
 
 </div>
 
@@ -463,7 +829,7 @@ Daily Canteen & Transport Coordination
 
 <!-- Submitted By -->
 
-<div class="row mb-4">
+<div class="row mb-4 mt-2">
 
 <div class="col-lg-6 col-md-12">
 
@@ -556,7 +922,7 @@ type="checkbox"
 id="emergencyCheck">
 
 <label
-class="form-check-label fw-bold text-danger"
+class="form-check-label fw-bold"
 for="emergencyCheck">
 
 ⚠ Sudden Requirement / Additional OT Request
@@ -579,6 +945,8 @@ Enable this option if today's manpower request has already been submitted and ad
 <!-- ================= DEPARTMENT ================= -->
 
 <h4 class="section-header">
+
+<span class="chev-mark"><span></span><span></span></span>
 
 Department Information
 
@@ -632,6 +1000,8 @@ style="display:none;">
 
 <h4 class="section-header">
 
+<span class="chev-mark"><span></span><span></span></span>
+
 1. Canteen Facility Requirement
 
 </h4>
@@ -657,7 +1027,7 @@ Add Service Provider
 class="table table-bordered table-hover align-middle"
 id="manpowerTable">
 
-<thead class="table-primary">
+<thead>
 
 <tr>
 
@@ -853,9 +1223,26 @@ class="btn btn-danger btn-sm remove-provider">
 
 <h4 class="section-header">
 
+<span class="chev-mark"><span></span><span></span></span>
+
 2. Transportation Requirement
 
 </h4>
+
+<div class="d-flex justify-content-end mb-3">
+
+<button
+type="button"
+id="addRouteBtn"
+class="btn btn-outline-primary-soft btn-lg">
+
+<i class="bi bi-plus-circle"></i>
+
+Add Other Route / Shop
+
+</button>
+
+</div>
 
 <div id="transportList">
 
@@ -1067,12 +1454,161 @@ const departments=[
    SHIFT ROUTES
 ===================================== */
 
-/* Paste your complete SHIFT_ROUTES
-   object here exactly as in your
-   original file.
-*/
-
 const SHIFT_ROUTES={
+
+    "1st Shift": {
+        "Route 1 (LONI KALBHOR)": ["Loni Gaon", "HP Pump, Loni Gaon", "Wakwasti","Manjre Farm","Shawalwadi Depot","Bhekarai Nagar","Bhaji Mandai, Hadapsar","Pune Station","Maldhakka Ambedkar Bhavan","Dapodi"],
+        "Route 2 (NARAYANGAON)": ["Hotel Shravani", "Narayangaon Bus Stop", "Police Station","Manchar Market Yard","Mulewadi Road","Lohakare Hospita","Rakshewade"],
+        "Route 3 (SINHAGAD ROAD)": ["Kolhewadi", "Sun City", "Warje Bridge","CNG Petrol Pump, Bavdhan","Balewadi","Dange Chowk","Chinchwad Nagar"],
+        "Route 4 (WARJE)":["NDA","Mayur Colony","Ashish Garden, Kothrud"],
+        "Route 5 (WAGHOLI)":["Wageshwar Mandir","Kharadi Bypass","Wadgaon Sheri, Tingre Nagar","Bhopkhel","Parande Nagar","Datta Nagar"],
+        "Route 6 (KATRAJ)":["Santosh Nagar","Bharati Vidyapeeth","Hatti Chowk","Padmavati","Bibwewadi","Shaniwar Wada","Shivajinagar","Khondba Chowk"],
+        "Route 7 (MENGDEWADI)": [ "Mengdewadi", "Hingewasti", "Ausari BK Bus Stand", "Pandurang Mandir", "Temkar Wasti", "Ausari KH Water Tank", "Ranwara Hotel","Shivdhan Plaza","Marathi Shala","Market Yard","Khed Bus Stand","Shiroli Phata","Rajratna Hotel"],
+        "Route 8 (PABAL)":["Pabal","Petrol Pump Pabal","Tamane Mala","Kanersir","Nimgaon","Chavan Mala","Maharaja Chowk"],
+        "Route 9 (VISHRANTWADI)":["Vishrantwadi Chowk","Dhanori","Kotak Mahindra","Charholi Gaon","Bank of Maharashtra","Charholi Phata","Kate Colony","Kale Colony"],
+        "Route 10 (OLD SANGAVI)":["Sangavi Bus Stop","Ganpati Mandir","Kranti Chowk","Katepuram Chowk","Radha Krishna Mangal Karyalaya","Dehukar Park","Tulja Bhavani Mandir","Kalpataru Chowk","Nashik Phata","Empire Bridge","Akurdi Bajaj Gate"],
+        "Route 11 (ALANDI)":["Cosmos Bank","Dehu Phata","Dudulgaon","Dudulgaon 1","Moshi","Bharat Mata Chowk","Tupe Wasti","Moshi Toll Naka","Chimbli Phata","Kuruli Phata"],
+        "Route 12 (RAVET)":["Kiwale","Mukai Chowk","Adarsh Nagar","Soni Ghar","Shinde Wasti","CNG Pump"],
+        "Route 13 (KALE WADI)":["Thergaon","16 No. Bus Stop","Kalewadi Bridge","Rahatani Phata","Dhangar Baba","Tapkir Chowk","Keshav Nagar Corner","Keshav Nagar Bus Stop","Talera Hospital","Chafekar Chowk","SKF Company","Prem Lok Park","Delvi Nagar"],
+        "Route 14 (SHASTRI CHOWK)":["Shastri Chowk","Dighi Road","Panjar Pol","Godam Chowk","Gandharva Nagari","Sainath Hospital","Borade Wasti"],
+        "Route 15 (DEHU ROAD)":["Mamurdi (Sai Nagar)","Vikas Nagar","SBI Bank","Dehu Road","Chincholi","Abhilekha Park","Sangurdi Phata","Yelwadi"],
+        "Route 16 (SHEETAL BAGH)":["Landewadi","Spine Road","Jadhavwadi","Chikhli"],
+        "Route 17 (WADGAON)":["Wadgaon","Matoshree","Jambhul Phata","Wadgaon Court","Chhatrapati Shivaji Chowk","Lotus","Wadgaon Phata","Murlesh Hotel","Aarth Hospital","Seva Dham","Machhi Market","Indrayani College"],
+        "Route 18 (BHOSARI EXTRA)":["PMT Chowk, Bhosari","Dhawade Wasti","Satguru Nagar","Jadhavwadi","Laxmi Chowk","D Mart, Moshi","Silver 9","Rustic"],
+        "Route 19 (SHARAD NAGAR)":["Sane Chowk","Sharad Nagar","Gharkul Chowk","Kaseriyo Society","Nevale Wasti","Ganesh Mandir","Navale Wasti Corner","Imperial Hospital","Talawade Chowk"],
+        "Route 20 (RAJGURU NAGAR - KHED)":["Sangam Garden","Sangam Classic","Panyachi Taki","Panchayat Samiti","Chandoli Phata","Vishwakalyan"],
+        "Route 21 (YCM)":["Mahesh Nagar Chowk","Nehru Nagar","Vitthal Mandir","Ajmera 1","Ajmera 2","Ajmera 3","Bajaj Colony - Amruteshwar Colony","Old RTO","Petrol Pump","Kudalwadi 1","Patil Nagar, Chikhli","Bajaj Auto"],
+        "Route 22 (LINK ROAD)":["Gawade Petrol Pump","Chafekar Chowk","Bijli Nagar","Ankush Chowk","Triveni Nagar","Tawre Line","Ganesh Nagar"],
+        "Route 23 (TALEGAON)":["McDonald's","Bagicha Hotel","Nim Phata","Bhandari Hospital","Kesar Hotel","Jijamata Chowk","Khadge Pump","Nagar Palika","Kaka Halwai","BSNL","Siddhi Khed","Machhi Market","Induri Gaon","Khalumbre"],
+        "Route 24 (SHAHU NAGAR)":["Atal Bihari Udyan Corner","Rasrang","Ganesh Mandir","Bajaj School","Someshwar Mandir","Chintamani Corner","Kasturi Market","Polite Harmony","Ganesh International School"],
+        "Route 25 (AUTO GAS TALEGAON)":["Varale Phata","Shivaji Chowk","Sindket Bank","Bullet Showroom","Balaji Marble","Aishwarya Hotel","Indori Gaon"],
+        "Route 26 (WALHEKARWADI)":["Jakat Naka","Walhekarwadi Chowk","Aaher Garden","Ganpati Mandir","Gurudwara Chowk","Railway Station","Appu Ghar"],
+        "Route 27 (MOHAN NAGAR)":["Pimple Saudagar","Pimpri Gaon","Kalewadi","Vijay Nagar Bus Stop","Mohan Nagar","Huma Bakery"],
+        "Route 28 (BAJAJ SCHOOL)":["Vinayak Sweets","Shivalkar Chowk","Hanuman Mandir","Mehtre Garden","More Wasti","Ashtavinayak Chowk","Vande Mataram Chowk","Waghu Sane Chowk","Aishwaryam Society"],
+        "Route 29 (DEHUGAON)":["Krida Sankul","Omi Home","Gatha Mandir","Arogya Hospital","Parandwal Chowk","Parishri Hotel","Omkar Society","V-Mart","Banner Bank","Vitthalwadi"],
+        "Route 30 (WAKI PHATA)":["Sumbare Nagar","Ekta Nagar","Swapna Nagari","Chakan Market Yard","Yeshwant Nagar","Dnyanvardhani School","Jhipre Mala","Biradwadi"],
+        "Route 31 (MEDANKARWADI)":["Kadachiwadi","Kalpataru Society","Medankarwadi Phata","Vishal Garden"],
+        "Route 32 (BALAJI NAGAR CHAKAN)":["Chakan Chowk","Mutkewadi","Balaji Nagar","Premacha Chaha","IAI Company"],
+        "Route 33 (CHAKAN CHOWK)":["Ambethan Chowk","Ghadge Mala","Unicare Hospital","Chakan Chowk","Arogyam Hospital","Sahara City","Kharabwadi","Mahalunge"],
+        "Route 33 (DANGE CHOWK)":["Dange Chowk","Bijli Nagar","Big India","Sambhaji Chowk","Mhalsakant Chowk","TJSB Bank","Datta Wadi","Nigdi","LIC Corner","Hatti Chowk"],
+        "Route 35 (NIGDI)":["Pawale Bridge","Swanand Dairy","LIC Corner","Hatti Chowk","Ganesh Nagar","Jyotiba Nagar","Talawade (Only Ladies)"],
+        "Route 36 (MEDANKARWADI EXTRA)":["Kadachiwadi","Kalpataru Society","Medankarwadi Phata","Vishal Garden"],
+        "Route 37 (IAI COMPANY)":["IAI Company"],
+        "Route 38 (KHANDO MANDIR CHAKAN)":["Khandoba Mandir","Vishal Garden","Manik Chowk","Premacha Chaha"],
+        "Route 40 (CHAKAN CHOWK)":["Ambethan Chowk","Ghadge Mala","Unicare Hospital","Chakan Chowk","Arogyam Hospital","Sahara City","Kharabwadi","Mahalunge"]
+
+    },
+
+    "2nd Shift": {
+        "Route 1 (SINHGAD)":["Kolhewadi","Sinhagad Road","Dahyri Gaon","Navale Bridge","Warje","Bawdhan","Balewadi","Dange Chowk","Aditya Birla","Chinchwade Nagar","Kachghar Chowk","Ankush Chowk","Chakan Chowk","Bajaj Chakan"],
+
+        "Route 2 (WAGHOLI)":["Wagholi","Vishrantwadi","Dighi","Sai Mandir","Kale Colony","Kate Colony","Chikhali","Bajaj Chakan"],
+
+        "Route 3 (DEHU GAON)":["Krida Sankul","Gatha Mandir","V Mart","Baner Bank","Bypass Chowk","Devi Indrani","Bajaj Chakan"],
+
+        "Route 4 (MEDANKARWADI)":["Kadachiwadi","Medankarwadi Gate","Vishal Garden","Manik Chowk","Indian Oil Pump","Balaji Nagar (Premacha Chaha)","IAI Company","Bajaj Chakan"],
+
+        "Route 5 (WAKI PHATA)":["Biradwadi","Waki Phata","Ekta Nagar","Swapna Nagari","Market Yard","Ambethan Chowk","Zitrai Mala","Mahalunge","Bajaj Chakan"],
+
+        "Route 6 (RAVET-WALHEKARWADI)":["Mukai Chowk","CNG Pump","Shinde Wasti","Walhekarwadi","Chintamani Chowk","Ganesh Mandir","Athurwa Park","Gurudwara Chowk","Tower Line","Huma Bakery","Bajaj Chakan"],
+
+        "Route 7 (ALANDI)":["Charoli Phata","Dehu Phata","Dudulgaon","Moshi","Bharat Mata Chowk","Chikhali Rustic Paradise","Bajaj Chakan"],
+
+        "Route 8 (SHASTRI CHOWK)":["Shastri Chowk","PMT Chowk","Dhawde Wasti","Godown Chowk","Panjarpol","Gandharv Nagari","Borhade Wasti","Tupe Wasti","Toll Naka","Chimbli Phata","Kurali Phata","Bajaj Chakan"],
+
+        "Route 9 (DEHUROAD)":["Sai Nagar Mamurdi","Shinde Petrol Pump Dehuroad","Vikas Nagar Dehuroad","Bank of India Dehuroad","Mali Nagar (Malwadi)","Abhilasha Society","Mangalkaryalaya","Parandwal Chowk","Yelwadi","Bajaj Chakan"],
+
+        "Route 10 (PIMPLE GURAV)":["Dapodi","Kate Puram Chowk","Bhau Nagar","Pimpri","Akurdi Main Gate","LIC Corner","Triveni Nagar","Bajaj Chakan"],
+
+        "Route 11 (JADHAVWADI)":["Jadhavwadi","RTO","Sharad Nagar","Newale Wasti","Ganpati Mandir","Newale Wasti Corner","Patil Nagar","Rustic Plaza","Talwade Chowk","Mahindra Gate","Bajaj Chakan"],
+
+        "Route 12 (TALEGAON)":["Bagicha Hotel","Tukaram Nagar","Bhandari Hospital","Bhosle Chaha","Jijamata Chowk","Khandge Petrol Pump","Kaka Halwai","BSNL","Balaji Marble","Sadumbre","Khalumbre","Bajaj Chakan"],
+
+        "Route 13 (WADGAON)":["Chhatrapati Shivaji Chowk","Lotus","Rupesh Hotel","Athurwa Hospital","Sevadham","Indrayani College Talegaon","Bullet Showroom","Induri","Khalumbre","Bajaj Chakan"],
+
+        "Route 14 (KHED)":["Kardewasti","Sangam Garden","Sangam Classic","Water Tank","Pabal Road","Dhadge Mala","Unicare Hospital","Arogyam Hospital","IFL City","Kharabwadi","Sara City","Mahalunge"],
+
+        "Route 15 (KALEWADI)":["16 No Bus Stop","Kalewadi Phata","Rahatani Phata","Laxman Nagar Thergaon","Old Jakat Naka","Gawde Petrol Pump Link Road","Chafekar Chowk","Chaitanya Hall","Giriraj Housing Society","Hanuman Sweet","Mhalsakant Chowk","TJSB Bank","Axis Bank","Dattawadi","Bajaj Chakan"],
+
+        "Route 16 (SHAHU NAGAR)":["Ajmera","Amruteshwar Colony","Shahu Garden","Aryan Residency","Ganpati Mandir","Bajaj School","Rameshwar Mandir","Sambhaji Nagar Chowk","Rajdeep Society","Kasturi Market","Shivarkar Chowk","Polite Harmony","Ganesh International School","Shine City","Bajaj Chakan"],
+
+        "Route 17 (CHAKAN CHOWK)":["Balaji Nagar","Chakan Chowk","Ghanvat Plaza","Arogyam Hospital","Nanekarwadi","Kharabwadi","Sara City","Mahalunge","Hotel Karwa"],
+
+        "Route 18 (MOHAN NAGAR)":["Mohan Nagar","Morewasti","Chikhali Rustic Paradise","Talwade Chowk","Mahindra Gate"],
+
+        "Route 19 (ANKUSH CHOWK)":["Ankush Chowk","Triveni Nagar","Tower Line","Huma Bakery","Ganesh Nagar","Jotiba Nagar","Talwade Chowk"],
+
+        "Route 20 (NARAYANGAON)":["Raut Hospital Narayangaon","Narayangaon ST Stand","Manchar Market Yard","Manchar College Road","Maxcare Hospital Manchar","Paragaon Phata","Market Yard","Ambethan Chowk"],
+
+        "Route 21 (NIGDI)":["Big India","Dattawadi","LIC Corner","Hatti Chowk"]
+    },
+
+    "3rd Shift": {
+        "Route 1 (NIGDI)":["Nigdi Bridge","LIC Chowk"],
+
+        "Route 2 (TALEGAON)":["Talegaon","Khalumbre","Manohar Nagar Talegaon"],
+
+        "Route 3 (DEHU GAON)":["Dehugaon","Parishree Hospital"],
+
+        "Route 4 (SHASTRI CHOWK)":["Shastri Chowk","Bhosari","Alandi"],
+
+        "Route 5 (RAJGURU NAGAR)":["Rajgurunagar","Khed Toll Naka","Ambethan Chowk","Biradwadi"],
+
+        "Route 6 (MEDANKARWADI)":["Medankarwadi"],
+
+        "Route 7 (BALAJI NAGAR)":["Balaji Nagar","Chakan","Eiffel City","Karwa Hotel"],
+
+        "Route 8 (CHIKHALI)":["Chikhali","Sane Chowk"],
+
+        "Route 9 (DEHUROAD)":["Dehuroad"],
+
+        "Route 10 (PCMC)":["Mhalsakant Chowk"]
+    },
+
+    "General Shift": {
+        "Route 1 (SINHGAD)":["Kolhewadi","Sinhagad Road","Dahyri Gaon","Navale Bridge","Warje","Bawdhan","Balewadi","Dange Chowk","Aditya Birla","Chinchwade Nagar","Kachghar Chowk","Ankush Chowk","Chakan Chowk","Bajaj Chakan"],
+
+        "Route 2 (WAGHOLI)":["Wagholi","Vishrantwadi","Dighi","Sai Mandir","Kale Colony","Kate Colony","Chikhali","Bajaj Chakan"],
+
+        "Route 3 (DEHU GAON)":["Krida Sankul","Gatha Mandir","V Mart","Baner Bank","Bypass Chowk","Devi Indrani","Bajaj Chakan"],
+
+        "Route 4 (MEDANKARWADI)":["Kadachiwadi","Medankarwadi Gate","Vishal Garden","Manik Chowk","Indian Oil Pump","Balaji Nagar (Premacha Chaha)","IAI Company","Bajaj Chakan"],
+
+        "Route 5 (WAKI PHATA)":["Biradwadi","Waki Phata","Ekta Nagar","Swapna Nagari","Market Yard","Ambethan Chowk","Zitrai Mala","Mahalunge","Bajaj Chakan"],
+
+        "Route 6 (RAVET-WALHEKARWADI)":["Mukai Chowk","CNG Pump","Shinde Wasti","Walhekarwadi","Chintamani Chowk","Ganesh Mandir","Athurwa Park","Gurudwara Chowk","Tower Line","Huma Bakery","Bajaj Chakan"],
+
+        "Route 7 (ALANDI)":["Charoli Phata","Dehu Phata","Dudulgaon","Moshi","Bharat Mata Chowk","Chikhali Rustic Paradise","Bajaj Chakan"],
+
+        "Route 8 (SHASTRI CHOWK)":["Shastri Chowk","PMT Chowk","Dhawde Wasti","Godown Chowk","Panjarpol","Gandharv Nagari","Borhade Wasti","Tupe Wasti","Toll Naka","Chimbli Phata","Kurali Phata","Bajaj Chakan"],
+
+        "Route 9 (DEHUROAD)":["Sai Nagar Mamurdi","Shinde Petrol Pump Dehuroad","Vikas Nagar Dehuroad","Bank of India Dehuroad","Mali Nagar (Malwadi)","Abhilasha Society","Mangalkaryalaya","Parandwal Chowk","Yelwadi","Bajaj Chakan"],
+
+        "Route 10 (PIMPLE GURAV)":["Dapodi","Kate Puram Chowk","Bhau Nagar","Pimpri","Akurdi Main Gate","LIC Corner","Triveni Nagar","Bajaj Chakan"],
+
+        "Route 11 (JADHAVWADI)":["Jadhavwadi","RTO","Sharad Nagar","Newale Wasti","Ganpati Mandir","Newale Wasti Corner","Patil Nagar","Rustic Plaza","Talwade Chowk","Mahindra Gate","Bajaj Chakan"],
+
+        "Route 12 (TALEGAON)":["Bagicha Hotel","Tukaram Nagar","Bhandari Hospital","Bhosle Chaha","Jijamata Chowk","Khandge Petrol Pump","Kaka Halwai","BSNL","Balaji Marble","Sadumbre","Khalumbre","Bajaj Chakan"],
+
+        "Route 13 (WADGAON)":["Chhatrapati Shivaji Chowk","Lotus","Rupesh Hotel","Athurwa Hospital","Sevadham","Indrayani College Talegaon","Bullet Showroom","Induri","Khalumbre","Bajaj Chakan"],
+
+        "Route 14 (KHED)":["Kardewasti","Sangam Garden","Sangam Classic","Water Tank","Pabal Road","Dhadge Mala","Unicare Hospital","Arogyam Hospital","IFL City","Kharabwadi","Sara City","Mahalunge"],
+
+        "Route 15 (KALEWADI)":["16 No Bus Stop","Kalewadi Phata","Rahatani Phata","Laxman Nagar Thergaon","Old Jakat Naka","Gawde Petrol Pump Link Road","Chafekar Chowk","Chaitanya Hall","Giriraj Housing Society","Hanuman Sweet","Mhalsakant Chowk","TJSB Bank","Axis Bank","Dattawadi","Bajaj Chakan"],
+
+        "Route 16 (SHAHU NAGAR)":["Ajmera","Amruteshwar Colony","Shahu Garden","Aryan Residency","Ganpati Mandir","Bajaj School","Rameshwar Mandir","Sambhaji Nagar Chowk","Rajdeep Society","Kasturi Market","Shivarkar Chowk","Polite Harmony","Ganesh International School","Shine City","Bajaj Chakan"],
+
+        "Route 17 (CHAKAN CHOWK)":["Balaji Nagar","Chakan Chowk","Ghanvat Plaza","Arogyam Hospital","Nanekarwadi","Kharabwadi","Sara City","Mahalunge","Hotel Karwa"],
+
+        "Route 18 (MOHAN NAGAR)":["Mohan Nagar","Morewasti","Chikhali Rustic Paradise","Talwade Chowk","Mahindra Gate"],
+
+        "Route 19 (ANKUSH CHOWK)":["Ankush Chowk","Triveni Nagar","Tower Line","Huma Bakery","Ganesh Nagar","Jotiba Nagar","Talwade Chowk"],
+
+        "Route 20 (NARAYANGAON)":["Raut Hospital Narayangaon","Narayangaon ST Stand","Manchar Market Yard","Manchar College Road","Maxcare Hospital Manchar","Paragaon Phata","Market Yard","Ambethan Chowk"],
+
+        "Route 21 (NIGDI)":["Big India","Dattawadi","LIC Corner","Hatti Chowk"]
+
+    }
 
 };
 
@@ -1322,7 +1858,7 @@ function createProviderRow() {
 }
 
 /* ==========================================
-   CREATE TRANSPORT ROUTE CARD
+   CREATE TRANSPORT ROUTE CARD (from SHIFT_ROUTES)
 ========================================== */
 
 function createTransportRow(routeName, stops) {
@@ -1404,6 +1940,110 @@ class="btn btn-outline-primary w-100">
 }
 
 /* ==========================================
+   CREATE CUSTOM / MANUAL ROUTE CARD
+   (Route Name, Bus Stops, Personnel Required
+   are all user-editable, with a remove button)
+========================================== */
+
+function createCustomTransportRow() {
+
+    const card = document.createElement("div");
+
+    card.className = "route-row custom-route";
+
+    card.innerHTML = `
+
+<button
+type="button"
+class="btn btn-danger btn-sm remove-route-btn">
+
+<i class="bi bi-trash"></i>
+
+</button>
+
+<div class="row g-3">
+
+<div class="col-lg-4">
+
+<label class="fw-bold">Route Name</label>
+
+<input
+type="text"
+class="form-control route-name-input"
+placeholder="Enter Route / Shop Name">
+
+<label class="fw-bold mt-2">Bus Stops</label>
+
+<textarea
+class="form-control bus-stops"
+rows="4"
+placeholder="Enter Bus Stops, separated by commas"></textarea>
+
+</div>
+
+<div class="col-lg-3">
+
+<label>2 Hours</label>
+
+<input
+type="number"
+class="form-control transport-input"
+data-hours="2"
+value="0"
+min="0">
+
+</div>
+
+<div class="col-lg-3">
+
+<label>3 Hours</label>
+
+<input
+type="number"
+class="form-control transport-input"
+data-hours="3"
+value="0"
+min="0">
+
+</div>
+
+<div class="col-lg-2 d-flex align-items-end">
+
+<button
+type="button"
+class="btn btn-outline-primary w-100">
+
+<i class="bi bi-bus-front"></i>
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+    card.querySelectorAll(".transport-input")
+        .forEach(input => {
+
+            input.addEventListener("input", updateTotals);
+
+        });
+
+    card.querySelector(".remove-route-btn")
+        .addEventListener("click", function () {
+
+            card.remove();
+
+            updateTotals();
+
+        });
+
+    return card;
+
+}
+
+/* ==========================================
    LOAD ROUTES
 ========================================== */
 
@@ -1445,6 +2085,24 @@ document
         createProviderRow()
 
     );
+
+});
+
+/* ==========================================
+   ADD OTHER ROUTE / SHOP
+========================================== */
+
+document
+.getElementById("addRouteBtn")
+.addEventListener("click", function () {
+
+    transportList.appendChild(
+
+        createCustomTransportRow()
+
+    );
+
+    updateTotals();
 
 });
 
@@ -1578,10 +2236,15 @@ document.getElementById("submitBtn")
     document.querySelectorAll(".route-row")
     .forEach(route => {
 
+        const nameInput = route.querySelector(".route-name-input");
+
+        const routeName = nameInput
+            ? nameInput.value.trim()
+            : route.querySelector("label").innerText;
+
         transport.push({
 
-            route:
-                route.querySelector("label").innerText,
+            route: routeName,
 
             stops:
                 route.querySelector("textarea").value,
@@ -1642,6 +2305,7 @@ fetch("/save-ot-request",{
 
 });
 });
+
 
 /* ==========================================
    INITIALIZATION
