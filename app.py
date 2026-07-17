@@ -44,12 +44,6 @@ ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH") or generate_password
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    storage_uri="memory://",
-    default_limits=[]
-)
 
 
 # ---- Extra security response headers ----
