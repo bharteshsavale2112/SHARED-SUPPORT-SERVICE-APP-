@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Bajaj Auto | Live Bus Tracking</title>
+<title>Bajaj Transport System</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -13,19 +13,20 @@
 
 <style>
 
+/* BACKGROUND + BAJAJ LOGO WATERMARK */
 body{
-font-family:'Inter', sans-serif;
+font-family:Inter;
 background:
 url("https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png")
 no-repeat center center,
 linear-gradient(135deg,#0f172a,#1e293b);
+
 background-size:300px, cover;
 min-height:100vh;
 color:white;
-margin:0;
-padding-bottom:40px;
 }
 
+/* EXTRA WATERMARK LAYER */
 .watermark{
 position:fixed;
 inset:0;
@@ -41,102 +42,243 @@ pointer-events:none;
 width:500px;
 }
 
-.header{
-text-align:center;
-padding:30px 20px 20px;
-}
-
-.status-pill{
-display:inline-flex;
-align-items:center;
-gap:8px;
-background:rgba(255,255,255,.1);
-border:1px solid rgba(255,255,255,.2);
-padding:8px 18px;
-border-radius:999px;
-font-size:13px;
-font-weight:600;
-margin-top:10px;
-}
-
-.status-dot{
-width:9px;
-height:9px;
-border-radius:999px;
-background:#facc15;
-}
-
-.status-pill.live .status-dot{
-background:#4ade80;
-animation:blink 1.2s infinite;
-}
-
-@keyframes blink{
-0%,100%{ opacity:1; }
-50%{ opacity:.3; }
-}
-
-.wrap{
-max-width:900px;
-margin:auto;
-padding:0 20px;
-}
-
+/* CARD */
 .card{
 background:rgba(255,255,255,0.08);
 backdrop-filter: blur(10px);
 border-radius:20px;
-padding:22px;
+padding:20px;
 border:1px solid rgba(255,255,255,0.2);
-margin-bottom:20px;
+transition:0.3s;
 }
 
+.card:hover{
+transform:scale(1.03);
+}
+
+/* BUTTONS */
+.btn{
+padding:10px;
+border-radius:12px;
+width:100%;
+font-weight:bold;
+margin-top:10px;
+}
+
+.blue{background:#2563eb;}
+.green{background:#16a34a;}
+
+/* MAP */
 #map{
 width:100%;
-height:55vh;
+height:60vh;
 border-radius:15px;
-background:#1e293b;
 }
 
-.stop-list{
-display:flex;
-flex-wrap:wrap;
-gap:8px;
-margin-top:12px;
+/* MODAL */
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.7);
+padding:20px;
 }
 
-.stop-chip{
-background:rgba(255,255,255,.1);
-border:1px solid rgba(255,255,255,.15);
-padding:6px 14px;
-border-radius:999px;
-font-size:13px;
+.box{
+background:white;
+color:black;
+padding:20px;
+border-radius:20px;
+max-width:900px;
+margin:80px auto;
 }
 
-.info-row{
-display:flex;
-justify-content:space-between;
-font-size:14px;
-color:#cbd5e1;
-margin-top:6px;
+.stop{
+padding:8px;
+border-bottom:1px solid #ddd;
 }
 
-.empty-state{
-text-align:center;
-padding:50px 20px;
+</style>
+
+</head>
+
+<body>
+
+<!-- BAJAJ WATERMARK -->
+<div class="watermark">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png">
+</div>
+
+<!-- HEADER -->
+<div class="text-center py-6">
+<h1 class="text-3xl font-bold">🚍 BAJAJ LIVE TRANSPORT</h1>
+<p class="text-gray-200">Real-Time Bus Tracking System</p>
+</div>
+
+<!-- ROUTES -->
+<div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-6 p-6">
+
+<!-- ROUTE 02 -->
+<div class="card">
+<h2 class="text-xl font-bold text-yellow-300">Route 02</h2>
+<p>Nigdi → Chakan</p>
+
+<button onclick="showStops('Route-02')" class="btn blue">📍 Show Stops</button>
+<button onclick="openTracking('Route-02')" class="btn green">🚍 Live Tracking</button>
+</div>
+
+<!-- ROUTE 03 -->
+<div class="card">
+<h2 class="text-xl font-bold text-yellow-300">Route 03</h2>
+<p>Bhosari → Hinjewadi</p>
+
+<button onclick="showStops('Route-03')" class="btn blue">📍 Show Stops</button>
+<button onclick="openTracking('Route-03')" class="btn green">🚍 Live Tracking</button>
+</div>
+
+</div>
+
+<!-- ================= STOPS MODAL ================= -->
+<div id="stopsModal" class="modal">
+
+<div class="box">
+
+<h2 class="text-xl font-bold">🚌 Route Stops</h2>
+
+<div id="stopsList" class="mt-3"></div>
+
+<br>
+<button onclick="closeStops()" class="btn blue">Close</button>
+
+</div>
+</div>
+
+<!-- ================= TRACKING MODAL ================= -->
+<div id="trackingModal" class="modal">
+
+<div class="box">
+
+<div class="flex justify-between">
+<h2 class="text-xl font-bold">📍 Live Tracking</h2>
+<button onclick="closeTracking()">❌</button>
+</div>
+
+<h3 id="routeName" class="mt-2 font-bold text-blue-600">--</h3>
+
+<div id="map" class="mt-4"></div>
+
+<br>
+
+<p>Latitude: <span id="lat">--</span></p>
+<p>Longitude: <span id="lng">--</span></p>
+
+</div>
+</div>
+
+<script>
+
+let map, marker, routeNumber="", interval, routeLine;
+
+// STOP DATA
+let stopsData = {
+  "RouteNumber-02": ["Nigdi", "Akurdi", "Chinchwad", "Talegaon", "Chakan"],
+  "RouteNumber-03": ["Bhosari", "Dighi", "Wakad", "Hinjewadi"]
+};
+
+// ================= SHOW STOPS =================
+function showStops(r){
+
+document.getElementById("stopsModal").style.display="block";
+
+let list=document.getElementById("stopsList");
+list.innerHTML="";
+
+stopsData[r].forEach(s=>{
+let div=document.createElement("div");
+div.className="stop";
+div.innerHTML="📍 "+s;
+list.appendChild(div);
+});
+
 }
 
-.empty-state a{
-display:inline-block;
-margin-top:16px;
-background:#2563eb;
-color:white;
-padding:10px 22px;
-border-radius:12px;
-text-decoration:none;
-font-weight:600;
+function closeStops(){
+document.getElementById("stopsModal").style.display="none";
 }
 
+// ================= LIVE TRACK =================
+function openTracking(r){
+
+route=r;
+document.getElementById("routeName").innerText=r;
+document.getElementById("trackingModal").style.display="block";
+
+setTimeout(()=>{
+
+if(map) map.remove();
+
+map=L.map('map').setView([18.5204,73.8567],12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// BAJAJ ICON (OPTIONAL)
+let icon=L.icon({
+iconUrl:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png",
+iconSize:[45,45]
+});
+
+marker=L.marker([18.5204,73.8567],{icon}).addTo(map);
+
+// ROUTE LINE
+routeLine=L.polyline([],{
+color:"#00ff88",
+weight:4
+}).addTo(map);
+
+if(interval) clearInterval(interval);
+
+interval=setInterval(updateBus,2000);
+
+},300);
+
+}
+
+// ================= LIVE UPDATE =================
+async function updateBus(){
+
+let res=await fetch(`/live-location/${route}`);
+let data=await res.json();
+
+if(data.success){
+
+let lat=data.lat;
+let lng=data.lng;
+
+// smooth movement
+marker.setLatLng([lat,lng]);
+map.panTo([lat,lng]);
+
+// route line
+routeLine.addLatLng([lat,lng]);
+
+document.getElementById("lat").innerText=lat;
+document.getElementById("lng").innerText=lng;
+
+}
+
+}
+
+// ================= CLOSE =================
+function closeTracking(){
+document.getElementById("trackingModal").style.display="none";
+if(interval) clearInterval(interval);
+}
+
+</script>
+
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
 #globalBackBtn{
     position:fixed;
     top:14px;
@@ -155,175 +297,16 @@ font-weight:600;
 }
 #globalBackBtn:hover{ background:#0f172a; }
 @media (max-width:600px){
-    #globalBackBtn{ top:8px; left:8px; padding:8px 14px; font-size:13px; }
+    #globalBackBtn{
+        top:8px;
+        left:8px;
+        padding:8px 14px;
+        font-size:13px;
+    }
 }
-
 </style>
-
-</head>
-
-<body>
-
-<div class="watermark">
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png">
-</div>
-
 <button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
-
-<div class="header">
-<h1 class="text-3xl font-bold">🚍 BAJAJ LIVE TRANSPORT</h1>
-<p class="text-gray-300 mt-1" id="routeSubtitle">Real-Time Bus Tracking</p>
-<div class="status-pill" id="statusPill">
-<span class="status-dot"></span>
-<span id="statusText">Waiting for location...</span>
-</div>
-</div>
-
-<div class="wrap" id="mainContent">
-
-<div class="card">
-<h2 class="text-xl font-bold text-yellow-300" id="routeTitle">--</h2>
-<p class="text-gray-300" id="shiftLabel">--</p>
-
-<div id="map" class="mt-4"></div>
-
-<div class="info-row">
-<span>Latitude: <b id="lat">--</b></span>
-<span>Longitude: <b id="lng">--</b></span>
-<span>Last update: <b id="updatedAt">--</b></span>
-</div>
-</div>
-
-<div class="card">
-<h3 class="font-bold mb-2">📍 Bus Stops on this route</h3>
-<div class="stop-list" id="stopsList"></div>
-</div>
-
-</div>
-
-<div class="wrap empty-state" id="emptyState" style="display:none;">
-<h2 class="text-xl font-bold">No route selected</h2>
-<p class="text-gray-300 mt-2">This link needs a shift and route — ask the admin for the correct tracking link, or open it from your dashboard's "Track Bus" button.</p>
-</div>
-
-<script>
-
-const params = new URLSearchParams(window.location.search);
-const shift = params.get("shift") || "";
-const route = params.get("route") || "";
-
-let map, marker, routeLine;
-let pollInterval;
-
-function initPage(){
-
-    if(!shift || !route){
-        document.getElementById("mainContent").style.display = "none";
-        document.getElementById("emptyState").style.display = "block";
-        return;
-    }
-
-    document.getElementById("routeSubtitle").textContent = shift + " — " + route;
-    document.getElementById("routeTitle").textContent = route;
-    document.getElementById("shiftLabel").textContent = shift;
-
-    initMap();
-    loadStops();
-
-    pollInterval = setInterval(updateBus, 2000);
-    updateBus();
-}
-
-function initMap(){
-
-    map = L.map('map').setView([18.5204, 73.8567], 12);
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    const icon = L.icon({
-        iconUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png",
-        iconSize: [40, 40]
-    });
-
-    marker = L.marker([18.5204, 73.8567], { icon }).addTo(map);
-
-    routeLine = L.polyline([], {
-        color: "#00ff88",
-        weight: 4
-    }).addTo(map);
-
-}
-
-async function loadStops(){
-
-    try{
-
-        const res = await fetch("/get-shift-routes?shift=" + encodeURIComponent(shift));
-        const data = await res.json();
-
-        const stops = (data.routes && data.routes[route]) || [];
-
-        const list = document.getElementById("stopsList");
-
-        if(stops.length === 0){
-            list.innerHTML = `<span class="text-gray-400 text-sm">No stop information available for this route.</span>`;
-            return;
-        }
-
-        list.innerHTML = stops.map(s => `<div class="stop-chip">📍 ${s}</div>`).join("");
-
-    } catch(e){
-        console.log(e);
-    }
-
-}
-
-async function updateBus(){
-
-    try{
-
-        const res = await fetch(`/live-location/${encodeURIComponent(shift)}/${encodeURIComponent(route)}`);
-        const data = await res.json();
-
-        const pill = document.getElementById("statusPill");
-        const statusText = document.getElementById("statusText");
-
-        if(data.success){
-
-            const lat = data.lat;
-            const lng = data.lng;
-
-            marker.setLatLng([lat, lng]);
-            map.panTo([lat, lng]);
-            routeLine.addLatLng([lat, lng]);
-
-            document.getElementById("lat").textContent = lat.toFixed(6);
-            document.getElementById("lng").textContent = lng.toFixed(6);
-            document.getElementById("updatedAt").textContent = data.updatedAt;
-
-            pill.classList.add("live");
-            statusText.textContent = "Live — updated " + data.updatedAt;
-
-        } else {
-
-            pill.classList.remove("live");
-            statusText.textContent = "Waiting for admin to share live location...";
-
-        }
-
-    } catch(e){
-        console.log(e);
-    }
-
-}
-
-window.addEventListener("beforeunload", () => {
-    if(pollInterval) clearInterval(pollInterval);
-});
-
-initPage();
-
-</script>
+<!-- ============ END BACK BUTTON ============ -->
 
 </body>
 </html>
