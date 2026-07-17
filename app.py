@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify, send_from_directory, session
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import request, jsonify
 import openpyxl
 import pandas as pd
+import json
 import os
 
 app = Flask(__name__)
@@ -29,8 +30,7 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "False") != "True"
 
 # Auto logout after 2 hours of inactivity
-from datetime import timedelta as _timedelta
-app.config["PERMANENT_SESSION_LIFETIME"] = _timedelta(hours=2)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=2)
 
 # Admin credentials now come from environment variables instead of being
 # hardcoded in the source code (which is visible to anyone with repo access).
@@ -537,34 +537,85 @@ def assign():
     
 # ==========================
 # GPS STORAGE (LIVE TRACKING)
+# --------------------------------------------------------------------
+# Admin dashboard pushes lat/lng here (POST /update-live-location).
+# The employee's live map (viewroots.html) polls
+# GET /live-location/<shift>/<route> every ~2 seconds and moves the
+# bus icon when a new position comes in.
+#
+# Stored in a JSON file (not just an in-memory dict) so it survives a
+# server restart, and keyed by shift+route together because the same
+# route name (e.g. "Route 1 (SINHGAD)") is reused across different
+# shifts.
 # ==========================
 
-live = {}
+LIVE_LOCATIONS_FILE = "live_locations.json"
 
-@app.route("/update-location", methods=["POST"])
-def update():
+# A ping older than this is treated as stale and NOT shown as "live"
+# (stops yesterday's last position from looking like a live bus today).
+STALE_AFTER_SECONDS = 15 * 60  # 15 minutes
+
+
+def _live_key(shift, route):
+    return f"{shift}||{route}"
+
+
+def _load_live_locations():
+    if os.path.exists(LIVE_LOCATIONS_FILE):
+        try:
+            with open(LIVE_LOCATIONS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _save_live_locations(data):
+    with open(LIVE_LOCATIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _location_is_stale(updated_at_str):
+    try:
+        updated_at = datetime.fromisoformat(updated_at_str)
+        age_seconds = (datetime.now(timezone.utc) - updated_at).total_seconds()
+        return age_seconds > STALE_AFTER_SECONDS
+    except Exception:
+        return False
+
+
+@app.route("/update-live-location", methods=["POST"])
+@login_required("admin")
+def update_live_location():
 
     try:
 
-        data = request.get_json()
+        data = request.get_json(silent=True)
 
-        if (
-            not data or
-            "route" not in data or
-            "lat" not in data or
-            "lng" not in data
-        ):
-            return jsonify({
-                "success": False,
-                "message": "Invalid Data"
-            })
+        if not data:
+            return jsonify({"success": False, "message": "Invalid Data"})
 
-        route = str(data["route"]).strip()
+        shift = str(data.get("shift", "")).strip()
+        route = str(data.get("route", "")).strip()
 
-        live[route] = {
-            "lat": float(data["lat"]),
-            "lng": float(data["lng"])
+        if not shift or not route:
+            return jsonify({"success": False, "message": "Shift and Route are required"})
+
+        try:
+            lat = float(data.get("lat"))
+            lng = float(data.get("lng"))
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "message": "lat/lng must be numbers"})
+
+        locations = _load_live_locations()
+
+        locations[_live_key(shift, route)] = {
+            "lat": lat,
+            "lng": lng,
+            "updatedAt": datetime.now(timezone.utc).isoformat()
         }
+
+        _save_live_locations(locations)
 
         return jsonify({
             "success": True,
@@ -578,25 +629,54 @@ def update():
             "message": str(e)
         })
 
-#=========================
-# live location route
-#=========================
 
-@app.route("/live-location/<route>")
-def get(route):
+# ---- Employee side: shift + route qualified (preferred) ----
+@app.route("/live-location/<shift>/<route>")
+def get_live_location(shift, route):
 
-    route = str(route).strip()
+    locations = _load_live_locations()
+    entry = locations.get(_live_key(shift, route))
 
-    if route not in live:
-        return jsonify({
-            "success": False,
-            "message": "Location Not Found"
-        })
+    if not entry:
+        return jsonify({"success": False, "message": "Location Not Found"})
+
+    if _location_is_stale(entry.get("updatedAt", "")):
+        return jsonify({"success": False, "message": "Location is stale"})
 
     return jsonify({
         "success": True,
-        "lat": live[route]["lat"],
-        "lng": live[route]["lng"]
+        "lat": entry["lat"],
+        "lng": entry["lng"],
+        "updatedAt": entry.get("updatedAt", "")
+    })
+
+
+# ---- Backward-compatible: route only, no shift ----
+# Only kept in case an older page still calls it this way. Prefer the
+# shift-qualified route above since route names repeat across shifts.
+@app.route("/live-location/<route>")
+def get_live_location_legacy(route):
+
+    locations = _load_live_locations()
+
+    matches = [
+        (key, entry) for key, entry in locations.items()
+        if key.split("||", 1)[-1] == route
+    ]
+
+    if len(matches) != 1:
+        return jsonify({"success": False, "message": "Route Not Found or Ambiguous Across Shifts"})
+
+    _, entry = matches[0]
+
+    if _location_is_stale(entry.get("updatedAt", "")):
+        return jsonify({"success": False, "message": "Location is stale"})
+
+    return jsonify({
+        "success": True,
+        "lat": entry["lat"],
+        "lng": entry["lng"],
+        "updatedAt": entry.get("updatedAt", "")
     })
 
 
@@ -608,8 +688,6 @@ def get(route):
 # ==========================
 # PASS FILE
 # ==========================
-
-from datetime import datetime
 
 PASS_FILE = "passes.xlsx"
 
@@ -1425,8 +1503,6 @@ def employees_json():
 # TEMPORARY PASS SYSTEM
 # ==========================
 
-from datetime import timedelta
-
 TEMP_PASS_FILE = "temp_pass_requests.xlsx"
 
 
@@ -1621,106 +1697,153 @@ def my_temp_pass(employeeCode):
 
 
 # ==========================
-# SUBMIT OT
+# OT MANPOWER / TRANSPORT REQUEST
+# --------------------------------------------------------------------
+# Every "Save & Send Request" submit from the OT Manpower Approval page
+# appends rows here: one row per Manpower entry + one row per Transport
+# route, all tagged with the same Date/Time/Submitted By, so the sheet
+# can be filtered/pivoted by date in Excel. File is created
+# automatically on first submit — no manual setup needed.
 # ==========================
 
-# OT_FILE = "ot_requests.xlsx"
+OT_FILE = "OT_Requests.xlsx"
 
-# # # def create_ot_excel():
+OT_COLUMNS = [
+    "Date",
+    "Time",
+    "Submitted By",
+    "Department",
+    "Shift",
+    "Emergency",
+    "Entry Type",
+    "Category / Route",
+    "Bus Stops",
+    "2 Hours",
+    "3 Hours"
+]
+
+
+def create_ot_file_if_needed():
 
     if not os.path.exists(OT_FILE):
+        pd.DataFrame(columns=OT_COLUMNS).to_excel(OT_FILE, index=False)
+        return
 
-        df = pd.DataFrame(columns=[
-            "Date",
-            "Time",
-            "Submitted By",
-            "Department",
-            "Shift",
-            "Route Number",
-            "Route Name",
-            "Bus Stops",
-            "2 Hours",
-            "3 Hours"
-        ])
+    try:
+        df = pd.read_excel(OT_FILE)
+        df.columns = df.columns.str.strip()
 
-        df.to_excel(OT_FILE,index=False)
+        for col in OT_COLUMNS:
+            if col not in df.columns:
+                df[col] = ""
 
-# create_ot_excel()
+        df = df[OT_COLUMNS]
+        df.to_excel(OT_FILE, index=False)
+
+    except Exception:
+        pd.DataFrame(columns=OT_COLUMNS).to_excel(OT_FILE, index=False)
 
 
-# @app.route("/submit-ot",methods=["POST"])
-# def submit_ot():
+create_ot_file_if_needed()
 
-    create_ot_excel()
-
-    df = pd.read_excel(OT_FILE)
-
-    new_data={
-
-        "Date":datetime.now().strftime("%d-%m-%Y"),
-
-        "Time":datetime.now().strftime("%I:%M %p"),
-
-        "Submitted By":request.form.get("submittedBy"),
-
-        "Department":request.form.get("department"),
-
-        "Shift":request.form.get("shift"),
-
-        "Route Number":request.form.get("routeNumber"),
-
-        "Route Name":request.form.get("routeName"),
-
-        "Bus Stops":request.form.get("busStops"),
-
-        "2 Hours":request.form.get("twoHours"),
-
-        "3 Hours":request.form.get("threeHours")
-
-    }
-
-    df=pd.concat([df,pd.DataFrame([new_data])],ignore_index=True)
-
-    df.to_excel(OT_FILE,index=False)
-
-    return jsonify({
-
-        "status":"success",
-
-        "message":"OT Request Submitted Successfully"
-
-    })
-    
-    
-# ==========================
-# OT REQUEST
-# ==========================
 
 @app.route("/save-ot-request", methods=["POST"])
 def save_ot_request():
 
-    data = request.get_json()
+    try:
 
-    df = pd.read_excel("database/ot_requests.xlsx")
+        data = request.get_json(silent=True)
 
-    new_row = {
-        "Request ID": "OT" + datetime.now().strftime("%Y%m%d%H%M%S"),
-        "Submitted By": data["submittedBy"],
-        "Department": data["department"],
-        "Shift": data["shift"],
-        "Emergency": "Yes" if data["emergency"] else "No",
-        "Manpower": json.dumps(data["manpower"]),
-        "Transport": json.dumps(data["transport"]),
-        "Created On": datetime.now().strftime("%d-%m-%Y %H:%M")
-    }
+        submitted_by = str((data or {}).get("submittedBy", "")).strip()
+        department = str((data or {}).get("department", "")).strip()
 
-    df.loc[len(df)] = new_row
-    df.to_excel("database/ot_requests.xlsx", index=False)
+        if not data or not submitted_by or not department:
+            return jsonify({
+                "status": "error",
+                "message": "Submitted By / Department Required"
+            }), 400
 
-    return jsonify({
-        "status": "success",
-        "message": "Request Saved Successfully"
-    })
+        create_ot_file_if_needed()
+
+        df = pd.read_excel(OT_FILE)
+        df.columns = df.columns.str.strip()
+
+        now = datetime.now()
+        date_str = now.strftime("%d-%m-%Y")
+        time_str = now.strftime("%I:%M:%S %p")
+
+        shift = str(data.get("shift", "")).strip()
+        emergency = "Yes" if data.get("emergency") else "No"
+
+        manpower = data.get("manpower") or []
+        transport = data.get("transport") or []
+
+        new_rows = []
+
+        for row in manpower:
+            new_rows.append({
+                "Date": date_str,
+                "Time": time_str,
+                "Submitted By": submitted_by,
+                "Department": department,
+                "Shift": shift,
+                "Emergency": emergency,
+                "Entry Type": "Manpower",
+                "Category / Route": row.get("provider", ""),
+                "Bus Stops": "",
+                "2 Hours": row.get("twoHours", 0),
+                "3 Hours": row.get("threeHours", 0)
+            })
+
+        for row in transport:
+            new_rows.append({
+                "Date": date_str,
+                "Time": time_str,
+                "Submitted By": submitted_by,
+                "Department": department,
+                "Shift": shift,
+                "Emergency": emergency,
+                "Entry Type": "Transport",
+                "Category / Route": row.get("route", ""),
+                "Bus Stops": row.get("stops", ""),
+                "2 Hours": row.get("twoHours", 0),
+                "3 Hours": row.get("threeHours", 0)
+            })
+
+        # Don't silently lose a submission that had no rows at all
+        if not new_rows:
+            new_rows.append({
+                "Date": date_str,
+                "Time": time_str,
+                "Submitted By": submitted_by,
+                "Department": department,
+                "Shift": shift,
+                "Emergency": emergency,
+                "Entry Type": "Info",
+                "Category / Route": "No manpower/transport rows submitted",
+                "Bus Stops": "",
+                "2 Hours": 0,
+                "3 Hours": 0
+            })
+
+        df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
+        df.to_excel(OT_FILE, index=False)
+
+        return jsonify({
+            "status": "success",
+            "message": "Saved Successfully to Excel Sheet"
+        })
+
+    except Exception as e:
+
+        print("SAVE OT REQUEST ERROR:", e)
+
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
+
+
 # ==========================
 # RUN SERVER
 # ==========================
@@ -1729,4 +1852,3 @@ if __name__ == "__main__":
     # debug mode should NEVER be on when the site is public (it leaks
     # internal code/data on errors). Set FLASK_DEBUG=True locally if needed.
     app.run(debug=os.environ.get("FLASK_DEBUG", "False") == "True")
-

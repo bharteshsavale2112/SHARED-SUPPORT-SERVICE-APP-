@@ -715,6 +715,42 @@ Submit
 <iframe id="ltMapFrame" src="" style="width:100%;height:480px;border:0;"></iframe>
 </div>
 
+<!-- Update Live Location -->
+
+<div class="mt-5 p-4 rounded-xl" style="background:white;border:1px solid #cbd5e1;">
+
+<h4 class="font-bold mb-1" style="color:#0056b3;">📍 Update Live Location for this Route</h4>
+
+<p class="text-sm text-gray-500 mb-3">Yahan se jo location update karoge, wahi employee ke live tracking map par turant (har ~2 second mein) dikhegi — daily, jab bhi tum yahan update karo.</p>
+
+<div class="grid md:grid-cols-2 gap-3">
+
+<input id="ltLatInput" type="number" step="any" placeholder="Latitude" class="p-3 rounded-xl border" style="border-color:#cbd5e1;">
+
+<input id="ltLngInput" type="number" step="any" placeholder="Longitude" class="p-3 rounded-xl border" style="border-color:#cbd5e1;">
+
+</div>
+
+<div class="flex flex-wrap gap-3 mt-3">
+
+<button onclick="useMyLocation()" class="bg-slate-700 text-white px-4 py-3 rounded-xl font-semibold">
+📍 Use My Current Location
+</button>
+
+<button onclick="updateLiveLocation()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-semibold">
+✅ Update Once
+</button>
+
+<button id="ltBroadcastBtn" onclick="toggleLiveBroadcast()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-semibold">
+🔄 Start Live Broadcast
+</button>
+
+</div>
+
+<p id="ltLocStatus" class="text-sm text-gray-500 mt-3">Location not updated yet.</p>
+
+</div>
+
 </div>
 
 </div>
@@ -807,6 +843,12 @@ ltShiftSelect.addEventListener("change", function(){
     }
 
     ltLinkBox.style.display = "none";
+    stopLiveBroadcastIfRunning();
+});
+
+ltRouteSelect.addEventListener("change", function(){
+    // switching route mid-broadcast would keep sending to the old route, so stop it
+    stopLiveBroadcastIfRunning();
 });
 
 function generateTrackingLink(){
@@ -830,6 +872,11 @@ function generateTrackingLink(){
 
     ltWhatsappBtn.href = "https://wa.me/?text=" +
         encodeURIComponent("Live Bus Tracking - " + route + " (" + shift + "):\n" + url);
+
+    // reset location panel for the newly selected route
+    document.getElementById("ltLatInput").value = "";
+    document.getElementById("ltLngInput").value = "";
+    document.getElementById("ltLocStatus").innerText = "Location not updated yet.";
 }
 
 function copyTrackingLink(){
@@ -843,6 +890,166 @@ function copyTrackingLink(){
         document.execCommand("copy");
         alert("Link Copied!");
     });
+}
+
+// ==============================
+// LIVE TRACKING - UPDATE LOCATION
+// (this is what actually moves the bus icon on the
+// employee's live map — pushed to /update-live-location,
+// employee side polls /live-location/<shift>/<route>)
+// ==============================
+
+let liveWatchId = null;
+
+function useMyLocation(){
+
+    if(!navigator.geolocation){
+        alert("Is browser mein Geolocation support nahi hai");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(pos=>{
+
+        document.getElementById("ltLatInput").value = pos.coords.latitude.toFixed(6);
+        document.getElementById("ltLngInput").value = pos.coords.longitude.toFixed(6);
+
+    }, err=>{
+
+        alert("Location le nahi paye: " + err.message);
+
+    }, { enableHighAccuracy:true, timeout:10000 });
+
+}
+
+async function pushLiveLocation(shift, route, lat, lng){
+
+    const res = await fetch("/update-live-location", {
+
+        method:"POST",
+
+        headers:{ "Content-Type":"application/json" },
+
+        body: JSON.stringify({ shift, route, lat, lng })
+
+    });
+
+    return res.json();
+
+}
+
+async function updateLiveLocation(){
+
+    const shift = ltShiftSelect.value;
+    const route = ltRouteSelect.value;
+
+    const lat = Number(document.getElementById("ltLatInput").value);
+    const lng = Number(document.getElementById("ltLngInput").value);
+
+    if(!shift || !route){
+        alert("Pehle Shift aur Route select karo");
+        return;
+    }
+
+    if(!lat || !lng){
+        alert("Latitude/Longitude bharo, ya 'Use My Current Location' click karo");
+        return;
+    }
+
+    try{
+
+        await pushLiveLocation(shift, route, lat, lng);
+
+        document.getElementById("ltLocStatus").innerText =
+            "✅ Updated: " + new Date().toLocaleTimeString("en-IN");
+
+    }catch(err){
+
+        console.log(err);
+
+        document.getElementById("ltLocStatus").innerText =
+            "❌ Location update fail zala. Firun try kara.";
+
+    }
+
+}
+
+function stopLiveBroadcastIfRunning(){
+
+    if(liveWatchId !== null){
+
+        navigator.geolocation.clearWatch(liveWatchId);
+        liveWatchId = null;
+
+        const btn = document.getElementById("ltBroadcastBtn");
+
+        if(btn){
+            btn.innerText = "🔄 Start Live Broadcast";
+            btn.classList.remove("bg-red-600");
+            btn.classList.add("bg-blue-600");
+        }
+
+        document.getElementById("ltLocStatus").innerText = "⏹ Broadcast stopped.";
+
+    }
+
+}
+
+function toggleLiveBroadcast(){
+
+    const btn = document.getElementById("ltBroadcastBtn");
+
+    // already broadcasting -> stop
+    if(liveWatchId !== null){
+        stopLiveBroadcastIfRunning();
+        return;
+    }
+
+    const shift = ltShiftSelect.value;
+    const route = ltRouteSelect.value;
+
+    if(!shift || !route){
+        alert("Pehle Shift aur Route select karo");
+        return;
+    }
+
+    if(!navigator.geolocation){
+        alert("Is browser mein Geolocation support nahi hai");
+        return;
+    }
+
+    liveWatchId = navigator.geolocation.watchPosition(pos=>{
+
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        document.getElementById("ltLatInput").value = lat.toFixed(6);
+        document.getElementById("ltLngInput").value = lng.toFixed(6);
+
+        pushLiveLocation(shift, route, lat, lng).then(()=>{
+
+            document.getElementById("ltLocStatus").innerText =
+                "🟢 Live: updated " + new Date().toLocaleTimeString("en-IN");
+
+        }).catch(()=>{
+
+            document.getElementById("ltLocStatus").innerText =
+                "⚠ Ek update fail zala, phir try hoil.";
+
+        });
+
+    }, err=>{
+
+        alert("Location error: " + err.message);
+        stopLiveBroadcastIfRunning();
+
+    }, { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
+
+    btn.innerText = "⏹ Stop Broadcast";
+    btn.classList.remove("bg-blue-600");
+    btn.classList.add("bg-red-600");
+
+    document.getElementById("ltLocStatus").innerText = "🟢 Live broadcast chalu aahe...";
+
 }
 
 // ==============================
