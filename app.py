@@ -1,11 +1,7 @@
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory, session, send_file
 from functools import wraps
-from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import request, jsonify
-import openpyxl
 import pandas as pd
-import json
 import os
 
 app = Flask(__name__)
@@ -30,7 +26,8 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_DEBUG", "False") != "True"
 
 # Auto logout after 2 hours of inactivity
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=2)
+from datetime import timedelta as _timedelta
+app.config["PERMANENT_SESSION_LIFETIME"] = _timedelta(hours=2)
 
 # Admin credentials now come from environment variables instead of being
 # hardcoded in the source code (which is visible to anyone with repo access).
@@ -39,6 +36,29 @@ ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@bajaj.com")
 ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH") or generate_password_hash(
     os.environ.get("ADMIN_PASSWORD", "admin123")
 )
+
+
+# ---- Brute-force login protection ----
+# Blocks an IP address after too many rapid login attempts, so someone
+# can't sit there guessing passwords over and over.
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    storage_uri="memory://",
+    default_limits=[]
+)
+
+
+# ---- Extra security response headers ----
+@app.after_request
+def add_security_headers(response):
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 
 def login_required(role=None):
@@ -57,6 +77,120 @@ def login_required(role=None):
 
 
 EMPLOYEE_FILE = "employees.xlsx"
+
+# ==========================
+# DATABASE (Azure Database for PostgreSQL / Neon) + LIVE EXCEL MIRROR
+# ==========================
+# Set DATABASE_URL as an environment variable (Azure App Service ->
+# Configuration -> Environment variables, or Render -> Environment) to
+# make Postgres the permanent source of truth. Every time data is saved,
+# it is written to Postgres AND to a local .xlsx file (so you always also
+# have an Excel copy). If DATABASE_URL is not set, the app falls back to
+# using ONLY the local Excel files (old behaviour, useful for local
+# testing).
+
+from sqlalchemy import create_engine, inspect as _sa_inspect
+
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+db_engine = None
+
+if DATABASE_URL:
+    try:
+        # Some providers give a URL starting with "postgres://";
+        # SQLAlchemy needs "postgresql://"
+        _url = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+        # Azure Database for PostgreSQL requires an SSL connection.
+        # If the connection string doesn't already specify sslmode,
+        # add it automatically so it works out of the box on Azure.
+        if "sslmode" not in _url:
+            _sep = "&" if "?" in _url else "?"
+            _url = _url + _sep + "sslmode=require"
+
+        db_engine = create_engine(_url, pool_pre_ping=True, pool_recycle=300)
+    except Exception as _e:
+        print("DATABASE CONNECTION ERROR:", _e)
+        db_engine = None
+
+
+def db_table_exists(table_name):
+    if db_engine is None:
+        return False
+    try:
+        return _sa_inspect(db_engine).has_table(table_name)
+    except Exception as e:
+        print("DB CHECK ERROR:", e)
+        return False
+
+
+def init_table_if_needed(table_name, xlsx_path, cols, default_df=None):
+    """Creates the table in Postgres (with the right columns, optionally
+    pre-populated with default_df rows) only if it doesn't already exist
+    there. Never overwrites existing data.
+    Also makes sure a local Excel mirror file exists."""
+
+    starter_df = default_df if default_df is not None else pd.DataFrame(columns=cols)
+
+    if db_engine is not None:
+        if not db_table_exists(table_name):
+            try:
+                starter_df.to_sql(
+                    table_name, db_engine, index=False
+                )
+            except Exception as e:
+                print("DB INIT ERROR (" + table_name + "):", e)
+        # Refresh the local Excel mirror from the database (source of truth)
+        try:
+            df = pd.read_sql_table(table_name, db_engine)
+            df.to_excel(xlsx_path, index=False)
+        except Exception as e:
+            print("EXCEL MIRROR ERROR (" + table_name + "):", e)
+        return
+
+    # No database configured -> old local-Excel-only behaviour
+    if not os.path.exists(xlsx_path):
+        starter_df.to_excel(xlsx_path, index=False)
+
+
+def read_table(table_name, xlsx_path):
+    """Reads a table from Postgres if a database is configured,
+    otherwise reads the local Excel file.
+
+    IMPORTANT: dtype=str is used for the Excel read so that
+    numeric-looking text (employee codes, mobile numbers, route
+    numbers) is never silently turned into a float (e.g. "9876543210"
+    becoming "9876543210.0")."""
+
+    if db_engine is not None:
+        try:
+            return pd.read_sql_table(table_name, db_engine)
+        except Exception as e:
+            print("DB READ ERROR (" + table_name + "):", e)
+
+    if os.path.exists(xlsx_path):
+        df = pd.read_excel(xlsx_path, dtype=str)
+        return df.fillna("")
+
+    return pd.DataFrame()
+
+
+def save_table(df, table_name, xlsx_path):
+    """Saves a table to Postgres (source of truth, if configured) AND
+    always also writes a local Excel copy (as requested), so an
+    up-to-date .xlsx file is available any time the app is running."""
+
+    if db_engine is not None:
+        try:
+            df.to_sql(table_name, db_engine, if_exists="replace", index=False)
+        except Exception as e:
+            print("DB WRITE ERROR (" + table_name + "):", e)
+
+    try:
+        df.to_excel(xlsx_path, index=False)
+    except Exception as e:
+        print("EXCEL WRITE ERROR (" + table_name + "):", e)
+
 
 # ==========================
 # CREATE EXCEL FILE SAFELY
@@ -78,23 +212,7 @@ def create_excel_if_needed():
     "route"
 ]
 
-    if not os.path.exists(EMPLOYEE_FILE):
-        pd.DataFrame(columns=cols).to_excel(EMPLOYEE_FILE, index=False)
-        return
-
-    try:
-        df = pd.read_excel(EMPLOYEE_FILE)
-        df.columns = df.columns.str.strip()
-
-        for col in cols:
-            if col not in df.columns:
-                df[col] = ""
-
-        df = df[cols]
-        df.to_excel(EMPLOYEE_FILE, index=False)
-
-    except Exception:
-        pd.DataFrame(columns=cols).to_excel(EMPLOYEE_FILE, index=False)
+    init_table_if_needed("employees", EMPLOYEE_FILE, cols)
 
 create_excel_if_needed()
 
@@ -107,7 +225,7 @@ create_excel_if_needed()
 def load_df():
     create_excel_if_needed()   # <-- ही नवीन line add कर
 
-    df = pd.read_excel(EMPLOYEE_FILE)
+    df = read_table("employees", EMPLOYEE_FILE)
     df.columns = df.columns.str.strip()
 
     return df
@@ -145,6 +263,7 @@ def serve(path):
 # ==========================
 
 @app.route("/employee-registration", methods=["POST"])
+@limiter.limit("10 per hour")
 def register():
 
     try:
@@ -199,7 +318,7 @@ def register():
             ignore_index=True
         )
 
-        df.to_excel(EMPLOYEE_FILE, index=False)
+        save_table(df, "employees", EMPLOYEE_FILE)
 
         return """
         <script>
@@ -223,6 +342,7 @@ def register():
 # ==========================
 
 @app.route("/employee-login", methods=["POST"])
+@limiter.limit("6 per minute")
 def employee_login():
 
     try:
@@ -272,7 +392,7 @@ def employee_login():
             if password_ok:
                 # Legacy plain-text password found; upgrade it to a hash now
                 df.loc[user.index, "password"] = generate_password_hash(password)
-                df.to_excel(EMPLOYEE_FILE, index=False)
+                save_table(df, "employees", EMPLOYEE_FILE)
 
         if not password_ok:
             return jsonify({
@@ -315,6 +435,7 @@ def employee_login():
 # ==========================
 
 @app.route("/admin-login", methods=["POST"])
+@limiter.limit("6 per minute")
 def admin_login():
 
     data = request.get_json()
@@ -388,7 +509,7 @@ def dashboard_stats():
 
         if os.path.exists(PASS_REQUEST_FILE):
 
-            req = pd.read_excel(PASS_REQUEST_FILE)
+            req = read_pass_requests()
 
             pendingRequests = len(
                 req[req["status"] == "Pending"]
@@ -396,7 +517,7 @@ def dashboard_stats():
 
         if os.path.exists(PASS_FILE):
 
-            passes = pd.read_excel(PASS_FILE)
+            passes = read_passes()
 
             activePasses = len(passes)
 
@@ -521,7 +642,7 @@ def assign():
             "route"
         ] = route
 
-        df.to_excel(EMPLOYEE_FILE, index=False)
+        save_table(df, "employees", EMPLOYEE_FILE)
 
         return jsonify({
             "success": True,
@@ -537,85 +658,34 @@ def assign():
     
 # ==========================
 # GPS STORAGE (LIVE TRACKING)
-# --------------------------------------------------------------------
-# Admin dashboard pushes lat/lng here (POST /update-live-location).
-# The employee's live map (viewroots.html) polls
-# GET /live-location/<shift>/<route> every ~2 seconds and moves the
-# bus icon when a new position comes in.
-#
-# Stored in a JSON file (not just an in-memory dict) so it survives a
-# server restart, and keyed by shift+route together because the same
-# route name (e.g. "Route 1 (SINHGAD)") is reused across different
-# shifts.
 # ==========================
 
-LIVE_LOCATIONS_FILE = "live_locations.json"
+live = {}
 
-# A ping older than this is treated as stale and NOT shown as "live"
-# (stops yesterday's last position from looking like a live bus today).
-STALE_AFTER_SECONDS = 15 * 60  # 15 minutes
-
-
-def _live_key(shift, route):
-    return f"{shift}||{route}"
-
-
-def _load_live_locations():
-    if os.path.exists(LIVE_LOCATIONS_FILE):
-        try:
-            with open(LIVE_LOCATIONS_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except (json.JSONDecodeError, OSError):
-            return {}
-    return {}
-
-
-def _save_live_locations(data):
-    with open(LIVE_LOCATIONS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-
-def _location_is_stale(updated_at_str):
-    try:
-        updated_at = datetime.fromisoformat(updated_at_str)
-        age_seconds = (datetime.now(timezone.utc) - updated_at).total_seconds()
-        return age_seconds > STALE_AFTER_SECONDS
-    except Exception:
-        return False
-
-
-@app.route("/update-live-location", methods=["POST"])
-@login_required("admin")
-def update_live_location():
+@app.route("/update-location", methods=["POST"])
+def update():
 
     try:
 
-        data = request.get_json(silent=True)
+        data = request.get_json()
 
-        if not data:
-            return jsonify({"success": False, "message": "Invalid Data"})
+        if (
+            not data or
+            "route" not in data or
+            "lat" not in data or
+            "lng" not in data
+        ):
+            return jsonify({
+                "success": False,
+                "message": "Invalid Data"
+            })
 
-        shift = str(data.get("shift", "")).strip()
-        route = str(data.get("route", "")).strip()
+        route = str(data["route"]).strip()
 
-        if not shift or not route:
-            return jsonify({"success": False, "message": "Shift and Route are required"})
-
-        try:
-            lat = float(data.get("lat"))
-            lng = float(data.get("lng"))
-        except (TypeError, ValueError):
-            return jsonify({"success": False, "message": "lat/lng must be numbers"})
-
-        locations = _load_live_locations()
-
-        locations[_live_key(shift, route)] = {
-            "lat": lat,
-            "lng": lng,
-            "updatedAt": datetime.now(timezone.utc).isoformat()
+        live[route] = {
+            "lat": float(data["lat"]),
+            "lng": float(data["lng"])
         }
-
-        _save_live_locations(locations)
 
         return jsonify({
             "success": True,
@@ -629,54 +699,25 @@ def update_live_location():
             "message": str(e)
         })
 
+#=========================
+# live location route
+#=========================
 
-# ---- Employee side: shift + route qualified (preferred) ----
-@app.route("/live-location/<shift>/<route>")
-def get_live_location(shift, route):
-
-    locations = _load_live_locations()
-    entry = locations.get(_live_key(shift, route))
-
-    if not entry:
-        return jsonify({"success": False, "message": "Location Not Found"})
-
-    if _location_is_stale(entry.get("updatedAt", "")):
-        return jsonify({"success": False, "message": "Location is stale"})
-
-    return jsonify({
-        "success": True,
-        "lat": entry["lat"],
-        "lng": entry["lng"],
-        "updatedAt": entry.get("updatedAt", "")
-    })
-
-
-# ---- Backward-compatible: route only, no shift ----
-# Only kept in case an older page still calls it this way. Prefer the
-# shift-qualified route above since route names repeat across shifts.
 @app.route("/live-location/<route>")
-def get_live_location_legacy(route):
+def get(route):
 
-    locations = _load_live_locations()
+    route = str(route).strip()
 
-    matches = [
-        (key, entry) for key, entry in locations.items()
-        if key.split("||", 1)[-1] == route
-    ]
-
-    if len(matches) != 1:
-        return jsonify({"success": False, "message": "Route Not Found or Ambiguous Across Shifts"})
-
-    _, entry = matches[0]
-
-    if _location_is_stale(entry.get("updatedAt", "")):
-        return jsonify({"success": False, "message": "Location is stale"})
+    if route not in live:
+        return jsonify({
+            "success": False,
+            "message": "Location Not Found"
+        })
 
     return jsonify({
         "success": True,
-        "lat": entry["lat"],
-        "lng": entry["lng"],
-        "updatedAt": entry.get("updatedAt", "")
+        "lat": live[route]["lat"],
+        "lng": live[route]["lng"]
     })
 
 
@@ -689,71 +730,33 @@ def get_live_location_legacy(route):
 # PASS FILE
 # ==========================
 
+from datetime import datetime
+
 PASS_FILE = "passes.xlsx"
 
 # ==========================
-# CREATE PASSES EXCEL
+# CREATE PASSES TABLE (Postgres + Excel mirror)
 # ==========================
 
-def create_pass_file():
-
-    cols=[
-
-"passNumber",
-
-"employeeCode",
-
-"employeeName",
-
-"department",
-
-"mobile",
-
-"shift",
-
-"routeNumber",
-
-"busStop",
-
-"issueDate",
-
-"status"
-
+PASS_COLS = [
+    "passNumber", "employeeCode", "employeeName", "department",
+    "mobile", "shift", "routeNumber", "busStop", "issueDate", "status"
 ]
-    if os.path.exists(PASS_FILE):
 
-        try:
 
-            df = pd.read_excel(PASS_FILE)
+def create_pass_file():
+    init_table_if_needed("passes", PASS_FILE, PASS_COLS)
 
-            df.columns = df.columns.str.strip()
 
-            for col in cols:
+def read_passes():
+    df = read_table("passes", PASS_FILE)
+    df.columns = df.columns.str.strip()
+    return df
 
-                if col not in df.columns:
 
-                    df[col] = ""
+def save_passes(df):
+    save_table(df, "passes", PASS_FILE)
 
-            df = df[cols]
-
-            df.to_excel(
-                PASS_FILE,
-                index=False
-            )
-
-        except Exception:
-
-            pd.DataFrame(columns=cols).to_excel(
-                PASS_FILE,
-                index=False
-            )
-
-    else:
-
-        pd.DataFrame(columns=cols).to_excel(
-            PASS_FILE,
-            index=False
-        )
 
 create_pass_file()
 
@@ -787,7 +790,7 @@ def bus_pass():
                 "message":"Employee Not Found"
             })
 
-        pass_df = pd.read_excel(PASS_FILE)
+        pass_df = read_passes()
 
         month = datetime.now().strftime("%B")
         year = datetime.now().year
@@ -820,7 +823,7 @@ def bus_pass():
             ignore_index=True
         )
 
-        pass_df.to_excel(PASS_FILE, index=False)
+        save_passes(pass_df)
 
         return jsonify({
             "status":"success",
@@ -846,7 +849,7 @@ def check_pass(employeeCode):
     if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
         return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
-    df = pd.read_excel(PASS_FILE)
+    df = read_passes()
 
     user = df[
         df["employeeCode"].astype(str) == str(employeeCode)
@@ -875,9 +878,23 @@ def check_pass(employeeCode):
 import uuid
 PASS_REQUEST_FILE = "pass_requests.xlsx"
 
-# ==========================
-# CREATE PASS REQUEST FILE
-# ==========================
+PASS_REQUEST_COLS = [
+    "requestId", "employeeCode", "employeeName", "department", "mobile",
+    "routeNumber", "busStop", "requestDate", "status",
+    "approvedBy", "approvedDate"
+]
+
+init_table_if_needed("pass_requests", PASS_REQUEST_FILE, PASS_REQUEST_COLS)
+
+
+def read_pass_requests():
+    df = read_table("pass_requests", PASS_REQUEST_FILE)
+    df.columns = df.columns.str.strip()
+    return df
+
+
+def save_pass_requests(df):
+    save_table(df, "pass_requests", PASS_REQUEST_FILE)
 
 # ==========================
 # APPROVE PASS
@@ -892,7 +909,7 @@ def approve_pass():
         requestId = str(data.get("requestId", "")).strip()
 
         # Load request file
-        req = pd.read_excel(PASS_REQUEST_FILE)
+        req = read_pass_requests()
         req = req.fillna("")
 
         req["requestId"] = req["requestId"].astype(str)
@@ -912,10 +929,10 @@ def approve_pass():
         req.loc[index, "approvedBy"] = "Admin"
         req.loc[index, "approvedDate"] = datetime.now().strftime("%d-%m-%Y %H:%M")
 
-        req.to_excel(PASS_REQUEST_FILE, index=False)
+        save_pass_requests(req)
 
         # Load pass file
-        passes = pd.read_excel(PASS_FILE)
+        passes = read_passes()
         passes = passes.fillna("")
 
         # FIXED COLUMN NAME (IMPORTANT)
@@ -943,7 +960,7 @@ def approve_pass():
 
 }
         passes = pd.concat([passes, pd.DataFrame([newPass])], ignore_index=True)
-        passes.to_excel(PASS_FILE, index=False)
+        save_passes(passes)
 
         return jsonify({
             "status": "success",
@@ -952,15 +969,15 @@ def approve_pass():
 
     except Exception as e:
 
-        print("APPROVE PASS ERROR:", e)
+     print("APPROVE PASS ERROR:", e)
 
-        return jsonify({
+    return jsonify({
 
-            "status":"error",
+        "status":"error",
 
-            "message":str(e)
+        "message":str(e)
 
-        })
+    })
 
  # ==========================
 # GET MY PASS
@@ -976,7 +993,7 @@ def my_pass(employeeCode):
 
         print("Employee Code from URL:", employeeCode)
 
-        df = pd.read_excel(PASS_FILE)
+        df = read_passes()
         df.columns = df.columns.str.strip()
 
         print(df[["employeeCode"]])
@@ -1004,7 +1021,6 @@ def my_pass(employeeCode):
             "mobile": str(row["mobile"]),
             "shift": str(row["shift"]),
             "routeNumber": str(row["routeNumber"]),
-            "route": str(row["routeNumber"]),
             "busStop": str(row["busStop"]),
             "issueDate": str(row["issueDate"]),
             "passStatus": str(row["status"])
@@ -1016,43 +1032,6 @@ def my_pass(employeeCode):
             "message": str(e)
         })
         
-# ==========================
-# CREATE PASS FILE
-# ==========================
-
-def create_pass_file():
-
-    if not os.path.exists(PASS_FILE):
-
-        pd.DataFrame(columns=[
-
-            "passNumber",
-
-            "employeeCode",
-
-            "employeeName",
-
-            "department",
-
-            "mobile",
-
-            "shift",
-
-            "routeNumber",
-
-            "busStop",
-
-            "issueDate",
-
-            "status"
-
-        ]).to_excel(
-            PASS_FILE,
-            index=False
-        )
-
-
-create_pass_file()
 
 
 
@@ -1102,7 +1081,7 @@ def request_pass():
             })
 
         # Pass Request File
-        req = pd.read_excel(PASS_REQUEST_FILE)
+        req = read_pass_requests()
         req.columns = req.columns.str.strip()
 
         # Check Pending Request
@@ -1168,13 +1147,7 @@ def request_pass():
 
         )
 
-        req.to_excel(
-
-            PASS_REQUEST_FILE,
-
-            index=False
-
-        )
+        save_pass_requests(req)
 
         return jsonify({
 
@@ -1209,7 +1182,7 @@ def pending_pass_requests():
 
             return jsonify([])
 
-        df = pd.read_excel(PASS_REQUEST_FILE)
+        df = read_pass_requests()
 
         df = df[df["status"] == "Pending"]
 
@@ -1225,7 +1198,7 @@ def pending_pass_requests():
 
                 "employeeName": str(row["employeeName"]),
 
-                "route": str(row["routeNumber"]),
+                "route": str(row["route"]),
 
                 "requestDate": str(row["requestDate"])
 
@@ -1255,7 +1228,7 @@ def reject_pass():
 
         requestId = str(data.get("requestId"))
 
-        req = pd.read_excel(PASS_REQUEST_FILE)
+        req = read_pass_requests()
 
         index = req[
             req["requestId"].astype(str) == requestId
@@ -1277,10 +1250,7 @@ def reject_pass():
 
         req.loc[index, "approvedDate"] = datetime.now().strftime("%d-%m-%Y")
 
-        req.to_excel(
-            PASS_REQUEST_FILE,
-            index=False
-        )
+        save_pass_requests(req)
 
         return jsonify({
 
@@ -1323,7 +1293,7 @@ def dashboard_summary():
 
         if os.path.exists(PASS_REQUEST_FILE):
 
-            req = pd.read_excel(PASS_REQUEST_FILE)
+            req = read_pass_requests()
 
             pendingRequests = len(
                 req[req["status"] == "Pending"]
@@ -1331,7 +1301,7 @@ def dashboard_summary():
 
         if os.path.exists(PASS_FILE):
 
-            passes = pd.read_excel(PASS_FILE)
+            passes = read_passes()
 
             activePasses = len(passes)
 
@@ -1344,45 +1314,6 @@ def dashboard_summary():
             "pendingRequests": pendingRequests,
 
             "activePasses": activePasses
-
-        })
-
-    except Exception as e:
-
-        return jsonify({
-
-            "status":"error",
-
-            "message":str(e)
-
-        })
-
-
-# ==========================
-# EMPLOYEE SUMMARY (for employee-list.html)
-# ==========================
-
-@app.route("/employee-summary")
-@login_required("admin")
-def employee_summary():
-
-    try:
-
-        emp = load_df()
-
-        totalEmployees = len(emp)
-
-        totalDepartments = emp["department"].fillna("").astype(str).str.strip().replace("", pd.NA).dropna().nunique()
-
-        totalRoutes = emp["route"].fillna("").astype(str).str.strip().replace("", pd.NA).dropna().nunique()
-
-        return jsonify({
-
-            "totalEmployees": totalEmployees,
-
-            "totalDepartments": totalDepartments,
-
-            "totalRoutes": totalRoutes
 
         })
 
@@ -1412,7 +1343,7 @@ def admin_pass_requests():
 
             return jsonify([])
 
-        df = pd.read_excel(PASS_REQUEST_FILE)
+        df = read_pass_requests()
 
         df = df.fillna("")
 
@@ -1442,7 +1373,7 @@ def generated_passes():
 
             return jsonify([])
 
-        passes = pd.read_excel(PASS_FILE)
+        passes = read_passes()
 
         return jsonify(
 
@@ -1503,18 +1434,30 @@ def employees_json():
 # TEMPORARY PASS SYSTEM
 # ==========================
 
+from datetime import timedelta
+
 TEMP_PASS_FILE = "temp_pass_requests.xlsx"
+
+TEMP_PASS_COLS = [
+    "requestId", "employeeCode", "employeeName", "department",
+    "mobile", "reason", "pickupLocation", "dropLocation",
+    "travelDateTime", "requestDate", "status",
+    "tempPassId", "validUntil"
+]
 
 
 def create_temp_pass_file():
-    if not os.path.exists(TEMP_PASS_FILE):
-        df = pd.DataFrame(columns=[
-            "requestId", "employeeCode", "employeeName", "department",
-            "mobile", "reason", "pickupLocation", "dropLocation",
-            "travelDateTime", "requestDate", "status",
-            "tempPassId", "validUntil"
-        ])
-        df.to_excel(TEMP_PASS_FILE, index=False)
+    init_table_if_needed("temp_pass_requests", TEMP_PASS_FILE, TEMP_PASS_COLS)
+
+
+def read_temp_passes():
+    df = read_table("temp_pass_requests", TEMP_PASS_FILE)
+    df.columns = df.columns.str.strip()
+    return df
+
+
+def save_temp_passes(df):
+    save_table(df, "temp_pass_requests", TEMP_PASS_FILE)
 
 
 create_temp_pass_file()
@@ -1536,7 +1479,7 @@ def request_temp_pass():
         if employeeCode == "":
             return jsonify({"status": "error", "message": "Employee Code Required"})
 
-        df = pd.read_excel(TEMP_PASS_FILE)
+        df = read_temp_passes()
 
         request_id = "TMP" + str(int(datetime.now().timestamp()))
 
@@ -1557,7 +1500,7 @@ def request_temp_pass():
         }
 
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        df.to_excel(TEMP_PASS_FILE, index=False)
+        save_temp_passes(df)
 
         return jsonify({
             "status": "success",
@@ -1575,7 +1518,7 @@ def request_temp_pass():
 def admin_temp_pass_requests():
 
     try:
-        df = pd.read_excel(TEMP_PASS_FILE)
+        df = read_temp_passes()
         df = df.fillna("")
         return jsonify(df.to_dict(orient="records"))
 
@@ -1592,7 +1535,7 @@ def approve_temp_pass():
         data = request.get_json()
         request_id = str(data.get("requestId", ""))
 
-        df = pd.read_excel(TEMP_PASS_FILE)
+        df = read_temp_passes()
         match = df["requestId"].astype(str) == request_id
 
         if not match.any():
@@ -1605,7 +1548,7 @@ def approve_temp_pass():
         df.loc[match, "tempPassId"] = temp_pass_id
         df.loc[match, "validUntil"] = valid_until
 
-        df.to_excel(TEMP_PASS_FILE, index=False)
+        save_temp_passes(df)
 
         return jsonify({
             "status": "success",
@@ -1625,14 +1568,14 @@ def reject_temp_pass():
         data = request.get_json()
         request_id = str(data.get("requestId", ""))
 
-        df = pd.read_excel(TEMP_PASS_FILE)
+        df = read_temp_passes()
         match = df["requestId"].astype(str) == request_id
 
         if not match.any():
             return jsonify({"status": "error", "message": "Request Not Found"})
 
         df.loc[match, "status"] = "Rejected"
-        df.to_excel(TEMP_PASS_FILE, index=False)
+        save_temp_passes(df)
 
         return jsonify({
             "status": "success",
@@ -1652,7 +1595,7 @@ def my_temp_pass(employeeCode):
         return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
     try:
-        df = pd.read_excel(TEMP_PASS_FILE)
+        df = read_temp_passes()
 
         user_passes = df[
             (df["employeeCode"].astype(str) == str(employeeCode)) &
@@ -1697,151 +1640,561 @@ def my_temp_pass(employeeCode):
 
 
 # ==========================
-# OT MANPOWER / TRANSPORT REQUEST
-# --------------------------------------------------------------------
-# Every "Save & Send Request" submit from the OT Manpower Approval page
-# appends rows here: one row per Manpower entry + one row per Transport
-# route, all tagged with the same Date/Time/Submitted By, so the sheet
-# can be filtered/pivoted by date in Excel. File is created
-# automatically on first submit — no manual setup needed.
+# ADMIN: DOWNLOAD LIVE EXCEL BACKUP
 # ==========================
+# These always read straight from Postgres (if DATABASE_URL is set) so the
+# downloaded file is guaranteed to reflect the current live data, even if
+# the local .xlsx mirror on this server instance was reset by a restart.
 
-OT_FILE = "OT_Requests.xlsx"
-
-OT_COLUMNS = [
-    "Date",
-    "Time",
-    "Submitted By",
-    "Department",
-    "Shift",
-    "Emergency",
-    "Entry Type",
-    "Category / Route",
-    "Bus Stops",
-    "2 Hours",
-    "3 Hours"
-]
+import io
 
 
-def create_ot_file_if_needed():
+def _excel_download(df, filename):
+    buffer = io.BytesIO()
+    df.to_excel(buffer, index=False)
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name=filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
-    if not os.path.exists(OT_FILE):
-        pd.DataFrame(columns=OT_COLUMNS).to_excel(OT_FILE, index=False)
-        return
 
+@app.route("/admin/export/employees")
+@login_required("admin")
+def export_employees():
+    df = load_df()
+    if "password" in df.columns:
+        df = df.drop(columns=["password"])
+    return _excel_download(df, "employees.xlsx")
+
+
+@app.route("/admin/export/passes")
+@login_required("admin")
+def export_passes():
+    return _excel_download(read_passes(), "passes.xlsx")
+
+
+@app.route("/admin/export/pass-requests")
+@login_required("admin")
+def export_pass_requests():
+    return _excel_download(read_pass_requests(), "pass_requests.xlsx")
+
+
+@app.route("/admin/export/temp-pass-requests")
+@login_required("admin")
+def export_temp_pass_requests():
+    return _excel_download(read_temp_passes(), "temp_pass_requests.xlsx")
+
+
+# ==========================
+# SHIFT -> ROUTE -> BUS STOPS (real data)
+# ==========================
+# Single source of truth used by both employeeregistration.html and
+# ot-approval.html for the Route Number -> Bus Stop cascading dropdown.
+#
+# NOTE: Only "1st Shift" and "2nd Shift" data has been provided so far.
+# "3rd Shift" and "General Shift" are empty until that data is supplied.
+
+SHIFT_ROUTES = {
+
+    "1st Shift": {
+        "Route 1 (LONI KALBHOR)": ["Loni Gaon", "HP Pump, Loni Gaon", "Wakwasti", "Manjre Farm", "Shawalwadi Depot", "Bhekarai Nagar", "Bhaji Mandai, Hadapsar", "Pune Station", "Maldhakka Ambedkar Bhavan", "Dapodi"],
+        "Route 2 (NARAYANGAON)": ["Hotel Shravani", "Narayangaon Bus Stop", "Police Station", "Manchar Market Yard", "Mulewadi Road", "Lohakare Hospita", "Rakshewade"],
+        "Route 3 (SINHAGAD ROAD)": ["Kolhewadi", "Sun City", "Warje Bridge", "CNG Petrol Pump, Bavdhan", "Balewadi", "Dange Chowk", "Chinchwad Nagar"],
+        "Route 4 (WARJE)": ["NDA", "Mayur Colony", "Ashish Garden, Kothrud"],
+        "Route 5 (WAGHOLI)": ["Wageshwar Mandir", "Kharadi Bypass", "Wadgaon Sheri, Tingre Nagar", "Bhopkhel", "Parande Nagar", "Datta Nagar"],
+        "Route 6 (KATRAJ)": ["Santosh Nagar", "Bharati Vidyapeeth", "Hatti Chowk", "Padmavati", "Bibwewadi", "Shaniwar Wada", "Shivajinagar", "Khondba Chowk"],
+        "Route 7 (MENGDEWADI)": ["Mengdewadi", "Hingewasti", "Ausari BK Bus Stand", "Pandurang Mandir", "Temkar Wasti", "Ausari KH Water Tank", "Ranwara Hotel", "Shivdhan Plaza", "Marathi Shala", "Market Yard", "Khed Bus Stand", "Shiroli Phata", "Rajratna Hotel"],
+        "Route 8 (PABAL)": ["Pabal", "Petrol Pump Pabal", "Tamane Mala", "Kanersir", "Nimgaon", "Chavan Mala", "Maharaja Chowk"],
+        "Route 9 (VISHRANTWADI)": ["Vishrantwadi Chowk", "Dhanori", "Kotak Mahindra", "Charholi Gaon", "Bank of Maharashtra", "Charholi Phata", "Kate Colony", "Kale Colony"],
+        "Route 10 (OLD SANGAVI)": ["Sangavi Bus Stop", "Ganpati Mandir", "Kranti Chowk", "Katepuram Chowk", "Radha Krishna Mangal Karyalaya", "Dehukar Park", "Tulja Bhavani Mandir", "Kalpataru Chowk", "Nashik Phata", "Empire Bridge", "Akurdi Bajaj Gate"],
+        "Route 11 (ALANDI)": ["Cosmos Bank", "Dehu Phata", "Dudulgaon", "Dudulgaon 1", "Moshi", "Bharat Mata Chowk", "Tupe Wasti", "Moshi Toll Naka", "Chimbli Phata", "Kuruli Phata"],
+        "Route 12 (RAVET)": ["Kiwale", "Mukai Chowk", "Adarsh Nagar", "Soni Ghar", "Shinde Wasti", "CNG Pump"],
+        "Route 13 (KALE WADI)": ["Thergaon", "16 No. Bus Stop", "Kalewadi Bridge", "Rahatani Phata", "Dhangar Baba", "Tapkir Chowk", "Keshav Nagar Corner", "Keshav Nagar Bus Stop", "Talera Hospital", "Chafekar Chowk", "SKF Company", "Prem Lok Park", "Delvi Nagar"],
+        "Route 14 (SHASTRI CHOWK)": ["Shastri Chowk", "Dighi Road", "Panjar Pol", "Godam Chowk", "Gandharva Nagari", "Sainath Hospital", "Borade Wasti"],
+        "Route 15 (DEHU ROAD)": ["Mamurdi (Sai Nagar)", "Vikas Nagar", "SBI Bank", "Dehu Road", "Chincholi", "Abhilekha Park", "Sangurdi Phata", "Yelwadi"],
+        "Route 16 (SHEETAL BAGH)": ["Landewadi", "Spine Road", "Jadhavwadi", "Chikhli"],
+        "Route 17 (WADGAON)": ["Wadgaon", "Matoshree", "Jambhul Phata", "Wadgaon Court", "Chhatrapati Shivaji Chowk", "Lotus", "Wadgaon Phata", "Murlesh Hotel", "Aarth Hospital", "Seva Dham", "Machhi Market", "Indrayani College"],
+        "Route 18 (BHOSARI EXTRA)": ["PMT Chowk, Bhosari", "Dhawade Wasti", "Satguru Nagar", "Jadhavwadi", "Laxmi Chowk", "D Mart, Moshi", "Silver 9", "Rustic"],
+        "Route 19 (SHARAD NAGAR)": ["Sane Chowk", "Sharad Nagar", "Gharkul Chowk", "Kaseriyo Society", "Nevale Wasti", "Ganesh Mandir", "Navale Wasti Corner", "Imperial Hospital", "Talawade Chowk"],
+        "Route 20 (RAJGURU NAGAR - KHED)": ["Sangam Garden", "Sangam Classic", "Panyachi Taki", "Panchayat Samiti", "Chandoli Phata", "Vishwakalyan"],
+        "Route 21 (YCM)": ["Mahesh Nagar Chowk", "Nehru Nagar", "Vitthal Mandir", "Ajmera 1", "Ajmera 2", "Ajmera 3", "Bajaj Colony - Amruteshwar Colony", "Old RTO", "Petrol Pump", "Kudalwadi 1", "Patil Nagar, Chikhli", "Bajaj Auto"],
+        "Route 22 (LINK ROAD)": ["Gawade Petrol Pump", "Chafekar Chowk", "Bijli Nagar", "Ankush Chowk", "Triveni Nagar", "Tawre Line", "Ganesh Nagar"],
+        "Route 23 (TALEGAON)": ["McDonald's", "Bagicha Hotel", "Nim Phata", "Bhandari Hospital", "Kesar Hotel", "Jijamata Chowk", "Khadge Pump", "Nagar Palika", "Kaka Halwai", "BSNL", "Siddhi Khed", "Machhi Market", "Induri Gaon", "Khalumbre"],
+        "Route 24 (SHAHU NAGAR)": ["Atal Bihari Udyan Corner", "Rasrang", "Ganesh Mandir", "Bajaj School", "Someshwar Mandir", "Chintamani Corner", "Kasturi Market", "Polite Harmony", "Ganesh International School"],
+        "Route 25 (AUTO GAS TALEGAON)": ["Varale Phata", "Shivaji Chowk", "Sindket Bank", "Bullet Showroom", "Balaji Marble", "Aishwarya Hotel", "Indori Gaon"],
+        "Route 26 (WALHEKARWADI)": ["Jakat Naka", "Walhekarwadi Chowk", "Aaher Garden", "Ganpati Mandir", "Gurudwara Chowk", "Railway Station", "Appu Ghar"],
+        "Route 27 (MOHAN NAGAR)": ["Pimple Saudagar", "Pimpri Gaon", "Kalewadi", "Vijay Nagar Bus Stop", "Mohan Nagar", "Huma Bakery"],
+        "Route 28 (BAJAJ SCHOOL)": ["Vinayak Sweets", "Shivalkar Chowk", "Hanuman Mandir", "Mehtre Garden", "More Wasti", "Ashtavinayak Chowk", "Vande Mataram Chowk", "Waghu Sane Chowk", "Aishwaryam Society"],
+        "Route 29 (DEHUGAON)": ["Krida Sankul", "Omi Home", "Gatha Mandir", "Arogya Hospital", "Parandwal Chowk", "Parishri Hotel", "Omkar Society", "V-Mart", "Banner Bank", "Vitthalwadi"],
+        "Route 30 (WAKI PHATA)": ["Sumbare Nagar", "Ekta Nagar", "Swapna Nagari", "Chakan Market Yard", "Yeshwant Nagar", "Dnyanvardhani School", "Jhipre Mala", "Biradwadi"],
+        "Route 31 (MEDANKARWADI)": ["Kadachiwadi", "Kalpataru Society", "Medankarwadi Phata", "Vishal Garden"],
+        "Route 32 (BALAJI NAGAR CHAKAN)": ["Chakan Chowk", "Mutkewadi", "Balaji Nagar", "Premacha Chaha", "IAI Company"],
+        "Route 33 (CHAKAN CHOWK)": ["Ambethan Chowk", "Ghadge Mala", "Unicare Hospital", "Chakan Chowk", "Arogyam Hospital", "Sahara City", "Kharabwadi", "Mahalunge"],
+        "Route 34 (DANGE CHOWK)": ["Dange Chowk", "Bijli Nagar", "Big India", "Sambhaji Chowk", "Mhalsakant Chowk", "TJSB Bank", "Datta Wadi", "Nigdi", "LIC Corner", "Hatti Chowk"],
+        "Route 35 (NIGDI)": ["Pawale Bridge", "Swanand Dairy", "LIC Corner", "Hatti Chowk", "Ganesh Nagar", "Jyotiba Nagar", "Talawade (Only Ladies)"],
+        "Route 36 (MEDANKARWADI EXTRA)": ["Kadachiwadi", "Kalpataru Society", "Medankarwadi Phata", "Vishal Garden"],
+        "Route 37 (IAI COMPANY)": ["IAI Company"],
+        "Route 38 (KHANDO MANDIR CHAKAN)": ["Khandoba Mandir", "Vishal Garden", "Manik Chowk", "Premacha Chaha"],
+        "Route 40 (CHAKAN CHOWK)": ["Ambethan Chowk", "Ghadge Mala", "Unicare Hospital", "Chakan Chowk", "Arogyam Hospital", "Sahara City", "Kharabwadi", "Mahalunge"]
+    },
+
+    "2nd Shift": {
+        "Route 1 (SINHGAD)": ["Kolhewadi", "Sinhagad Road", "Dahyri Gaon", "Navale Bridge", "Warje", "Bawdhan", "Balewadi", "Dange Chowk", "Aditya Birla", "Chinchwade Nagar", "Kachghar Chowk", "Ankush Chowk", "Chakan Chowk", "Bajaj Chakan"],
+        "Route 2 (WAGHOLI)": ["Wagholi", "Vishrantwadi", "Dighi", "Sai Mandir", "Kale Colony", "Kate Colony", "Chikhali", "Bajaj Chakan"],
+        "Route 3 (DEHU GAON)": ["Krida Sankul", "Gatha Mandir", "V Mart", "Baner Bank", "Bypass Chowk", "Devi Indrani", "Bajaj Chakan"],
+        "Route 4 (MEDANKARWADI)": ["Kadachiwadi", "Medankarwadi Gate", "Vishal Garden", "Manik Chowk", "Indian Oil Pump", "Balaji Nagar (Premacha Chaha)", "IAI Company", "Bajaj Chakan"],
+        "Route 5 (WAKI PHATA)": ["Biradwadi", "Waki Phata", "Ekta Nagar", "Swapna Nagari", "Market Yard", "Ambethan Chowk", "Zitrai Mala", "Mahalunge", "Bajaj Chakan"],
+        "Route 6 (RAVET-WALHEKARWADI)": ["Mukai Chowk", "CNG Pump", "Shinde Wasti", "Walhekarwadi", "Chintamani Chowk", "Ganesh Mandir", "Athurwa Park", "Gurudwara Chowk", "Tower Line", "Huma Bakery", "Bajaj Chakan"],
+        "Route 7 (ALANDI)": ["Charoli Phata", "Dehu Phata", "Dudulgaon", "Moshi", "Bharat Mata Chowk", "Chikhali Rustic Paradise", "Bajaj Chakan"],
+        "Route 8 (SHASTRI CHOWK)": ["Shastri Chowk", "PMT Chowk", "Dhawde Wasti", "Godown Chowk", "Panjarpol", "Gandharv Nagari", "Borhade Wasti", "Tupe Wasti", "Toll Naka", "Chimbli Phata", "Kurali Phata", "Bajaj Chakan"],
+        "Route 9 (DEHUROAD)": ["Sai Nagar Mamurdi", "Shinde Petrol Pump Dehuroad", "Vikas Nagar Dehuroad", "Bank of India Dehuroad", "Mali Nagar (Malwadi)", "Abhilasha Society", "Mangalkaryalaya", "Parandwal Chowk", "Yelwadi", "Bajaj Chakan"],
+        "Route 10 (PIMPLE GURAV)": ["Dapodi", "Kate Puram Chowk", "Bhau Nagar", "Pimpri", "Akurdi Main Gate", "LIC Corner", "Triveni Nagar", "Bajaj Chakan"],
+        "Route 11 (JADHAVWADI)": ["Jadhavwadi", "RTO", "Sharad Nagar", "Newale Wasti", "Ganpati Mandir", "Newale Wasti Corner", "Patil Nagar", "Rustic Plaza", "Talwade Chowk", "Mahindra Gate", "Bajaj Chakan"],
+        "Route 12 (TALEGAON)": ["Bagicha Hotel", "Tukaram Nagar", "Bhandari Hospital", "Bhosle Chaha", "Jijamata Chowk", "Khandge Petrol Pump", "Kaka Halwai", "BSNL", "Balaji Marble", "Sadumbre", "Khalumbre", "Bajaj Chakan"],
+        "Route 13 (WADGAON)": ["Chhatrapati Shivaji Chowk", "Lotus", "Rupesh Hotel", "Athurwa Hospital", "Sevadham", "Indrayani College Talegaon", "Bullet Showroom", "Induri", "Khalumbre", "Bajaj Chakan"],
+        "Route 14 (KHED)": ["Kardewasti", "Sangam Garden", "Sangam Classic", "Water Tank", "Pabal Road", "Dhadge Mala", "Unicare Hospital", "Arogyam Hospital", "IFL City", "Kharabwadi", "Sara City", "Mahalunge"],
+        "Route 15 (KALEWADI)": ["16 No Bus Stop", "Kalewadi Phata", "Rahatani Phata", "Laxman Nagar Thergaon", "Old Jakat Naka", "Gawde Petrol Pump Link Road", "Chafekar Chowk", "Chaitanya Hall", "Giriraj Housing Society", "Hanuman Sweet", "Mhalsakant Chowk", "TJSB Bank", "Axis Bank", "Dattawadi", "Bajaj Chakan"],
+        "Route 16 (SHAHU NAGAR)": ["Ajmera", "Amruteshwar Colony", "Shahu Garden", "Aryan Residency", "Ganpati Mandir", "Bajaj School", "Rameshwar Mandir", "Sambhaji Nagar Chowk", "Rajdeep Society", "Kasturi Market", "Shivarkar Chowk", "Polite Harmony", "Ganesh International School", "Shine City", "Bajaj Chakan"],
+        "Route 17 (CHAKAN CHOWK)": ["Balaji Nagar", "Chakan Chowk", "Ghanvat Plaza", "Arogyam Hospital", "Nanekarwadi", "Kharabwadi", "Sara City", "Mahalunge", "Hotel Karwa"],
+        "Route 18 (MOHAN NAGAR)": ["Mohan Nagar", "Morewasti", "Chikhali Rustic Paradise", "Talwade Chowk", "Mahindra Gate"],
+        "Route 19 (ANKUSH CHOWK)": ["Ankush Chowk", "Triveni Nagar", "Tower Line", "Huma Bakery", "Ganesh Nagar", "Jotiba Nagar", "Talwade Chowk"],
+        "Route 20 (NARAYANGAON)": ["Raut Hospital Narayangaon", "Narayangaon ST Stand", "Manchar Market Yard", "Manchar College Road", "Maxcare Hospital Manchar", "Paragaon Phata", "Market Yard", "Ambethan Chowk"],
+        "Route 21 (NIGDI)": ["Big India", "Dattawadi", "LIC Corner", "Hatti Chowk"]
+    },
+
+    "3rd Shift": {
+        "Route 1 (NIGDI)": ["Nigdi Bridge", "LIC Chowk"],
+        "Route 2 (TALEGAON)": ["Talegaon", "Khalumbre", "Manohar Nagar Talegaon"],
+        "Route 3 (DEHU GAON)": ["Dehugaon", "Parishree Hospital"],
+        "Route 4 (SHASTRI CHOWK)": ["Shastri Chowk", "Bhosari", "Alandi"],
+        "Route 5 (RAJGURU NAGAR)": ["Rajgurunagar", "Khed Toll Naka", "Ambethan Chowk", "Biradwadi"],
+        "Route 6 (MEDANKARWADI)": ["Medankarwadi"],
+        "Route 7 (BALAJI NAGAR)": ["Balaji Nagar", "Chakan", "Eiffel City", "Karwa Hotel"],
+        "Route 8 (CHIKHALI)": ["Chikhali", "Sane Chowk"],
+        "Route 9 (DEHUROAD)": ["Dehuroad"],
+        "Route 10 (PCMC)": ["Mhalsakant Chowk"]
+    },
+
+    "General Shift": {
+        "Route 1 (SINHGAD)": ["Kolhewadi", "Sinhagad Road", "Dahyri Gaon", "Navale Bridge", "Warje", "Bawdhan", "Balewadi", "Dange Chowk", "Aditya Birla", "Chinchwade Nagar", "Kachghar Chowk", "Ankush Chowk", "Chakan Chowk", "Bajaj Chakan"],
+        "Route 2 (WAGHOLI)": ["Wagholi", "Vishrantwadi", "Dighi", "Sai Mandir", "Kale Colony", "Kate Colony", "Chikhali", "Bajaj Chakan"],
+        "Route 3 (DEHU GAON)": ["Krida Sankul", "Gatha Mandir", "V Mart", "Baner Bank", "Bypass Chowk", "Devi Indrani", "Bajaj Chakan"],
+        "Route 4 (MEDANKARWADI)": ["Kadachiwadi", "Medankarwadi Gate", "Vishal Garden", "Manik Chowk", "Indian Oil Pump", "Balaji Nagar (Premacha Chaha)", "IAI Company", "Bajaj Chakan"],
+        "Route 5 (WAKI PHATA)": ["Biradwadi", "Waki Phata", "Ekta Nagar", "Swapna Nagari", "Market Yard", "Ambethan Chowk", "Zitrai Mala", "Mahalunge", "Bajaj Chakan"],
+        "Route 6 (RAVET-WALHEKARWADI)": ["Mukai Chowk", "CNG Pump", "Shinde Wasti", "Walhekarwadi", "Chintamani Chowk", "Ganesh Mandir", "Athurwa Park", "Gurudwara Chowk", "Tower Line", "Huma Bakery", "Bajaj Chakan"],
+        "Route 7 (ALANDI)": ["Charoli Phata", "Dehu Phata", "Dudulgaon", "Moshi", "Bharat Mata Chowk", "Chikhali Rustic Paradise", "Bajaj Chakan"],
+        "Route 8 (SHASTRI CHOWK)": ["Shastri Chowk", "PMT Chowk", "Dhawde Wasti", "Godown Chowk", "Panjarpol", "Gandharv Nagari", "Borhade Wasti", "Tupe Wasti", "Toll Naka", "Chimbli Phata", "Kurali Phata", "Bajaj Chakan"],
+        "Route 9 (DEHUROAD)": ["Sai Nagar Mamurdi", "Shinde Petrol Pump Dehuroad", "Vikas Nagar Dehuroad", "Bank of India Dehuroad", "Mali Nagar (Malwadi)", "Abhilasha Society", "Mangalkaryalaya", "Parandwal Chowk", "Yelwadi", "Bajaj Chakan"],
+        "Route 10 (PIMPLE GURAV)": ["Dapodi", "Kate Puram Chowk", "Bhau Nagar", "Pimpri", "Akurdi Main Gate", "LIC Corner", "Triveni Nagar", "Bajaj Chakan"],
+        "Route 11 (JADHAVWADI)": ["Jadhavwadi", "RTO", "Sharad Nagar", "Newale Wasti", "Ganpati Mandir", "Newale Wasti Corner", "Patil Nagar", "Rustic Plaza", "Talwade Chowk", "Mahindra Gate", "Bajaj Chakan"],
+        "Route 12 (TALEGAON)": ["Bagicha Hotel", "Tukaram Nagar", "Bhandari Hospital", "Bhosle Chaha", "Jijamata Chowk", "Khandge Petrol Pump", "Kaka Halwai", "BSNL", "Balaji Marble", "Sadumbre", "Khalumbre", "Bajaj Chakan"],
+        "Route 13 (WADGAON)": ["Chhatrapati Shivaji Chowk", "Lotus", "Rupesh Hotel", "Athurwa Hospital", "Sevadham", "Indrayani College Talegaon", "Bullet Showroom", "Induri", "Khalumbre", "Bajaj Chakan"],
+        "Route 14 (KHED)": ["Kardewasti", "Sangam Garden", "Sangam Classic", "Water Tank", "Pabal Road", "Dhadge Mala", "Unicare Hospital", "Arogyam Hospital", "IFL City", "Kharabwadi", "Sara City", "Mahalunge"],
+        "Route 15 (KALEWADI)": ["16 No Bus Stop", "Kalewadi Phata", "Rahatani Phata", "Laxman Nagar Thergaon", "Old Jakat Naka", "Gawde Petrol Pump Link Road", "Chafekar Chowk", "Chaitanya Hall", "Giriraj Housing Society", "Hanuman Sweet", "Mhalsakant Chowk", "TJSB Bank", "Axis Bank", "Dattawadi", "Bajaj Chakan"],
+        "Route 16 (SHAHU NAGAR)": ["Ajmera", "Amruteshwar Colony", "Shahu Garden", "Aryan Residency", "Ganpati Mandir", "Bajaj School", "Rameshwar Mandir", "Sambhaji Nagar Chowk", "Rajdeep Society", "Kasturi Market", "Shivarkar Chowk", "Polite Harmony", "Ganesh International School", "Shine City", "Bajaj Chakan"],
+        "Route 17 (CHAKAN CHOWK)": ["Balaji Nagar", "Chakan Chowk", "Ghanvat Plaza", "Arogyam Hospital", "Nanekarwadi", "Kharabwadi", "Sara City", "Mahalunge", "Hotel Karwa"],
+        "Route 18 (MOHAN NAGAR)": ["Mohan Nagar", "Morewasti", "Chikhali Rustic Paradise", "Talwade Chowk", "Mahindra Gate"],
+        "Route 19 (ANKUSH CHOWK)": ["Ankush Chowk", "Triveni Nagar", "Tower Line", "Huma Bakery", "Ganesh Nagar", "Jotiba Nagar", "Talwade Chowk"],
+        "Route 20 (NARAYANGAON)": ["Raut Hospital Narayangaon", "Narayangaon ST Stand", "Manchar Market Yard", "Manchar College Road", "Maxcare Hospital Manchar", "Paragaon Phata", "Market Yard", "Ambethan Chowk"],
+        "Route 21 (NIGDI)": ["Big India", "Dattawadi", "LIC Corner", "Hatti Chowk"]
+    }
+
+}
+
+
+@app.route("/get-shift-routes", methods=["GET"])
+def get_shift_routes():
+    shift = request.args.get("shift", "").strip()
+    routes = SHIFT_ROUTES.get(shift, {})
+    return jsonify({"status": "success", "shift": shift, "routes": routes})
+
+
+# ==========================
+# LIVE BUS LOCATION (shift + route based)
+# ==========================
+# Admin pushes their current lat/lng (from their phone) for a specific
+# shift+route. Anyone viewing that route's tracking link (viewroots.html)
+# polls this every couple of seconds to move the bus marker on the map.
+#
+# NOTE: this is stored in memory (not the database) since it's live,
+# constantly-changing data — there's no need to keep old locations
+# around. It will reset if the server restarts, which is expected.
+
+LIVE_LOCATIONS = {}
+
+
+def _location_key(shift, route):
+    return (str(shift).strip(), str(route).strip())
+
+
+@app.route("/update-live-location", methods=["POST"])
+@login_required("admin")
+def update_live_location():
     try:
-        df = pd.read_excel(OT_FILE)
-        df.columns = df.columns.str.strip()
+        data = request.get_json()
+        shift = data.get("shift", "")
+        route = data.get("route", "")
+        lat = data.get("lat")
+        lng = data.get("lng")
 
-        for col in OT_COLUMNS:
-            if col not in df.columns:
-                df[col] = ""
+        if not shift or not route or lat is None or lng is None:
+            return jsonify({"status": "error", "message": "shift, route, lat and lng are all required"})
 
-        df = df[OT_COLUMNS]
-        df.to_excel(OT_FILE, index=False)
+        LIVE_LOCATIONS[_location_key(shift, route)] = {
+            "lat": float(lat),
+            "lng": float(lng),
+            "updatedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
 
-    except Exception:
-        pd.DataFrame(columns=OT_COLUMNS).to_excel(OT_FILE, index=False)
+        return jsonify({"status": "success", "message": "Location updated"})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 
-create_ot_file_if_needed()
+@app.route("/live-location/<shift>/<route>", methods=["GET"])
+def get_live_location(shift, route):
+    entry = LIVE_LOCATIONS.get(_location_key(shift, route))
+
+    if not entry:
+        return jsonify({"success": False, "message": "No live location yet for this route"})
+
+    return jsonify({
+        "success": True,
+        "lat": entry["lat"],
+        "lng": entry["lng"],
+        "updatedAt": entry["updatedAt"]
+    })
 
 
-@app.route("/save-ot-request", methods=["POST"])
-def save_ot_request():
+# ==========================
+# LIVE TRACKING LINKS (40 ROUTES)
+# ==========================
+# Admin pastes a live-tracking link (e.g. a GPS/fleet-tracking share link)
+# against each route number. Employees see the link for their own route.
 
+ROUTE_TRACKING_FILE = "route_tracking.xlsx"
+TOTAL_ROUTES = 40
+
+
+def create_route_tracking_file():
+    default_df = pd.DataFrame({
+        "routeNumber": [f"Route {i}" for i in range(1, TOTAL_ROUTES + 1)],
+        "trackingLink": [""] * TOTAL_ROUTES,
+        "updatedDate": [""] * TOTAL_ROUTES
+    })
+    init_table_if_needed(
+        "route_tracking",
+        ROUTE_TRACKING_FILE,
+        list(default_df.columns),
+        default_df=default_df
+    )
+
+
+def read_route_tracking():
+    df = read_table("route_tracking", ROUTE_TRACKING_FILE)
+    df.columns = df.columns.str.strip()
+    return df
+
+
+def save_route_tracking(df):
+    save_table(df, "route_tracking", ROUTE_TRACKING_FILE)
+
+
+create_route_tracking_file()
+
+
+@app.route("/admin/route-tracking", methods=["GET"])
+@login_required("admin")
+def admin_get_route_tracking():
     try:
+        df = read_route_tracking().fillna("")
+        return jsonify(df.to_dict(orient="records"))
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
-        data = request.get_json(silent=True)
 
-        submitted_by = str((data or {}).get("submittedBy", "")).strip()
-        department = str((data or {}).get("department", "")).strip()
+@app.route("/admin/update-route-tracking", methods=["POST"])
+@login_required("admin")
+def admin_update_route_tracking():
+    try:
+        data = request.get_json()
+        route_number = str(data.get("routeNumber", "")).strip()
+        tracking_link = str(data.get("trackingLink", "")).strip()
 
-        if not data or not submitted_by or not department:
+        if route_number == "":
+            return jsonify({"status": "error", "message": "Route Number Required"})
+
+        df = read_route_tracking()
+        match = df["routeNumber"].astype(str).str.strip() == route_number
+
+        if not match.any():
+            return jsonify({"status": "error", "message": "Route Not Found"})
+
+        df.loc[match, "trackingLink"] = tracking_link
+        df.loc[match, "updatedDate"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        save_route_tracking(df)
+
+        return jsonify({"status": "success", "message": "Tracking Link Updated"})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/my-route-tracking", methods=["GET"])
+@login_required("employee")
+def my_route_tracking():
+    try:
+        employee_code = session.get("employeeCode")
+
+        emp_df = load_df()
+        emp_match = emp_df["employeeCode"].astype(str).str.strip() == str(employee_code).strip()
+
+        if not emp_match.any():
+            return jsonify({"status": "error", "message": "Employee Not Found"})
+
+        route_number = str(emp_df.loc[emp_match, "routeNumber"].iloc[0]).strip()
+
+        if route_number == "" or route_number.lower() == "nan":
+            return jsonify({"status": "error", "message": "No Route Assigned Yet"})
+
+        track_df = read_route_tracking()
+        track_match = track_df["routeNumber"].astype(str).str.strip() == route_number
+
+        if not track_match.any():
+            return jsonify({"status": "error", "message": "Route Not Found"})
+
+        link = str(track_df.loc[track_match, "trackingLink"].iloc[0]).strip()
+
+        if link == "" or link.lower() == "nan":
             return jsonify({
                 "status": "error",
-                "message": "Submitted By / Department Required"
-            }), 400
-
-        create_ot_file_if_needed()
-
-        df = pd.read_excel(OT_FILE)
-        df.columns = df.columns.str.strip()
-
-        now = datetime.now()
-        date_str = now.strftime("%d-%m-%Y")
-        time_str = now.strftime("%I:%M:%S %p")
-
-        shift = str(data.get("shift", "")).strip()
-        emergency = "Yes" if data.get("emergency") else "No"
-
-        manpower = data.get("manpower") or []
-        transport = data.get("transport") or []
-
-        new_rows = []
-
-        for row in manpower:
-            new_rows.append({
-                "Date": date_str,
-                "Time": time_str,
-                "Submitted By": submitted_by,
-                "Department": department,
-                "Shift": shift,
-                "Emergency": emergency,
-                "Entry Type": "Manpower",
-                "Category / Route": row.get("provider", ""),
-                "Bus Stops": "",
-                "2 Hours": row.get("twoHours", 0),
-                "3 Hours": row.get("threeHours", 0)
+                "message": "Live tracking link not added yet for your route"
             })
-
-        for row in transport:
-            new_rows.append({
-                "Date": date_str,
-                "Time": time_str,
-                "Submitted By": submitted_by,
-                "Department": department,
-                "Shift": shift,
-                "Emergency": emergency,
-                "Entry Type": "Transport",
-                "Category / Route": row.get("route", ""),
-                "Bus Stops": row.get("stops", ""),
-                "2 Hours": row.get("twoHours", 0),
-                "3 Hours": row.get("threeHours", 0)
-            })
-
-        # Don't silently lose a submission that had no rows at all
-        if not new_rows:
-            new_rows.append({
-                "Date": date_str,
-                "Time": time_str,
-                "Submitted By": submitted_by,
-                "Department": department,
-                "Shift": shift,
-                "Emergency": emergency,
-                "Entry Type": "Info",
-                "Category / Route": "No manpower/transport rows submitted",
-                "Bus Stops": "",
-                "2 Hours": 0,
-                "3 Hours": 0
-            })
-
-        df = pd.concat([df, pd.DataFrame(new_rows)], ignore_index=True)
-        df.to_excel(OT_FILE, index=False)
 
         return jsonify({
             "status": "success",
-            "message": "Saved Successfully to Excel Sheet"
+            "routeNumber": route_number,
+            "trackingLink": link
         })
 
     except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
-        print("SAVE OT REQUEST ERROR:", e)
+
+# ==========================
+# REPORTS / CHARTS DATA
+# ==========================
+
+@app.route("/admin/report-data", methods=["GET"])
+@login_required("admin")
+def admin_report_data():
+    try:
+        # ---- Employees by Department ----
+        emp_df = load_df()
+        dept_counts = (
+            emp_df["department"].fillna("Unassigned").replace("", "Unassigned")
+            .value_counts().to_dict()
+            if "department" in emp_df.columns and not emp_df.empty else {}
+        )
+
+        # ---- Employees by Route ----
+        route_counts = (
+            emp_df["routeNumber"].fillna("Unassigned").replace("", "Unassigned")
+            .value_counts().to_dict()
+            if "routeNumber" in emp_df.columns and not emp_df.empty else {}
+        )
+
+        # ---- Pass Status (Permanent + Temporary combined) ----
+        pass_status = {"Pending": 0, "Approved": 0, "Rejected": 0}
+
+        perm_requests = read_pass_requests()
+        if not perm_requests.empty and "status" in perm_requests.columns:
+            for status, count in perm_requests["status"].value_counts().items():
+                if status in pass_status:
+                    pass_status[status] += int(count)
+
+        temp_requests = read_temp_passes()
+        if not temp_requests.empty and "status" in temp_requests.columns:
+            for status, count in temp_requests["status"].value_counts().items():
+                if status in pass_status:
+                    pass_status[status] += int(count)
+
+        # ---- Live Tracking Coverage ----
+        track_df = read_route_tracking()
+        with_link = 0
+        without_link = TOTAL_ROUTES
+
+        if not track_df.empty and "trackingLink" in track_df.columns:
+            with_link = int((track_df["trackingLink"].astype(str).str.strip() != "").sum())
+            without_link = len(track_df) - with_link
 
         return jsonify({
-            "status": "error",
-            "message": str(e)
+            "status": "success",
+            "employeesByDepartment": dept_counts,
+            "employeesByRoute": route_counts,
+            "passStatus": pass_status,
+            "trackingCoverage": {
+                "withLink": with_link,
+                "withoutLink": without_link
+            }
         })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ==========================
+# OT MANPOWER APPROVAL
+# ==========================
+# Public page — no login required. Saves each OT request and returns
+# email details so the browser can open a pre-filled mailto: link.
+
+import json as _json
+
+OT_FILE = "ot_requests.xlsx"
+
+OT_COLS = [
+    "otId", "submittedBy", "shift", "department", "otherDepartment",
+    "approvalDate", "approvalTime", "isSuddenRequirement",
+    "canteenData", "transportData", "createdAt"
+]
+
+# The department list used on the OT Manpower Approval form.
+OT_DEPARTMENTS = [
+    "Production", "Quality", "Maintenance", "HR", "Administration",
+    "Alluminium Shop", "BU HR -Operations", "Central Maintenance",
+    "Assembly Planned Maint", "Chassis Sub Assembly Center", "Civil",
+    "Dispensary", "Civil & Utility", "Engine Assembly Line-KTM",
+    "Engine Assembly", "Export", "Exoprt Assembly CKD", "Export Open",
+    "Facility Engineering", "Flying Start GT-OP", "HRD", "Machining",
+    "Maintenance", "Manufacturing Check", "Manufacturing Engine",
+    "ME (E&T)", "ME(Vehicle)", "Paint Shop", "Personnel", "PPC",
+    "Production", "Production Planning", "Vehicel Assembly-Pulsar",
+    "Quality", "Quality Assurance", "Reliability Sub Vehicle",
+    "Reliability Supply Vehicle", "Safety", "Security", "Steel Shop",
+    "Steel Shop (C-10)", "Time Office", "Tool Room", "TPM",
+    "Utilities & Services", "Vehicle Assembly Electric", "Vehicle Dispatch ",
+    "Vehicle Assembly", "Works Admin (C-01)"
+]
+
+# Who should receive the approval email. Set OT_APPROVAL_EMAIL as an
+# environment variable to change this without touching the code.
+OT_APPROVAL_EMAIL = os.environ.get("OT_APPROVAL_EMAIL", "transport.admin@bajaj.com")
+
+
+def create_ot_file():
+    init_table_if_needed("ot_requests", OT_FILE, OT_COLS)
+
+
+create_ot_file()
+
+
+@app.route("/get-departments", methods=["GET"])
+def get_departments():
+    return jsonify({"status": "success", "departments": OT_DEPARTMENTS})
+
+
+@app.route("/submit-ot", methods=["POST"])
+@limiter.limit("20 per hour")
+def submit_ot():
+
+    try:
+        shift = request.form.get("shift", "").strip()
+        department = request.form.get("department", "").strip()
+        other_department = request.form.get("other_department", "").strip()
+        approval_date = request.form.get("approval_date", "").strip()
+        approval_time = request.form.get("approval_time", "").strip()
+        canteen_data_raw = request.form.get("canteen_data", "[]")
+        transport_data_raw = request.form.get("transport_data", "[]")
+        user_name = request.form.get("user_name", "").strip() or "Unknown"
+        is_sudden = request.form.get("is_sudden_requirement", "0")
+
+        if department == "":
+            return jsonify({"status": "error", "message": "Department is required"})
+
+        try:
+            canteen_data = _json.loads(canteen_data_raw)
+        except Exception:
+            canteen_data = []
+
+        try:
+            transport_data = _json.loads(transport_data_raw)
+        except Exception:
+            transport_data = []
+
+        final_department = other_department if department == "Other" and other_department else department
+
+        ot_id = "OT" + str(int(datetime.now().timestamp()))
+
+        df = read_table("ot_requests", OT_FILE)
+
+        new_row = {
+            "otId": ot_id,
+            "submittedBy": user_name,
+            "shift": shift,
+            "department": final_department,
+            "otherDepartment": other_department,
+            "approvalDate": approval_date,
+            "approvalTime": approval_time,
+            "isSuddenRequirement": is_sudden,
+            "canteenData": _json.dumps(canteen_data),
+            "transportData": _json.dumps(transport_data),
+            "createdAt": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        save_table(df, "ot_requests", OT_FILE)
+
+        # ---- Build a readable email for the approver ----
+        subject = f"OT Manpower Request - {final_department} - {shift} - {approval_date}"
+        if is_sudden == "1":
+            subject = "[URGENT] " + subject
+
+        lines = []
+        lines.append(f"Department: {final_department}")
+        lines.append(f"Shift: {shift}")
+        lines.append(f"Date: {approval_date}   Time: {approval_time}")
+        lines.append(f"Submitted By: {user_name}")
+        if is_sudden == "1":
+            lines.append("")
+            lines.append("*** SUDDEN / ADDITIONAL OT REQUEST ***")
+        lines.append("")
+        lines.append("---- Canteen Facility Requirement ----")
+        if canteen_data:
+            for item in canteen_data:
+                lines.append(
+                    f"{item.get('category','')}: 2hr={item.get('hours_2',0)}, 3hr={item.get('hours_3',0)}"
+                )
+        else:
+            lines.append("None requested")
+        lines.append("")
+        lines.append("---- Transportation Requirement ----")
+        if transport_data:
+            for item in transport_data:
+                lines.append(
+                    f"{item.get('route_name','')} ({item.get('bus_stops','')}): "
+                    f"2hr={item.get('hours_2',0)}, 3hr={item.get('hours_3',0)}"
+                )
+        else:
+            lines.append("None requested")
+
+        body = "\n".join(lines)
+
+        return jsonify({
+            "status": "success",
+            "message": "OT request submitted successfully",
+            "to": OT_APPROVAL_EMAIL,
+            "email_subject": subject,
+            "email_body": body
+        })
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 
 # ==========================
@@ -1852,3 +2205,4 @@ if __name__ == "__main__":
     # debug mode should NEVER be on when the site is public (it leaks
     # internal code/data on errors). Set FLASK_DEBUG=True locally if needed.
     app.run(debug=os.environ.get("FLASK_DEBUG", "False") == "True")
+

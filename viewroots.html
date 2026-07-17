@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Bajaj Transport System</title>
+<title>Bajaj Auto | Live Bus Tracking</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -13,20 +13,19 @@
 
 <style>
 
-/* BACKGROUND + BAJAJ LOGO WATERMARK */
 body{
-font-family:Inter;
+font-family:'Inter', sans-serif;
 background:
-url("Bajaj.png")
+url("https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png")
 no-repeat center center,
 linear-gradient(135deg,#0f172a,#1e293b);
-
 background-size:300px, cover;
 min-height:100vh;
 color:white;
+margin:0;
+padding-bottom:40px;
 }
 
-/* EXTRA WATERMARK LAYER */
 .watermark{
 position:fixed;
 inset:0;
@@ -42,426 +41,102 @@ pointer-events:none;
 width:500px;
 }
 
-/* CARD */
+.header{
+text-align:center;
+padding:30px 20px 20px;
+}
+
+.status-pill{
+display:inline-flex;
+align-items:center;
+gap:8px;
+background:rgba(255,255,255,.1);
+border:1px solid rgba(255,255,255,.2);
+padding:8px 18px;
+border-radius:999px;
+font-size:13px;
+font-weight:600;
+margin-top:10px;
+}
+
+.status-dot{
+width:9px;
+height:9px;
+border-radius:999px;
+background:#facc15;
+}
+
+.status-pill.live .status-dot{
+background:#4ade80;
+animation:blink 1.2s infinite;
+}
+
+@keyframes blink{
+0%,100%{ opacity:1; }
+50%{ opacity:.3; }
+}
+
+.wrap{
+max-width:900px;
+margin:auto;
+padding:0 20px;
+}
+
 .card{
 background:rgba(255,255,255,0.08);
 backdrop-filter: blur(10px);
 border-radius:20px;
-padding:20px;
+padding:22px;
 border:1px solid rgba(255,255,255,0.2);
-transition:0.3s;
+margin-bottom:20px;
 }
 
-.card:hover{
-transform:scale(1.03);
-}
-
-/* BUTTONS */
-.btn{
-padding:10px;
-border-radius:12px;
-width:100%;
-font-weight:bold;
-margin-top:10px;
-}
-
-.blue{background:#2563eb;}
-.green{background:#16a34a;}
-
-/* MAP */
 #map{
 width:100%;
-height:60vh;
+height:55vh;
 border-radius:15px;
+background:#1e293b;
 }
 
-/* MODAL */
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.7);
-padding:20px;
+.stop-list{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+margin-top:12px;
 }
 
-.box{
-background:white;
-color:black;
-padding:20px;
-border-radius:20px;
-max-width:900px;
-margin:80px auto;
+.stop-chip{
+background:rgba(255,255,255,.1);
+border:1px solid rgba(255,255,255,.15);
+padding:6px 14px;
+border-radius:999px;
+font-size:13px;
 }
 
-.stop{
-padding:8px;
-border-bottom:1px solid #ddd;
+.info-row{
+display:flex;
+justify-content:space-between;
+font-size:14px;
+color:#cbd5e1;
+margin-top:6px;
 }
 
-#stopsList{
-max-height:50vh;
-overflow-y:auto;
-padding-right:6px;
+.empty-state{
+text-align:center;
+padding:50px 20px;
 }
 
-</style>
-
-</head>
-
-<body>
-
-<!-- BAJAJ WATERMARK -->
-<div class="watermark">
-<img src="Bajaj.png">
-</div>
-
-<!-- HEADER -->
-<div class="text-center py-6">
-<h1 class="text-3xl font-bold">🚍 BAJAJ LIVE TRANSPORT</h1>
-<p class="text-gray-200">Real-Time Bus Tracking System</p>
-</div>
-
-<!-- SHIFT SELECTOR -->
-<div class="max-w-6xl mx-auto p-6">
-<div class="card">
-<h2 class="text-xl font-bold text-yellow-300 mb-2">🕐 Select Your Shift</h2>
-<select id="shiftSelect" class="w-full p-3 rounded-xl text-black font-semibold">
-<option value="">-- Select Shift --</option>
-<option value="1st Shift">1st Shift</option>
-<option value="2nd Shift">2nd Shift</option>
-<option value="3rd Shift">3rd Shift</option>
-<option value="General Shift">General Shift</option>
-</select>
-</div>
-</div>
-
-<!-- ROUTES (populated dynamically based on selected shift) -->
-<div id="routesGrid" class="max-w-6xl mx-auto grid md:grid-cols-2 gap-6 p-6">
-<p id="noShiftMsg" class="text-gray-300 col-span-2 text-center">👆 Route list dekhne ke liye pehle apni shift select karo.</p>
-</div>
-
-<!-- ================= STOPS MODAL ================= -->
-<div id="stopsModal" class="modal">
-
-<div class="box">
-
-<div class="flex justify-between items-center">
-<button onclick="closeStops()" class="text-2xl leading-none">❌</button>
-<h2 class="text-xl font-bold">🚌 Route Stops</h2>
-<span style="width:24px;"></span>
-</div>
-
-<div id="stopsList" class="mt-3"></div>
-
-</div>
-</div>
-
-<!-- ================= TRACKING MODAL ================= -->
-<div id="trackingModal" class="modal">
-
-<div class="box">
-
-<div class="flex justify-between">
-<h2 class="text-xl font-bold">📍 Live Tracking</h2>
-<button onclick="closeTracking()">❌</button>
-</div>
-
-<h3 id="routeName" class="mt-2 font-bold text-blue-600">--</h3>
-
-<div id="map" class="mt-4"></div>
-
-<br>
-
-<p>Latitude: <span id="lat">--</span></p>
-<p>Longitude: <span id="lng">--</span></p>
-
-</div>
-</div>
-
-<script>
-
-let map, marker, routeNumber="", interval, routeLine;
-let currentShift = "";
-
-/* =========================================================
-   SHIFT -> ROUTE NUMBER -> BUS STOP
-   (same data used on the Employee Registration page, so
-   routes/stops stay consistent across the whole app)
-   ========================================================= */
-const SHIFT_ROUTES = {
-
-    "1st Shift": {
-        "Route 1 (LONI KALBHOR)": ["Loni Gaon", "HP Pump, Loni Gaon", "Wakwasti","Manjre Farm","Shawalwadi Depot","Bhekarai Nagar","Bhaji Mandai, Hadapsar","Pune Station","Maldhakka Ambedkar Bhavan","Dapodi"],
-        "Route 2 (NARAYANGAON)": ["Hotel Shravani", "Narayangaon Bus Stop", "Police Station","Manchar Market Yard","Mulewadi Road","Lohakare Hospita","Rakshewade"],
-        "Route 3 (SINHAGAD ROAD)": ["Kolhewadi", "Sun City", "Warje Bridge","CNG Petrol Pump, Bavdhan","Balewadi","Dange Chowk","Chinchwad Nagar"],
-        "Route 4 (WARJE)":["NDA","Mayur Colony","Ashish Garden, Kothrud"],
-        "Route 5 (WAGHOLI)":["Wageshwar Mandir","Kharadi Bypass","Wadgaon Sheri, Tingre Nagar","Bhopkhel","Parande Nagar","Datta Nagar"],
-        "Route 6 (KATRAJ)":["Santosh Nagar","Bharati Vidyapeeth","Hatti Chowk","Padmavati","Bibwewadi","Shaniwar Wada","Shivajinagar","Khondba Chowk"],
-        "Route 7 (MENGDEWADI)": [ "Mengdewadi", "Hingewasti", "Ausari BK Bus Stand", "Pandurang Mandir", "Temkar Wasti", "Ausari KH Water Tank", "Ranwara Hotel","Shivdhan Plaza","Marathi Shala","Market Yard","Khed Bus Stand","Shiroli Phata","Rajratna Hotel"],
-        "Route 8 (PABAL)":["Pabal","Petrol Pump Pabal","Tamane Mala","Kanersir","Nimgaon","Chavan Mala","Maharaja Chowk"],
-        "Route 9 (VISHRANTWADI)":["Vishrantwadi Chowk","Dhanori","Kotak Mahindra","Charholi Gaon","Bank of Maharashtra","Charholi Phata","Kate Colony","Kale Colony"],
-        "Route 10 (OLD SANGAVI)":["Sangavi Bus Stop","Ganpati Mandir","Kranti Chowk","Katepuram Chowk","Radha Krishna Mangal Karyalaya","Dehukar Park","Tulja Bhavani Mandir","Kalpataru Chowk","Nashik Phata","Empire Bridge","Akurdi Bajaj Gate"],
-        "Route 11 (ALANDI)":["Cosmos Bank","Dehu Phata","Dudulgaon","Dudulgaon 1","Moshi","Bharat Mata Chowk","Tupe Wasti","Moshi Toll Naka","Chimbli Phata","Kuruli Phata"],
-        "Route 12 (RAVET)":["Kiwale","Mukai Chowk","Adarsh Nagar","Soni Ghar","Shinde Wasti","CNG Pump"],
-        "Route 13 (KALE WADI)":["Thergaon","16 No. Bus Stop","Kalewadi Bridge","Rahatani Phata","Dhangar Baba","Tapkir Chowk","Keshav Nagar Corner","Keshav Nagar Bus Stop","Talera Hospital","Chafekar Chowk","SKF Company","Prem Lok Park","Delvi Nagar"],
-        "Route 14 (SHASTRI CHOWK)":["Shastri Chowk","Dighi Road","Panjar Pol","Godam Chowk","Gandharva Nagari","Sainath Hospital","Borade Wasti"],
-        "Route 15 (DEHU ROAD)":["Mamurdi (Sai Nagar)","Vikas Nagar","SBI Bank","Dehu Road","Chincholi","Abhilekha Park","Sangurdi Phata","Yelwadi"],
-        "Route 16 (SHEETAL BAGH)":["Landewadi","Spine Road","Jadhavwadi","Chikhli"],
-        "Route 17 (WADGAON)":["Wadgaon","Matoshree","Jambhul Phata","Wadgaon Court","Chhatrapati Shivaji Chowk","Lotus","Wadgaon Phata","Murlesh Hotel","Aarth Hospital","Seva Dham","Machhi Market","Indrayani College"],
-        "Route 18 (BHOSARI EXTRA)":["PMT Chowk, Bhosari","Dhawade Wasti","Satguru Nagar","Jadhavwadi","Laxmi Chowk","D Mart, Moshi","Silver 9","Rustic"],
-        "Route 19 (SHARAD NAGAR)":["Sane Chowk","Sharad Nagar","Gharkul Chowk","Kaseriyo Society","Nevale Wasti","Ganesh Mandir","Navale Wasti Corner","Imperial Hospital","Talawade Chowk"],
-        "Route 20 (RAJGURU NAGAR - KHED)":["Sangam Garden","Sangam Classic","Panyachi Taki","Panchayat Samiti","Chandoli Phata","Vishwakalyan"],
-        "Route 21 (YCM)":["Mahesh Nagar Chowk","Nehru Nagar","Vitthal Mandir","Ajmera 1","Ajmera 2","Ajmera 3","Bajaj Colony - Amruteshwar Colony","Old RTO","Petrol Pump","Kudalwadi 1","Patil Nagar, Chikhli","Bajaj Auto"],
-        "Route 22 (LINK ROAD)":["Gawade Petrol Pump","Chafekar Chowk","Bijli Nagar","Ankush Chowk","Triveni Nagar","Tawre Line","Ganesh Nagar"],
-        "Route 23 (TALEGAON)":["McDonald's","Bagicha Hotel","Nim Phata","Bhandari Hospital","Kesar Hotel","Jijamata Chowk","Khadge Pump","Nagar Palika","Kaka Halwai","BSNL","Siddhi Khed","Machhi Market","Induri Gaon","Khalumbre"],
-        "Route 24 (SHAHU NAGAR)":["Atal Bihari Udyan Corner","Rasrang","Ganesh Mandir","Bajaj School","Someshwar Mandir","Chintamani Corner","Kasturi Market","Polite Harmony","Ganesh International School"],
-        "Route 25 (AUTO GAS TALEGAON)":["Varale Phata","Shivaji Chowk","Sindket Bank","Bullet Showroom","Balaji Marble","Aishwarya Hotel","Indori Gaon"],
-        "Route 26 (WALHEKARWADI)":["Jakat Naka","Walhekarwadi Chowk","Aaher Garden","Ganpati Mandir","Gurudwara Chowk","Railway Station","Appu Ghar"],
-        "Route 27 (MOHAN NAGAR)":["Pimple Saudagar","Pimpri Gaon","Kalewadi","Vijay Nagar Bus Stop","Mohan Nagar","Huma Bakery"],
-        "Route 28 (BAJAJ SCHOOL)":["Vinayak Sweets","Shivalkar Chowk","Hanuman Mandir","Mehtre Garden","More Wasti","Ashtavinayak Chowk","Vande Mataram Chowk","Waghu Sane Chowk","Aishwaryam Society"],
-        "Route 29 (DEHUGAON)":["Krida Sankul","Omi Home","Gatha Mandir","Arogya Hospital","Parandwal Chowk","Parishri Hotel","Omkar Society","V-Mart","Banner Bank","Vitthalwadi"],
-        "Route 30 (WAKI PHATA)":["Sumbare Nagar","Ekta Nagar","Swapna Nagari","Chakan Market Yard","Yeshwant Nagar","Dnyanvardhani School","Jhipre Mala","Biradwadi"],
-        "Route 31 (MEDANKARWADI)":["Kadachiwadi","Kalpataru Society","Medankarwadi Phata","Vishal Garden"],
-        "Route 32 (BALAJI NAGAR CHAKAN)":["Chakan Chowk","Mutkewadi","Balaji Nagar","Premacha Chaha","IAI Company"],
-        "Route 33 (CHAKAN CHOWK)":["Ambethan Chowk","Ghadge Mala","Unicare Hospital","Chakan Chowk","Arogyam Hospital","Sahara City","Kharabwadi","Mahalunge"],
-        "Route 33 (DANGE CHOWK)":["Dange Chowk","Bijli Nagar","Big India","Sambhaji Chowk","Mhalsakant Chowk","TJSB Bank","Datta Wadi","Nigdi","LIC Corner","Hatti Chowk"],
-        "Route 35 (NIGDI)":["Pawale Bridge","Swanand Dairy","LIC Corner","Hatti Chowk","Ganesh Nagar","Jyotiba Nagar","Talawade (Only Ladies)"],
-        "Route 36 (MEDANKARWADI EXTRA)":["Kadachiwadi","Kalpataru Society","Medankarwadi Phata","Vishal Garden"],
-        "Route 37 (IAI COMPANY)":["IAI Company"],
-        "Route 38 (KHANDO MANDIR CHAKAN)":["Khandoba Mandir","Vishal Garden","Manik Chowk","Premacha Chaha"],
-        "Route 40 (CHAKAN CHOWK)":["Ambethan Chowk","Ghadge Mala","Unicare Hospital","Chakan Chowk","Arogyam Hospital","Sahara City","Kharabwadi","Mahalunge"]
-    },
-
-    "2nd Shift": {
-        "Route 1 (SINHGAD)":["Kolhewadi","Sinhagad Road","Dahyri Gaon","Navale Bridge","Warje","Bawdhan","Balewadi","Dange Chowk","Aditya Birla","Chinchwade Nagar","Kachghar Chowk","Ankush Chowk","Chakan Chowk","Bajaj Chakan"],
-        "Route 2 (WAGHOLI)":["Wagholi","Vishrantwadi","Dighi","Sai Mandir","Kale Colony","Kate Colony","Chikhali","Bajaj Chakan"],
-        "Route 3 (DEHU GAON)":["Krida Sankul","Gatha Mandir","V Mart","Baner Bank","Bypass Chowk","Devi Indrani","Bajaj Chakan"],
-        "Route 4 (MEDANKARWADI)":["Kadachiwadi","Medankarwadi Gate","Vishal Garden","Manik Chowk","Indian Oil Pump","Balaji Nagar (Premacha Chaha)","IAI Company","Bajaj Chakan"],
-        "Route 5 (WAKI PHATA)":["Biradwadi","Waki Phata","Ekta Nagar","Swapna Nagari","Market Yard","Ambethan Chowk","Zitrai Mala","Mahalunge","Bajaj Chakan"],
-        "Route 6 (RAVET-WALHEKARWADI)":["Mukai Chowk","CNG Pump","Shinde Wasti","Walhekarwadi","Chintamani Chowk","Ganesh Mandir","Athurwa Park","Gurudwara Chowk","Tower Line","Huma Bakery","Bajaj Chakan"],
-        "Route 7 (ALANDI)":["Charoli Phata","Dehu Phata","Dudulgaon","Moshi","Bharat Mata Chowk","Chikhali Rustic Paradise","Bajaj Chakan"],
-        "Route 8 (SHASTRI CHOWK)":["Shastri Chowk","PMT Chowk","Dhawde Wasti","Godown Chowk","Panjarpol","Gandharv Nagari","Borhade Wasti","Tupe Wasti","Toll Naka","Chimbli Phata","Kurali Phata","Bajaj Chakan"],
-        "Route 9 (DEHUROAD)":["Sai Nagar Mamurdi","Shinde Petrol Pump Dehuroad","Vikas Nagar Dehuroad","Bank of India Dehuroad","Mali Nagar (Malwadi)","Abhilasha Society","Mangalkaryalaya","Parandwal Chowk","Yelwadi","Bajaj Chakan"],
-        "Route 10 (PIMPLE GURAV)":["Dapodi","Kate Puram Chowk","Bhau Nagar","Pimpri","Akurdi Main Gate","LIC Corner","Triveni Nagar","Bajaj Chakan"],
-        "Route 11 (JADHAVWADI)":["Jadhavwadi","RTO","Sharad Nagar","Newale Wasti","Ganpati Mandir","Newale Wasti Corner","Patil Nagar","Rustic Plaza","Talwade Chowk","Mahindra Gate","Bajaj Chakan"],
-        "Route 12 (TALEGAON)":["Bagicha Hotel","Tukaram Nagar","Bhandari Hospital","Bhosle Chaha","Jijamata Chowk","Khandge Petrol Pump","Kaka Halwai","BSNL","Balaji Marble","Sadumbre","Khalumbre","Bajaj Chakan"],
-        "Route 13 (WADGAON)":["Chhatrapati Shivaji Chowk","Lotus","Rupesh Hotel","Athurwa Hospital","Sevadham","Indrayani College Talegaon","Bullet Showroom","Induri","Khalumbre","Bajaj Chakan"],
-        "Route 14 (KHED)":["Kardewasti","Sangam Garden","Sangam Classic","Water Tank","Pabal Road","Dhadge Mala","Unicare Hospital","Arogyam Hospital","IFL City","Kharabwadi","Sara City","Mahalunge"],
-        "Route 15 (KALEWADI)":["16 No Bus Stop","Kalewadi Phata","Rahatani Phata","Laxman Nagar Thergaon","Old Jakat Naka","Gawde Petrol Pump Link Road","Chafekar Chowk","Chaitanya Hall","Giriraj Housing Society","Hanuman Sweet","Mhalsakant Chowk","TJSB Bank","Axis Bank","Dattawadi","Bajaj Chakan"],
-        "Route 16 (SHAHU NAGAR)":["Ajmera","Amruteshwar Colony","Shahu Garden","Aryan Residency","Ganpati Mandir","Bajaj School","Rameshwar Mandir","Sambhaji Nagar Chowk","Rajdeep Society","Kasturi Market","Shivarkar Chowk","Polite Harmony","Ganesh International School","Shine City","Bajaj Chakan"],
-        "Route 17 (CHAKAN CHOWK)":["Balaji Nagar","Chakan Chowk","Ghanvat Plaza","Arogyam Hospital","Nanekarwadi","Kharabwadi","Sara City","Mahalunge","Hotel Karwa"],
-        "Route 18 (MOHAN NAGAR)":["Mohan Nagar","Morewasti","Chikhali Rustic Paradise","Talwade Chowk","Mahindra Gate"],
-        "Route 19 (ANKUSH CHOWK)":["Ankush Chowk","Triveni Nagar","Tower Line","Huma Bakery","Ganesh Nagar","Jotiba Nagar","Talwade Chowk"],
-        "Route 20 (NARAYANGAON)":["Raut Hospital Narayangaon","Narayangaon ST Stand","Manchar Market Yard","Manchar College Road","Maxcare Hospital Manchar","Paragaon Phata","Market Yard","Ambethan Chowk"],
-        "Route 21 (NIGDI)":["Big India","Dattawadi","LIC Corner","Hatti Chowk"]
-    },
-
-    "3rd Shift": {
-        "Route 1 (NIGDI)":["Nigdi Bridge","LIC Chowk"],
-        "Route 2 (TALEGAON)":["Talegaon","Khalumbre","Manohar Nagar Talegaon"],
-        "Route 3 (DEHU GAON)":["Dehugaon","Parishree Hospital"],
-        "Route 4 (SHASTRI CHOWK)":["Shastri Chowk","Bhosari","Alandi"],
-        "Route 5 (RAJGURU NAGAR)":["Rajgurunagar","Khed Toll Naka","Ambethan Chowk","Biradwadi"],
-        "Route 6 (MEDANKARWADI)":["Medankarwadi"],
-        "Route 7 (BALAJI NAGAR)":["Balaji Nagar","Chakan","Eiffel City","Karwa Hotel"],
-        "Route 8 (CHIKHALI)":["Chikhali","Sane Chowk"],
-        "Route 9 (DEHUROAD)":["Dehuroad"],
-        "Route 10 (PCMC)":["Mhalsakant Chowk"]
-    },
-
-    "General Shift": {
-        "Route 1 (SINHGAD)":["Kolhewadi","Sinhagad Road","Dahyri Gaon","Navale Bridge","Warje","Bawdhan","Balewadi","Dange Chowk","Aditya Birla","Chinchwade Nagar","Kachghar Chowk","Ankush Chowk","Chakan Chowk","Bajaj Chakan"],
-        "Route 2 (WAGHOLI)":["Wagholi","Vishrantwadi","Dighi","Sai Mandir","Kale Colony","Kate Colony","Chikhali","Bajaj Chakan"],
-        "Route 3 (DEHU GAON)":["Krida Sankul","Gatha Mandir","V Mart","Baner Bank","Bypass Chowk","Devi Indrani","Bajaj Chakan"],
-        "Route 4 (MEDANKARWADI)":["Kadachiwadi","Medankarwadi Gate","Vishal Garden","Manik Chowk","Indian Oil Pump","Balaji Nagar (Premacha Chaha)","IAI Company","Bajaj Chakan"],
-        "Route 5 (WAKI PHATA)":["Biradwadi","Waki Phata","Ekta Nagar","Swapna Nagari","Market Yard","Ambethan Chowk","Zitrai Mala","Mahalunge","Bajaj Chakan"],
-        "Route 6 (RAVET-WALHEKARWADI)":["Mukai Chowk","CNG Pump","Shinde Wasti","Walhekarwadi","Chintamani Chowk","Ganesh Mandir","Athurwa Park","Gurudwara Chowk","Tower Line","Huma Bakery","Bajaj Chakan"],
-        "Route 7 (ALANDI)":["Charoli Phata","Dehu Phata","Dudulgaon","Moshi","Bharat Mata Chowk","Chikhali Rustic Paradise","Bajaj Chakan"],
-        "Route 8 (SHASTRI CHOWK)":["Shastri Chowk","PMT Chowk","Dhawde Wasti","Godown Chowk","Panjarpol","Gandharv Nagari","Borhade Wasti","Tupe Wasti","Toll Naka","Chimbli Phata","Kurali Phata","Bajaj Chakan"],
-        "Route 9 (DEHUROAD)":["Sai Nagar Mamurdi","Shinde Petrol Pump Dehuroad","Vikas Nagar Dehuroad","Bank of India Dehuroad","Mali Nagar (Malwadi)","Abhilasha Society","Mangalkaryalaya","Parandwal Chowk","Yelwadi","Bajaj Chakan"],
-        "Route 10 (PIMPLE GURAV)":["Dapodi","Kate Puram Chowk","Bhau Nagar","Pimpri","Akurdi Main Gate","LIC Corner","Triveni Nagar","Bajaj Chakan"],
-        "Route 11 (JADHAVWADI)":["Jadhavwadi","RTO","Sharad Nagar","Newale Wasti","Ganpati Mandir","Newale Wasti Corner","Patil Nagar","Rustic Plaza","Talwade Chowk","Mahindra Gate","Bajaj Chakan"],
-        "Route 12 (TALEGAON)":["Bagicha Hotel","Tukaram Nagar","Bhandari Hospital","Bhosle Chaha","Jijamata Chowk","Khandge Petrol Pump","Kaka Halwai","BSNL","Balaji Marble","Sadumbre","Khalumbre","Bajaj Chakan"],
-        "Route 13 (WADGAON)":["Chhatrapati Shivaji Chowk","Lotus","Rupesh Hotel","Athurwa Hospital","Sevadham","Indrayani College Talegaon","Bullet Showroom","Induri","Khalumbre","Bajaj Chakan"],
-        "Route 14 (KHED)":["Kardewasti","Sangam Garden","Sangam Classic","Water Tank","Pabal Road","Dhadge Mala","Unicare Hospital","Arogyam Hospital","IFL City","Kharabwadi","Sara City","Mahalunge"],
-        "Route 15 (KALEWADI)":["16 No Bus Stop","Kalewadi Phata","Rahatani Phata","Laxman Nagar Thergaon","Old Jakat Naka","Gawde Petrol Pump Link Road","Chafekar Chowk","Chaitanya Hall","Giriraj Housing Society","Hanuman Sweet","Mhalsakant Chowk","TJSB Bank","Axis Bank","Dattawadi","Bajaj Chakan"],
-        "Route 16 (SHAHU NAGAR)":["Ajmera","Amruteshwar Colony","Shahu Garden","Aryan Residency","Ganpati Mandir","Bajaj School","Rameshwar Mandir","Sambhaji Nagar Chowk","Rajdeep Society","Kasturi Market","Shivarkar Chowk","Polite Harmony","Ganesh International School","Shine City","Bajaj Chakan"],
-        "Route 17 (CHAKAN CHOWK)":["Balaji Nagar","Chakan Chowk","Ghanvat Plaza","Arogyam Hospital","Nanekarwadi","Kharabwadi","Sara City","Mahalunge","Hotel Karwa"],
-        "Route 18 (MOHAN NAGAR)":["Mohan Nagar","Morewasti","Chikhali Rustic Paradise","Talwade Chowk","Mahindra Gate"],
-        "Route 19 (ANKUSH CHOWK)":["Ankush Chowk","Triveni Nagar","Tower Line","Huma Bakery","Ganesh Nagar","Jotiba Nagar","Talwade Chowk"],
-        "Route 20 (NARAYANGAON)":["Raut Hospital Narayangaon","Narayangaon ST Stand","Manchar Market Yard","Manchar College Road","Maxcare Hospital Manchar","Paragaon Phata","Market Yard","Ambethan Chowk"],
-        "Route 21 (NIGDI)":["Big India","Dattawadi","LIC Corner","Hatti Chowk"]
-    }
-};
-
-// ================= RENDER ROUTE CARDS FOR SELECTED SHIFT =================
-const shiftSelectEl = document.getElementById("shiftSelect");
-const routesGrid = document.getElementById("routesGrid");
-
-function renderRoutes(shift){
-
-routesGrid.innerHTML = "";
-
-if(!shift){
-    routesGrid.innerHTML = '<p class="text-gray-300 col-span-2 text-center">👆 Route list dekhne ke liye pehle apni shift select karo.</p>';
-    return;
+.empty-state a{
+display:inline-block;
+margin-top:16px;
+background:#2563eb;
+color:white;
+padding:10px 22px;
+border-radius:12px;
+text-decoration:none;
+font-weight:600;
 }
 
-const routes = SHIFT_ROUTES[shift] || {};
-const routeNames = Object.keys(routes);
-
-if(routeNames.length === 0){
-    routesGrid.innerHTML = '<p class="text-gray-300 col-span-2 text-center">Is shift ke liye abhi koi route configure nahi hai.</p>';
-    return;
-}
-
-routeNames.forEach(routeName=>{
-
-    const stops = routes[routeName];
-    const from = stops[0];
-    const to = stops[stops.length-1];
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-        <h2 class="text-xl font-bold text-yellow-300">${routeName}</h2>
-        <p>${from} → ${to}</p>
-        <button class="btn blue">📍 Show Stops</button>
-        <button class="btn green">🚍 Live Tracking</button>
-    `;
-
-    const [stopsBtn, trackBtn] = card.querySelectorAll("button");
-    stopsBtn.onclick = ()=> showStops(routeName);
-    trackBtn.onclick = ()=> openTracking(routeName);
-
-    routesGrid.appendChild(card);
-});
-
-}
-
-shiftSelectEl.addEventListener("change", function(){
-    currentShift = shiftSelectEl.value;
-    renderRoutes(currentShift);
-});
-
-// ================= SHOW STOPS =================
-function showStops(routeName){
-
-document.getElementById("stopsModal").style.display="block";
-
-let list=document.getElementById("stopsList");
-list.innerHTML="";
-
-const stops = (SHIFT_ROUTES[currentShift] && SHIFT_ROUTES[currentShift][routeName]) || [];
-
-stops.forEach(s=>{
-let div=document.createElement("div");
-div.className="stop";
-div.innerHTML="📍 "+s;
-list.appendChild(div);
-});
-
-}
-
-function closeStops(){
-document.getElementById("stopsModal").style.display="none";
-}
-
-// ================= LIVE TRACK =================
-function openTracking(r){
-
-route=r;
-document.getElementById("routeName").innerText=r+" ("+currentShift+")";
-document.getElementById("trackingModal").style.display="block";
-
-setTimeout(()=>{
-
-if(map) map.remove();
-
-map=L.map('map').setView([18.5204,73.8567],12);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-// BAJAJ ICON (OPTIONAL)
-let icon=L.icon({
-iconUrl:"Bajaj.png",
-iconSize:[45,45]
-});
-
-marker=L.marker([18.5204,73.8567],{icon}).addTo(map);
-
-// ROUTE LINE
-routeLine=L.polyline([],{
-color:"#00ff88",
-weight:4
-}).addTo(map);
-
-if(interval) clearInterval(interval);
-
-interval=setInterval(updateBus,2000);
-
-},300);
-
-}
-
-// ================= LIVE UPDATE =================
-async function updateBus(){
-
-let res=await fetch(`/live-location/${encodeURIComponent(currentShift)}/${encodeURIComponent(route)}`);
-let data=await res.json();
-
-if(data.success){
-
-let lat=data.lat;
-let lng=data.lng;
-
-// smooth movement
-marker.setLatLng([lat,lng]);
-map.panTo([lat,lng]);
-
-// route line
-routeLine.addLatLng([lat,lng]);
-
-document.getElementById("lat").innerText=lat;
-document.getElementById("lng").innerText=lng;
-
-}
-
-}
-
-// ================= CLOSE =================
-function closeTracking(){
-document.getElementById("trackingModal").style.display="none";
-if(interval) clearInterval(interval);
-}
-
-// ================= AUTO-OPEN FROM SHARED LINK =================
-// When admin shares a link like viewroots.html?shift=1st%20Shift&route=Route%201%20(LONI%20KALBHOR)
-// this jumps straight into live tracking for that shift+route, no manual selection needed.
-(function autoOpenFromSharedLink(){
-
-const params = new URLSearchParams(window.location.search);
-const qShift = params.get("shift");
-const qRoute = params.get("route");
-
-if(qShift && SHIFT_ROUTES[qShift]){
-
-    currentShift = qShift;
-    shiftSelectEl.value = qShift;
-    renderRoutes(qShift);
-
-    if(qRoute && SHIFT_ROUTES[qShift][qRoute]){
-        setTimeout(()=> openTracking(qRoute), 200);
-    }
-}
-
-})();
-
-</script>
-
-
-<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
-<style>
 #globalBackBtn{
     position:fixed;
     top:14px;
@@ -480,16 +155,175 @@ if(qShift && SHIFT_ROUTES[qShift]){
 }
 #globalBackBtn:hover{ background:#0f172a; }
 @media (max-width:600px){
-    #globalBackBtn{
-        top:8px;
-        left:8px;
-        padding:8px 14px;
-        font-size:13px;
-    }
+    #globalBackBtn{ top:8px; left:8px; padding:8px 14px; font-size:13px; }
 }
+
 </style>
+
+</head>
+
+<body>
+
+<div class="watermark">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png">
+</div>
+
 <button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
-<!-- ============ END BACK BUTTON ============ -->
+
+<div class="header">
+<h1 class="text-3xl font-bold">🚍 BAJAJ LIVE TRANSPORT</h1>
+<p class="text-gray-300 mt-1" id="routeSubtitle">Real-Time Bus Tracking</p>
+<div class="status-pill" id="statusPill">
+<span class="status-dot"></span>
+<span id="statusText">Waiting for location...</span>
+</div>
+</div>
+
+<div class="wrap" id="mainContent">
+
+<div class="card">
+<h2 class="text-xl font-bold text-yellow-300" id="routeTitle">--</h2>
+<p class="text-gray-300" id="shiftLabel">--</p>
+
+<div id="map" class="mt-4"></div>
+
+<div class="info-row">
+<span>Latitude: <b id="lat">--</b></span>
+<span>Longitude: <b id="lng">--</b></span>
+<span>Last update: <b id="updatedAt">--</b></span>
+</div>
+</div>
+
+<div class="card">
+<h3 class="font-bold mb-2">📍 Bus Stops on this route</h3>
+<div class="stop-list" id="stopsList"></div>
+</div>
+
+</div>
+
+<div class="wrap empty-state" id="emptyState" style="display:none;">
+<h2 class="text-xl font-bold">No route selected</h2>
+<p class="text-gray-300 mt-2">This link needs a shift and route — ask the admin for the correct tracking link, or open it from your dashboard's "Track Bus" button.</p>
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const shift = params.get("shift") || "";
+const route = params.get("route") || "";
+
+let map, marker, routeLine;
+let pollInterval;
+
+function initPage(){
+
+    if(!shift || !route){
+        document.getElementById("mainContent").style.display = "none";
+        document.getElementById("emptyState").style.display = "block";
+        return;
+    }
+
+    document.getElementById("routeSubtitle").textContent = shift + " — " + route;
+    document.getElementById("routeTitle").textContent = route;
+    document.getElementById("shiftLabel").textContent = shift;
+
+    initMap();
+    loadStops();
+
+    pollInterval = setInterval(updateBus, 2000);
+    updateBus();
+}
+
+function initMap(){
+
+    map = L.map('map').setView([18.5204, 73.8567], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const icon = L.icon({
+        iconUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png",
+        iconSize: [40, 40]
+    });
+
+    marker = L.marker([18.5204, 73.8567], { icon }).addTo(map);
+
+    routeLine = L.polyline([], {
+        color: "#00ff88",
+        weight: 4
+    }).addTo(map);
+
+}
+
+async function loadStops(){
+
+    try{
+
+        const res = await fetch("/get-shift-routes?shift=" + encodeURIComponent(shift));
+        const data = await res.json();
+
+        const stops = (data.routes && data.routes[route]) || [];
+
+        const list = document.getElementById("stopsList");
+
+        if(stops.length === 0){
+            list.innerHTML = `<span class="text-gray-400 text-sm">No stop information available for this route.</span>`;
+            return;
+        }
+
+        list.innerHTML = stops.map(s => `<div class="stop-chip">📍 ${s}</div>`).join("");
+
+    } catch(e){
+        console.log(e);
+    }
+
+}
+
+async function updateBus(){
+
+    try{
+
+        const res = await fetch(`/live-location/${encodeURIComponent(shift)}/${encodeURIComponent(route)}`);
+        const data = await res.json();
+
+        const pill = document.getElementById("statusPill");
+        const statusText = document.getElementById("statusText");
+
+        if(data.success){
+
+            const lat = data.lat;
+            const lng = data.lng;
+
+            marker.setLatLng([lat, lng]);
+            map.panTo([lat, lng]);
+            routeLine.addLatLng([lat, lng]);
+
+            document.getElementById("lat").textContent = lat.toFixed(6);
+            document.getElementById("lng").textContent = lng.toFixed(6);
+            document.getElementById("updatedAt").textContent = data.updatedAt;
+
+            pill.classList.add("live");
+            statusText.textContent = "Live — updated " + data.updatedAt;
+
+        } else {
+
+            pill.classList.remove("live");
+            statusText.textContent = "Waiting for admin to share live location...";
+
+        }
+
+    } catch(e){
+        console.log(e);
+    }
+
+}
+
+window.addEventListener("beforeunload", () => {
+    if(pollInterval) clearInterval(pollInterval);
+});
+
+initPage();
+
+</script>
 
 </body>
 </html>
