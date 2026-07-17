@@ -691,10 +691,10 @@ def bus_pass():
 
         data = request.get_json()
 
-        employeeCode = data.get("employeeCode")
-
-        if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
-            return jsonify({"status": "error", "message": "Not Authorized"}), 403
+        # Always use the logged-in session's own employeeCode, never a
+        # client-submitted value - fixes false "Not Authorized" and closes
+        # off a user tampering with the request to act as someone else.
+        employeeCode = session.get("employeeCode")
 
         df = load_df()
 
@@ -761,12 +761,12 @@ def bus_pass():
 # ==========================
 
 
+@app.route("/check-pass", defaults={"employeeCode": None})
 @app.route("/check-pass/<employeeCode>")
 @login_required("employee")
 def check_pass(employeeCode):
 
-    if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
-        return jsonify({"status": "error", "message": "Not Authorized"}), 403
+    employeeCode = session.get("employeeCode")
 
     df = pd.read_excel(PASS_FILE)
 
@@ -887,16 +887,23 @@ def approve_pass():
  # ==========================
 # GET MY PASS
 # ==========================
+@app.route("/my-pass", defaults={"employeeCode": None}, methods=["GET"])
 @app.route("/my-pass/<employeeCode>", methods=["GET"])
 @login_required("employee")
 def my_pass(employeeCode):
 
-    if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
-        return jsonify({"status": "error", "message": "Not Authorized"}), 403
+    # Always trust the SERVER-SIDE session for identity, never the
+    # URL/client value. Previously this route 403'd with "Not Authorized"
+    # whenever the URL's employeeCode didn't exactly match the session's
+    # (e.g. stale localStorage from an earlier login/browser session) —
+    # even though the person WAS validly logged in. Since this route is
+    # already locked to "your own pass only", the URL value is redundant;
+    # using the session value directly removes that whole bug class.
+    employeeCode = session.get("employeeCode")
 
     try:
 
-        print("Employee Code from URL:", employeeCode)
+        print("Employee Code from session:", employeeCode)
 
         df = pd.read_excel(PASS_FILE)
         df.columns = df.columns.str.strip()
@@ -991,9 +998,9 @@ def request_pass():
 
         data = request.get_json()
 
-        employeeCode = str(
-            data.get("employeeCode", "")
-        ).strip()
+        # Always use the logged-in session's own employeeCode, never a
+        # client-submitted value.
+        employeeCode = str(session.get("employeeCode", "")).strip()
 
         if employeeCode == "":
 
@@ -1001,9 +1008,6 @@ def request_pass():
                 "status": "error",
                 "message": "Employee Code Required"
             })
-
-        if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
-            return jsonify({"status": "error", "message": "Not Authorized"}), 403
 
         # Employee Data
         df = load_df()
@@ -1452,10 +1456,9 @@ def request_temp_pass():
     try:
         data = request.get_json()
 
-        employeeCode = str(data.get("employeeCode", "")).strip()
-
-        if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
-            return jsonify({"status": "error", "message": "Not Authorized"}), 403
+        # Always use the logged-in session's own employeeCode, never a
+        # client-submitted value.
+        employeeCode = str(session.get("employeeCode", "")).strip()
 
         if employeeCode == "":
             return jsonify({"status": "error", "message": "Employee Code Required"})
@@ -1568,12 +1571,15 @@ def reject_temp_pass():
 
 
 # ---- Employee: view / download their approved temporary pass ----
+@app.route("/my-temp-pass", defaults={"employeeCode": None}, methods=["GET"])
 @app.route("/my-temp-pass/<employeeCode>", methods=["GET"])
 @login_required("employee")
 def my_temp_pass(employeeCode):
 
-    if str(session.get("employeeCode", "")).strip() != str(employeeCode).strip():
-        return jsonify({"status": "error", "message": "Not Authorized"}), 403
+    # Same fix as /my-pass: always use the session's own employeeCode,
+    # never the URL/client value, so a stale/mismatched client value
+    # can't wrongly trigger "Not Authorized" for a validly logged-in user.
+    employeeCode = session.get("employeeCode")
 
     try:
         df = pd.read_excel(TEMP_PASS_FILE)
@@ -1729,4 +1735,3 @@ if __name__ == "__main__":
     # debug mode should NEVER be on when the site is public (it leaks
     # internal code/data on errors). Set FLASK_DEBUG=True locally if needed.
     app.run(debug=os.environ.get("FLASK_DEBUG", "False") == "True")
-
