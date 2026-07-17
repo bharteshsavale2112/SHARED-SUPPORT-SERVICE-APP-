@@ -1735,4 +1735,3 @@ if __name__ == "__main__":
     # debug mode should NEVER be on when the site is public (it leaks
     # internal code/data on errors). Set FLASK_DEBUG=True locally if needed.
     app.run(debug=os.environ.get("FLASK_DEBUG", "False") == "True")
-    

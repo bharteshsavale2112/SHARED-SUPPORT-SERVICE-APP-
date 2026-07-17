@@ -328,6 +328,12 @@ async function loadTempPass(){
 
         if(data.status !== "success"){
 
+            if(res.status === 401 || res.status === 403){
+                alert("Session expired or you're logged in as a different user in this browser. Please login again.");
+                window.location.href = "employeelogin.html";
+                return;
+            }
+
             document.getElementById("passContent").style.display = "none";
             document.getElementById("emptyState").style.display = "block";
             return;

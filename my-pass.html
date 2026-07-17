@@ -301,6 +301,16 @@ async function loadPass(){
 
         if(data.status !== "success"){
 
+            // If the session isn't valid for this page (expired, or
+            // logged in as a different role in this same browser), send
+            // the person to login instead of leaving everything stuck
+            // on "Loading...".
+            if(res.status === 401 || res.status === 403){
+                alert("Session expired or you're logged in as a different user in this browser. Please login again.");
+                window.location.href = "employeelogin.html";
+                return;
+            }
+
             alert(data.message);
             return;
 
