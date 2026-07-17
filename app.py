@@ -6,6 +6,7 @@ from flask import request, jsonify
 import openpyxl
 import pandas as pd
 import os
+import json
 
 app = Flask(__name__)
 
@@ -1627,106 +1628,95 @@ def my_temp_pass(employeeCode):
 
 
 # ==========================
-# SUBMIT OT
+# OT REQUEST
 # ==========================
 
-# OT_FILE = "ot_requests.xlsx"
+OT_FILE = "ot_requests.xlsx"
 
-# # # def create_ot_excel():
+def create_ot_file():
+    """Creates ot_requests.xlsx (in the app's own folder, next to the
+    other .xlsx data files) if it doesn't exist yet, with a clean 'Date'
+    column so requests can be filtered/reported on a per-day basis."""
 
     if not os.path.exists(OT_FILE):
 
         df = pd.DataFrame(columns=[
+            "Request ID",
             "Date",
             "Time",
             "Submitted By",
             "Department",
             "Shift",
-            "Route Number",
-            "Route Name",
-            "Bus Stops",
-            "2 Hours",
-            "3 Hours"
+            "Emergency",
+            "Manpower",
+            "Transport",
+            "Total 2 Hours",
+            "Total 3 Hours",
+            "Created On"
         ])
 
-        df.to_excel(OT_FILE,index=False)
-
-# create_ot_excel()
+        df.to_excel(OT_FILE, index=False)
 
 
-# @app.route("/submit-ot",methods=["POST"])
-# def submit_ot():
+create_ot_file()
 
-    create_ot_excel()
-
-    df = pd.read_excel(OT_FILE)
-
-    new_data={
-
-        "Date":datetime.now().strftime("%d-%m-%Y"),
-
-        "Time":datetime.now().strftime("%I:%M %p"),
-
-        "Submitted By":request.form.get("submittedBy"),
-
-        "Department":request.form.get("department"),
-
-        "Shift":request.form.get("shift"),
-
-        "Route Number":request.form.get("routeNumber"),
-
-        "Route Name":request.form.get("routeName"),
-
-        "Bus Stops":request.form.get("busStops"),
-
-        "2 Hours":request.form.get("twoHours"),
-
-        "3 Hours":request.form.get("threeHours")
-
-    }
-
-    df=pd.concat([df,pd.DataFrame([new_data])],ignore_index=True)
-
-    df.to_excel(OT_FILE,index=False)
-
-    return jsonify({
-
-        "status":"success",
-
-        "message":"OT Request Submitted Successfully"
-
-    })
-    
-    
-# ==========================
-# OT REQUEST
-# ==========================
 
 @app.route("/save-ot-request", methods=["POST"])
 def save_ot_request():
 
-    data = request.get_json()
+    try:
 
-    df = pd.read_excel("database/ot_requests.xlsx")
+        data = request.get_json()
 
-    new_row = {
-        "Request ID": "OT" + datetime.now().strftime("%Y%m%d%H%M%S"),
-        "Submitted By": data["submittedBy"],
-        "Department": data["department"],
-        "Shift": data["shift"],
-        "Emergency": "Yes" if data["emergency"] else "No",
-        "Manpower": json.dumps(data["manpower"]),
-        "Transport": json.dumps(data["transport"]),
-        "Created On": datetime.now().strftime("%d-%m-%Y %H:%M")
-    }
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid Request"})
 
-    df.loc[len(df)] = new_row
-    df.to_excel("database/ot_requests.xlsx", index=False)
+        manpower = data.get("manpower", [])
+        transport = data.get("transport", [])
 
-    return jsonify({
-        "status": "success",
-        "message": "Request Saved Successfully"
-    })
+        # Per-day totals, computed from whatever manpower/transport rows
+        # were submitted in this request
+        total_2h = sum(int(p.get("twoHours", 0) or 0) for p in manpower) + \
+                   sum(int(t.get("twoHours", 0) or 0) for t in transport)
+
+        total_3h = sum(int(p.get("threeHours", 0) or 0) for p in manpower) + \
+                   sum(int(t.get("threeHours", 0) or 0) for t in transport)
+
+        create_ot_file()
+
+        df = pd.read_excel(OT_FILE)
+
+        now = datetime.now()
+
+        new_row = {
+            "Request ID": "OT" + now.strftime("%Y%m%d%H%M%S"),
+            "Date": now.strftime("%d-%m-%Y"),
+            "Time": now.strftime("%I:%M %p"),
+            "Submitted By": data.get("submittedBy", ""),
+            "Department": data.get("department", ""),
+            "Shift": data.get("shift", ""),
+            "Emergency": "Yes" if data.get("emergency") else "No",
+            "Manpower": json.dumps(manpower),
+            "Transport": json.dumps(transport),
+            "Total 2 Hours": total_2h,
+            "Total 3 Hours": total_3h,
+            "Created On": now.strftime("%d-%m-%Y %H:%M")
+        }
+
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_excel(OT_FILE, index=False)
+
+        return jsonify({
+            "status": "success",
+            "message": "OT Request Saved Successfully"
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
+
 # ==========================
 # RUN SERVER
 # ==========================
