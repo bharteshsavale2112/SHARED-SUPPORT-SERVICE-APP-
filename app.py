@@ -7,7 +7,10 @@ import openpyxl
 import pandas as pd
 import os
 import json
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+
 
 app = Flask(__name__)
 
@@ -1632,9 +1635,6 @@ def my_temp_pass(employeeCode):
 # OT REQUEST
 # ==========================
 
-
-   
-
 OT_FILE = "ot_requests.xlsx"
 
 OT_COLUMNS = [
@@ -1651,12 +1651,107 @@ OT_COLUMNS = [
     "Total 3 Hours"
 ]
 
+COL_WIDTHS = [20, 12, 12, 18, 18, 14, 12, 45, 45, 12, 12]
+
+HEADER_FONT = Font(name="Arial", bold=True, color="FFFFFF", size=11)
+HEADER_FILL = PatternFill(start_color="00253F", end_color="00253F", fill_type="solid")
+HEADER_ALIGN = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+BODY_FONT = Font(name="Arial", size=10)
+BODY_ALIGN = Alignment(horizontal="left", vertical="top", wrap_text=True)
+CENTER_ALIGN = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+THIN = Side(style="thin", color="DCE3EC")
+BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
+
+EMERGENCY_FILL = PatternFill(start_color="FFF7E0", end_color="FFF7E0", fill_type="solid")
+
+
+def format_manpower(manpower):
+    """JSON list -> readable multi-line text for the Excel cell."""
+    lines = []
+    for p in manpower:
+        provider = p.get("provider", "Unknown")
+        two = p.get("twoHours", 0)
+        three = p.get("threeHours", 0)
+        if two or three:
+            lines.append(f"{provider}: 2Hrs={two}, 3Hrs={three}")
+    return "\n".join(lines) if lines else "-"
+
+
+def format_transport(transport):
+    """JSON list -> readable multi-line text for the Excel cell."""
+    lines = []
+    for t in transport:
+        route = t.get("route", "Unknown Route")
+        two = t.get("twoHours", 0)
+        three = t.get("threeHours", 0)
+        if two or three:
+            lines.append(f"{route}: 2Hrs={two}, 3Hrs={three}")
+    return "\n".join(lines) if lines else "-"
+
+
+def style_header(ws):
+    for col_idx, col_name in enumerate(OT_COLUMNS, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=col_name)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+        cell.alignment = HEADER_ALIGN
+        cell.border = BORDER
+
+    for i, width in enumerate(COL_WIDTHS, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    ws.row_dimensions[1].height = 22
+    ws.freeze_panes = "A2"
+
+
 def create_ot_file():
-    """Master excel file banवतो jar ti exist nasel."""
+    """Master file banवतो jar exist nasel, formatted header sह."""
     if not os.path.exists(OT_FILE):
-        df = pd.DataFrame(columns=OT_COLUMNS)
-        with pd.ExcelWriter(OT_FILE, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="Sheet1")
+        wb = Workbook()
+        ws = wb.active
+        ws.title = datetime.now().strftime("%d-%m-%Y")
+        style_header(ws)
+        wb.save(OT_FILE)
+
+
+def append_row_to_sheet(sheet_name, row_values, is_emergency=False):
+    """openpyxl वापरून row append karto -- formatting kayam rahते."""
+
+    wb = load_workbook(OT_FILE)
+
+    if sheet_name not in wb.sheetnames:
+        ws = wb.create_sheet(title=sheet_name)
+        style_header(ws)
+    else:
+        ws = wb[sheet_name]
+
+    next_row = ws.max_row + 1
+
+    for col_idx, value in enumerate(row_values, start=1):
+        cell = ws.cell(row=next_row, column=col_idx, value=value)
+        cell.font = BODY_FONT
+        cell.border = BORDER
+
+        # Manpower / Transport columns -> left aligned, wrap
+        if col_idx in (8, 9):
+            cell.alignment = BODY_ALIGN
+        else:
+            cell.alignment = CENTER_ALIGN
+
+        if is_emergency:
+            cell.fill = EMERGENCY_FILL
+
+    # Row height auto-adjust for multi-line content
+    line_count = max(
+        str(row_values[7]).count("\n") + 1,
+        str(row_values[8]).count("\n") + 1,
+        1
+    )
+    ws.row_dimensions[next_row].height = 15 * line_count
+
+    wb.save(OT_FILE)
 
 
 create_ot_file()
@@ -1665,9 +1760,8 @@ create_ot_file()
 @app.route("/save-ot-request", methods=["POST"])
 def save_ot_request():
     """
-    Form submit zalyawar ithe DIRECT data save hoto.
-    Koणtahi admin approval / pending step nahi.
-    Pratyek divasachi data vegळya sheet madhe (date = sheet name).
+    Form submit zalyawar direct, neat-formatted data Excel madhe save hoto.
+    Admin approval / pending step nahi. Divas-nihay vegळya sheet madhe.
     """
 
     try:
@@ -1678,6 +1772,7 @@ def save_ot_request():
 
         manpower = data.get("manpower", [])
         transport = data.get("transport", [])
+        emergency = bool(data.get("emergency"))
 
         total_2h = sum(int(p.get("twoHours", 0) or 0) for p in manpower) + \
                    sum(int(t.get("twoHours", 0) or 0) for t in transport)
@@ -1688,32 +1783,23 @@ def save_ot_request():
         create_ot_file()
 
         now = datetime.now()
-        sheet_name = now.strftime("%d-%m-%Y")   # <-- day-by-day sheet
+        sheet_name = now.strftime("%d-%m-%Y")   # day-by-day sheet
 
-        new_row = {
-            "Entry No": now.strftime("%Y%m%d%H%M%S"),
-            "Date": now.strftime("%d-%m-%Y"),
-            "Time": now.strftime("%I:%M %p"),
-            "Submitted By": data.get("submittedBy", ""),
-            "Department": data.get("department", ""),
-            "Shift": data.get("shift", ""),
-            "Emergency": "Yes" if data.get("emergency") else "No",
-            "Manpower": json.dumps(manpower, ensure_ascii=False),
-            "Transport": json.dumps(transport, ensure_ascii=False),
-            "Total 2 Hours": total_2h,
-            "Total 3 Hours": total_3h
-        }
+        row_values = [
+            "OT" + now.strftime("%Y%m%d%H%M%S"),
+            now.strftime("%d-%m-%Y"),
+            now.strftime("%I:%M %p"),
+            data.get("submittedBy", ""),
+            data.get("department", ""),
+            data.get("shift", ""),
+            "Yes" if emergency else "No",
+            format_manpower(manpower),
+            format_transport(transport),
+            total_2h,
+            total_3h
+        ]
 
-        book = load_workbook(OT_FILE)   # <-- fixed
-
-        if sheet_name in book.sheetnames:
-            existing_df = pd.read_excel(OT_FILE, sheet_name=sheet_name)
-            updated_df = pd.concat([existing_df, pd.DataFrame([new_row])], ignore_index=True)
-        else:
-            updated_df = pd.DataFrame([new_row])
-
-        with pd.ExcelWriter(OT_FILE, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-            updated_df.to_excel(writer, index=False, sheet_name=sheet_name)
+        append_row_to_sheet(sheet_name, row_values, is_emergency=emergency)
 
         return jsonify({
             "status": "success",
