@@ -1636,6 +1636,16 @@ def my_temp_pass(employeeCode):
 # ==========================
 
 
+# ---- FILE PATH FIX: script च्या location वरून absolute path ----
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OT_FILE = os.path.join(BASE_DIR, "ot_requests.xlsx")
+
+# ---- DEBUG: server सुरू होताना terminal मध्ये path दाखवा ----
+print("APP FILE LOCATION:", os.path.abspath(__file__))
+print("CURRENT WORKING DIR:", os.getcwd())
+print("OT FILE WILL SAVE AT:", os.path.abspath(OT_FILE))
+
+
 
 OT_FILE = "ot_requests.xlsx"
 
