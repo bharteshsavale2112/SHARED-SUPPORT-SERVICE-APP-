@@ -1631,31 +1631,29 @@ def my_temp_pass(employeeCode):
 # OT REQUEST
 # ==========================
 
+
 OT_FILE = "ot_requests.xlsx"
 
+OT_COLUMNS = [
+    "Entry No",
+    "Date",
+    "Time",
+    "Submitted By",
+    "Department",
+    "Shift",
+    "Emergency",
+    "Manpower",
+    "Transport",
+    "Total 2 Hours",
+    "Total 3 Hours"
+]
+
 def create_ot_file():
-    """Creates ot_requests.xlsx (in the app's own folder, next to the
-    other .xlsx data files) if it doesn't exist yet, with a clean 'Date'
-    column so requests can be filtered/reported on a per-day basis."""
-
+    """Master excel file banवतो jar ti exist nasel."""
     if not os.path.exists(OT_FILE):
-
-        df = pd.DataFrame(columns=[
-            "Request ID",
-            "Date",
-            "Time",
-            "Submitted By",
-            "Department",
-            "Shift",
-            "Emergency",
-            "Manpower",
-            "Transport",
-            "Total 2 Hours",
-            "Total 3 Hours",
-            "Created On"
-        ])
-
-        df.to_excel(OT_FILE, index=False)
+        df = pd.DataFrame(columns=OT_COLUMNS)
+        with pd.ExcelWriter(OT_FILE, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Sheet1")
 
 
 create_ot_file()
@@ -1663,19 +1661,21 @@ create_ot_file()
 
 @app.route("/save-ot-request", methods=["POST"])
 def save_ot_request():
+    """
+    Form submit zalyawar ithe DIRECT data save hoto.
+    Koणtahi admin approval / pending step nahi.
+    Pratyek divasachi data vegळya sheet madhe (date = sheet name).
+    """
 
     try:
-
         data = request.get_json()
 
         if not data:
-            return jsonify({"status": "error", "message": "Invalid Request"})
+            return jsonify({"status": "error", "message": "Invalid Data"})
 
         manpower = data.get("manpower", [])
         transport = data.get("transport", [])
 
-        # Per-day totals, computed from whatever manpower/transport rows
-        # were submitted in this request
         total_2h = sum(int(p.get("twoHours", 0) or 0) for p in manpower) + \
                    sum(int(t.get("twoHours", 0) or 0) for t in transport)
 
@@ -1684,31 +1684,37 @@ def save_ot_request():
 
         create_ot_file()
 
-        df = pd.read_excel(OT_FILE)
-
         now = datetime.now()
+        sheet_name = now.strftime("%d-%m-%Y")   # <-- day-by-day sheet
 
         new_row = {
-            "Request ID": "OT" + now.strftime("%Y%m%d%H%M%S"),
+            "Entry No": now.strftime("%Y%m%d%H%M%S"),
             "Date": now.strftime("%d-%m-%Y"),
             "Time": now.strftime("%I:%M %p"),
             "Submitted By": data.get("submittedBy", ""),
             "Department": data.get("department", ""),
             "Shift": data.get("shift", ""),
             "Emergency": "Yes" if data.get("emergency") else "No",
-            "Manpower": json.dumps(manpower),
-            "Transport": json.dumps(transport),
+            "Manpower": json.dumps(manpower, ensure_ascii=False),
+            "Transport": json.dumps(transport, ensure_ascii=False),
             "Total 2 Hours": total_2h,
-            "Total 3 Hours": total_3h,
-            "Created On": now.strftime("%d-%m-%Y %H:%M")
+            "Total 3 Hours": total_3h
         }
 
-        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-        df.to_excel(OT_FILE, index=False)
+        book = load_workbook(OT_FILE)
+
+        if sheet_name in book.sheetnames:
+            existing_df = pd.read_excel(OT_FILE, sheet_name=sheet_name)
+            updated_df = pd.concat([existing_df, pd.DataFrame([new_row])], ignore_index=True)
+        else:
+            updated_df = pd.DataFrame([new_row])
+
+        with pd.ExcelWriter(OT_FILE, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            updated_df.to_excel(writer, index=False, sheet_name=sheet_name)
 
         return jsonify({
             "status": "success",
-            "message": "OT Request Saved Successfully"
+            "message": "Data Saved Successfully"
         })
 
     except Exception as e:
@@ -1716,7 +1722,7 @@ def save_ot_request():
             "status": "error",
             "message": str(e)
         })
-
+        
 # ==========================
 # RUN SERVER
 # ==========================
