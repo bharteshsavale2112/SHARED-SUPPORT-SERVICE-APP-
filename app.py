@@ -1636,11 +1636,10 @@ def my_temp_pass(employeeCode):
 # ==========================
 
 
-<<<<<<< HEAD
+HEAD
 
 
-=======
->>>>>>> ca5c43d71517f22e0c26b43691a85c6202fed1b7
+
 
 OT_FILE = "ot_requests.xlsx"
 
