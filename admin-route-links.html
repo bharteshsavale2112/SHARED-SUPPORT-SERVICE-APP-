@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bajaj Auto | Route Tracking Links</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="routes-data.js"></script>
+
+<style>
+body{ font-family:'Inter',sans-serif; background:#eef2f7; }
+</style>
+
+<!-- ADMIN SESSION GUARD -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache:"no-store" });
+            if(!res.ok){ window.location.href = "adminlogin.html"; }
+        }catch(e){ window.location.href = "adminlogin.html"; }
+    }
+    verifySession();
+    window.addEventListener("pageshow", e=>{ if(e.persisted) verifySession(); });
+})();
+</script>
+
+<link rel="stylesheet" href="mobile.css">
+</head>
+
+<body class="min-h-screen">
+
+<!-- HEADER -->
+<header class="bg-white shadow-md sticky top-0 z-50">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="bg-white ring-1 ring-slate-200 rounded-xl px-2.5 py-1.5 shrink-0">
+        <img src="download (1).png" alt="Bajaj Auto" class="h-9 sm:h-11 w-auto object-contain">
+      </div>
+      <div class="leading-tight min-w-0">
+        <h1 class="font-extrabold text-blue-900 text-base sm:text-xl truncate">Route Tracking Links</h1>
+        <p class="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide truncate">Live GPS Link Manager</p>
+      </div>
+    </div>
+    <a href="admin-dashboard.html"
+       class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl shrink-0">← Dashboard</a>
+  </div>
+</header>
+
+<main class="max-w-5xl mx-auto px-4 py-6">
+
+  <div class="bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl p-4 sm:p-5 mb-6 text-sm sm:text-base">
+    Set a <b>live GPS tracking link</b> for any route (e.g. a Google Maps live-location share link, or your GPS provider's tracking URL).
+    Employees will instantly see it on the <b>Routes</b> page when they tap <b>Live Tracking</b>. Leave a field empty to remove its link.
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 mb-6">
+    <label class="font-semibold text-slate-700 block mb-2">Select Shift</label>
+    <select id="shiftSelect" class="w-full p-3.5 rounded-xl border border-slate-300 font-semibold text-slate-800">
+      <option value="">-- Select Shift --</option>
+    </select>
+  </div>
+
+  <div id="routesList" class="space-y-4">
+    <p class="text-center text-gray-500 py-10">👆 Select a shift to manage its route tracking links.</p>
+  </div>
+
+</main>
+
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold opacity-0 pointer-events-none transition-opacity duration-300 z-[99999]"></div>
+
+<script>
+let SHIFT_ROUTES = window.SHIFT_ROUTES || {};
+let ROUTE_LINKS = {};
+
+const shiftSelect = document.getElementById("shiftSelect");
+const routesList  = document.getElementById("routesList");
+const toast       = document.getElementById("toast");
+
+function buildShiftOptions(){
+    shiftSelect.innerHTML = '<option value="">-- Select Shift --</option>';
+    Object.keys(SHIFT_ROUTES).forEach(s=>{
+        const o=document.createElement("option"); o.value=s; o.textContent=s; shiftSelect.appendChild(o);
+    });
+}
+buildShiftOptions();
+
+async function loadLiveRoutes(){
+    try{
+        const res = await fetch("/routes", { cache:"no-store" });
+        const d = await res.json();
+        if(d && d.status==="success" && d.routes && Object.keys(d.routes).length){
+            SHIFT_ROUTES = d.routes;
+            buildShiftOptions();
+        }
+    }catch(e){ /* fallback to routes-data.js */ }
+}
+
+function showToast(msg, ok=true){
+    toast.textContent = msg;
+    toast.style.background = ok ? "#16a34a" : "#dc2626";
+    toast.style.opacity = "1";
+    setTimeout(()=>{ toast.style.opacity="0"; }, 2200);
+}
+
+async function loadLinks(){
+    try{
+        const res = await fetch("/route-links", { cache:"no-store" });
+        const data = await res.json();
+        ROUTE_LINKS = (data && data.links) ? data.links : {};
+    }catch(e){ ROUTE_LINKS = {}; }
+}
+
+function esc(s){ return (s||"").replace(/"/g,"&quot;"); }
+
+function renderRoutes(shift){
+    if(!shift){
+        routesList.innerHTML = '<p class="text-center text-gray-500 py-10">👆 Select a shift to manage its route tracking links.</p>';
+        return;
+    }
+    const routes = Object.keys(SHIFT_ROUTES[shift] || {});
+    if(routes.length===0){
+        routesList.innerHTML = '<p class="text-center text-gray-500 py-10">No routes configured for this shift.</p>';
+        return;
+    }
+
+    routesList.innerHTML = "";
+    routes.forEach((route, idx)=>{
+        const key = shift + "||" + route;
+        const current = ROUTE_LINKS[key] || "";
+        const card = document.createElement("div");
+        card.className = "bg-white rounded-2xl shadow-sm p-4 sm:p-5";
+        card.innerHTML = `
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <h3 class="font-bold text-slate-800 text-sm sm:text-base">${route}</h3>
+              <span id="badge_${idx}" class="text-[11px] font-bold px-2.5 py-1 rounded-full ${current ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}">
+                ${current ? 'LINK SET' : 'NO LINK'}
+              </span>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input id="inp_${idx}" type="url" inputmode="url" placeholder="https://maps.app.goo.gl/... or GPS tracking URL"
+                     value="${esc(current)}"
+                     class="flex-1 w-full p-3 rounded-xl border border-slate-300 text-slate-800 text-sm">
+              <div class="flex gap-2">
+                <button onclick="saveLink('${idx}','${encodeURIComponent(shift)}','${encodeURIComponent(route)}')"
+                        class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-3 rounded-xl text-sm">Save</button>
+                <button onclick="clearLink('${idx}')"
+                        class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-4 py-3 rounded-xl text-sm">Clear</button>
+              </div>
+            </div>
+            <div class="mt-2">
+              <a id="open_${idx}" href="${esc(current)}" target="_blank" rel="noopener"
+                 class="text-xs text-blue-600 hover:underline ${current ? '' : 'hidden'}">🔗 Preview this link ↗</a>
+            </div>
+        `;
+        routesList.appendChild(card);
+    });
+}
+
+async function saveLink(idx, shiftEnc, routeEnc){
+    const shift = decodeURIComponent(shiftEnc);
+    const route = decodeURIComponent(routeEnc);
+    const link  = document.getElementById("inp_"+idx).value.trim();
+
+    try{
+        const res = await fetch("/update-route-link", {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ shift, route, link })
+        });
+
+        if(res.status===401 || res.status===403){
+            showToast("Session expired — please log in again", false);
+            setTimeout(()=> window.location.href="adminlogin.html", 1200);
+            return;
+        }
+
+        const data = await res.json();
+        if(data.status==="success"){
+            const key = shift + "||" + route;
+            if(link){ ROUTE_LINKS[key] = link; } else { delete ROUTE_LINKS[key]; }
+
+            const badge = document.getElementById("badge_"+idx);
+            const open  = document.getElementById("open_"+idx);
+            if(link){
+                badge.textContent="LINK SET"; badge.className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700";
+                open.href=link; open.classList.remove("hidden");
+            }else{
+                badge.textContent="NO LINK"; badge.className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500";
+                open.classList.add("hidden");
+            }
+            showToast(link ? "Live tracking link saved ✓" : "Link cleared ✓");
+        }else{
+            showToast(data.message || "Could not save", false);
+        }
+    }catch(e){
+        showToast("Cannot connect to server", false);
+    }
+}
+
+function clearLink(idx){
+    document.getElementById("inp_"+idx).value = "";
+    const btn = document.querySelector(`#inp_${idx}`).parentElement.querySelector("button[onclick^='saveLink']");
+    if(btn) btn.click();
+}
+
+shiftSelect.addEventListener("change", ()=> renderRoutes(shiftSelect.value));
+
+(async function(){
+    await loadLiveRoutes();
+    await loadLinks();
+    const first = Object.keys(SHIFT_ROUTES)[0] || "";
+    if(first){ shiftSelect.value = first; renderRoutes(first); }
+})();
+</script>
+
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
+#globalBackBtn{
+    position:fixed;
+    top:14px;
+    right:14px;
+    z-index:99999;
+    background:#1e293b;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    cursor:pointer;
+}
+#globalBackBtn:hover{ background:#0f172a; }
+@media (max-width:600px){
+    #globalBackBtn{
+        top:8px;
+        right:8px;
+        padding:8px 14px;
+        font-size:13px;
+    }
+}
+</style>
+<button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
+<!-- ============ END BACK BUTTON ============ -->
+
+</body>
+</html>

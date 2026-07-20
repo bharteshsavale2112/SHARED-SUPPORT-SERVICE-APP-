@@ -9,6 +9,7 @@
 <title>Bajaj Auto Plant 1 | Admin Dashboard</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -404,9 +405,13 @@ Transport Admin Panel
 
 <a href="viewroots.html">🚌 Routes</a>
 
+<a href="admin-routes.html">🛣️ Manage Routes</a>
+
 <a href="admin-pass-requests.html">📄 Pass Requests</a>
 
 <a href="live-map.html">📍 Live Tracking</a>
+
+<a href="admin-route-links.html">🔗 Tracking Links</a>
 
 <a href="settings.html">⚙ Settings</a>
 
@@ -514,63 +519,6 @@ admin@bajaj.com
 
 </div>
 
-<!-- Recent Employees -->
-
-<div class="table-box">
-
-<div class="flex justify-between items-center mb-5">
-
-<h2 class="text-2xl font-bold">
-
-👨‍💼 Recent Employees
-
-</h2>
-
-<a
-href="employee-management.html"
-class="bg-blue-600 text-white px-4 py-2 rounded-lg">
-
-View All
-
-</a>
-
-</div>
-
-<table>
-
-<thead>
-
-<tr>
-
-<th>Employee Code</th>
-
-<th>Name</th>
-
-<th>Department</th>
-
-<th>Route</th>
-
-</tr>
-
-</thead>
-
-<tbody id="employeeTable">
-
-<tr>
-
-<td colspan="4" style="text-align:center">
-
-Loading...
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</div>
 
 <!-- Pending Pass Requests -->
 
@@ -726,42 +674,54 @@ Submit
 
 <!-- Reports -->
 
-<div class="table-box">
+<div class="table-box" id="reportsSection">
 
-<h2 class="text-2xl font-bold mb-5">
-
-📊 Reports
-
-</h2>
-
-<div class="grid md:grid-cols-4 gap-5">
-
-<button class="bg-blue-600 text-white p-4 rounded-xl">
-
-Employee Report
-
-</button>
-
-<button class="bg-green-600 text-white p-4 rounded-xl">
-
-Pass Report
-
-</button>
-
-<button class="bg-orange-500 text-white p-4 rounded-xl">
-
-Route Report
-
-</button>
-
-<button class="bg-purple-600 text-white p-4 rounded-xl">
-
-GPS Report
-
-</button>
-
+<div class="flex flex-wrap justify-between items-center mb-6 gap-3">
+<h2 class="text-2xl font-bold">📊 Reports &amp; Analytics</h2>
+<button onclick="loadReports()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">🔄 Refresh</button>
 </div>
 
+<!-- KPI strip -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+<div class="text-3xl font-extrabold" id="repEmployees">0</div><div class="opacity-90 text-sm mt-1">Employees</div></div>
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#16a34a,#15803d);">
+<div class="text-3xl font-extrabold" id="repRoutes">0</div><div class="opacity-90 text-sm mt-1">Routes</div></div>
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+<div class="text-3xl font-extrabold" id="repDepts">0</div><div class="opacity-90 text-sm mt-1">Departments</div></div>
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
+<div class="text-3xl font-extrabold" id="repPasses">0</div><div class="opacity-90 text-sm mt-1">Generated Passes</div></div>
+</div>
+
+<!-- Charts grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">👥 Employees by Department (Top 10)</h3>
+<div style="position:relative;height:300px;"><canvas id="chartDept"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">🕐 Employees by Shift</h3>
+<div style="position:relative;height:300px;"><canvas id="chartShift"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">🚌 Employees by Route (Top 10)</h3>
+<div style="position:relative;height:300px;"><canvas id="chartRoute"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">📄 Pass Requests Status</h3>
+<div style="position:relative;height:300px;"><canvas id="chartPass"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border lg:col-span-2" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">✅ Approvals Overview (Permanent vs Temporary)</h3>
+<div style="position:relative;height:320px;"><canvas id="chartApprovals"></canvas></div>
+</div>
+
+</div>
 </div>
 <script>
 
@@ -920,7 +880,7 @@ async function loadEmployees(){
 
         });
 
-        document.getElementById("employeeTable").innerHTML=html;
+        var _et=document.getElementById("employeeTable"); if(_et){_et.innerHTML=html;}
 
     }
 
@@ -1098,17 +1058,76 @@ async function rejectPass(id){
 // AUTO LOAD
 // ==============================
 
-loadDashboard();
 
-loadEmployees();
+// ==============================
+// REPORTS & ANALYTICS (Charts)
+// ==============================
+const REP_COLORS = ["#2563eb","#16a34a","#f59e0b","#7c3aed","#dc2626","#0891b2","#db2777","#65a30d","#ea580c","#4f46e5"];
+let repCharts = {};
+
+function repMakeChart(id, type, labels, data, opts){
+    if(typeof Chart === "undefined") return;
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(repCharts[id]) repCharts[id].destroy();
+    repCharts[id] = new Chart(el, {type:type, data:{labels:labels, datasets:[data]}, options:Object.assign({
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:(type!=="bar")}}
+    }, opts||{})});
+}
+
+function repTop(obj, n){
+    const entries = Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]).slice(0,n);
+    return {labels:entries.map(e=>e[0]), values:entries.map(e=>e[1])};
+}
+
+async function loadReports(){
+    try{
+        const res = await fetch("/reports-data", {cache:"no-store"});
+        const d = await res.json();
+        if(d.status !== "success") return;
+
+        document.getElementById("repEmployees").innerHTML = d.totals.employees;
+        document.getElementById("repRoutes").innerHTML    = d.totals.routes;
+        document.getElementById("repDepts").innerHTML     = d.totals.departments;
+        document.getElementById("repPasses").innerHTML    = d.totals.generatedPasses;
+
+        const dept = repTop(d.byDepartment, 10);
+        repMakeChart("chartDept","bar",dept.labels,{label:"Employees",data:dept.values,backgroundColor:"#2563eb",borderRadius:6},{indexAxis:"y"});
+
+        const shift = repTop(d.byShift, 10);
+        repMakeChart("chartShift","doughnut",shift.labels,{data:shift.values,backgroundColor:REP_COLORS});
+
+        const route = repTop(d.byRoute, 10);
+        repMakeChart("chartRoute","bar",route.labels,{label:"Employees",data:route.values,backgroundColor:"#16a34a",borderRadius:6},{indexAxis:"y"});
+
+        const ps = d.passStatus||{};
+        repMakeChart("chartPass","pie",["Pending","Approved","Rejected"],
+            {data:[ps.Pending||0,ps.Approved||0,ps.Rejected||0],backgroundColor:["#f59e0b","#16a34a","#dc2626"]});
+
+        const tps = d.tempPassStatus||{};
+        repMakeChart("chartApprovals","bar",["Pending","Approved","Rejected"],
+            {label:"Permanent Passes",data:[ps.Pending||0,ps.Approved||0,ps.Rejected||0],backgroundColor:"#2563eb",borderRadius:6},
+            {plugins:{legend:{display:true}}});
+        // add temporary dataset
+        if(repCharts["chartApprovals"]){
+            repCharts["chartApprovals"].data.datasets.push({label:"Temporary Passes",data:[tps.Pending||0,tps.Approved||0,tps.Rejected||0],backgroundColor:"#7c3aed",borderRadius:6});
+            repCharts["chartApprovals"].update();
+        }
+    }catch(err){ console.log("reports error", err); }
+}
+
+loadReports();
+setInterval(loadReports, 60000);
+
+
+loadDashboard();
 
 loadPendingRequests();
 
 setInterval(()=>{
 
     loadDashboard();
-
-    loadEmployees();
 
     loadPendingRequests();
 
@@ -1274,7 +1293,7 @@ setInterval(footerData,30000);
 #globalBackBtn{
     position:fixed;
     top:14px;
-    left:14px;
+    right:14px;
     z-index:99999;
     background:#1e293b;
     color:#fff;
@@ -1291,7 +1310,7 @@ setInterval(footerData,30000);
 @media (max-width:600px){
     #globalBackBtn{
         top:8px;
-        left:8px;
+        right:8px;
         padding:8px 14px;
         font-size:13px;
     }
