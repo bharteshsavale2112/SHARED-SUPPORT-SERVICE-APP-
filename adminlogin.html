@@ -12,210 +12,97 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-
 body{
     font-family:'Inter',sans-serif;
     background:
-    linear-gradient(rgba(15,23,42,.88),rgba(15,23,42,.88)),
-    url('download (1).png');
+    linear-gradient(rgba(6,15,35,.9),rgba(6,15,35,.92)),
+    url('bajaj.jpg');
     background-size:cover;
     background-position:center;
 }
-
-.login-box{
-    backdrop-filter:blur(12px);
-}
-
-.btn{
-    transition:.2s;
-}
-
-.btn:hover{
-    transform:scale(.98);
-}
-
+.login-box{ backdrop-filter:blur(12px); }
 .back-btn{
-    position:fixed;
-    top:20px;
-    right:20px;
-    z-index:99999;
-    background:#007bff;
-    color:white;
-    text-decoration:none;
-    padding:10px 18px;
-    border-radius:8px;
-    font-weight:600;
+    position:fixed; top:16px; right:16px; z-index:99999;
+    background:#2563eb; color:#fff; text-decoration:none;
+    padding:9px 16px; border-radius:10px; font-weight:600; font-size:14px;
 }
-
-.back-btn:hover{
-    background:#0056b3;
-}
-
-@media (max-width:600px){
-    .back-btn{
-        top:10px;
-        right:10px;
-        padding:8px 14px;
-        font-size:13px;
-    }
-}
-
+.back-btn:hover{ background:#1d4ed8; }
 </style>
 
+<link rel="stylesheet" href="mobile.css">
 </head>
 
 <body class="min-h-screen flex items-center justify-center p-4">
 
-<a href="index.html" class="back-btn">
-← Back Home
-</a>
+<a href="index.html" class="back-btn">← Back Home</a>
 
-<div class="login-box bg-white/10 border border-white/20 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+<div class="login-box bg-white/10 border border-white/20 w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl">
 
-<div class="text-center mb-8">
+  <div class="text-center mb-7">
+    <div class="logo-pill mx-auto">
+      <img src="download (1).png" alt="Bajaj Auto" class="brand-logo">
+    </div>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-5">Admin Login</h1>
+    <p class="text-slate-300 text-sm mt-2 tracking-wide">TRANSPORT MANAGEMENT PANEL</p>
+  </div>
 
-<div class="h-20 w-20 rounded-3xl bg-blue-600 mx-auto flex items-center justify-center text-white text-4xl">
-🛡️
-</div>
+  <form class="space-y-4" onsubmit="return false;">
+    <div>
+      <label class="text-white text-sm font-semibold block mb-2">Admin Email</label>
+      <input id="email" type="email" placeholder="Enter Admin Email" required
+        class="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-300">
+    </div>
 
-<h1 class="text-3xl font-extrabold text-white mt-5">
-ADMIN LOGIN
-</h1>
+    <div>
+      <label class="text-white text-sm font-semibold block mb-2">Password</label>
+      <input id="password" type="password" placeholder="Enter Password" required
+        class="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-300">
+    </div>
 
-<p class="text-slate-300 text-sm mt-2">
-Bajaj Auto Transport Management
-</p>
+    <button type="button" onclick="adminLogin()"
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-bold text-lg transition shadow-lg shadow-blue-600/30">
+      Admin Login
+    </button>
+  </form>
 
-</div>
+  <div class="mt-5 text-center">
+    <a href="admin-forgot-password.html" class="text-slate-300 text-sm hover:text-white transition">Forgot Password?</a>
+  </div>
 
-<form class="space-y-5">
-
-  <div>
-
-<label class="text-white text-sm font-semibold block mb-2">
-Admin Email
-</label>
-
-<input
-id="email"
-type="email"
-placeholder="Enter Admin Email"
-required
-class="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-300 outline-none">
-
-</div>
-
-<div>
-
-<label class="text-white text-sm font-semibold block mb-2">
-Password
-</label>
-
-<input
-id="password"
-type="password"
-placeholder="Enter Password"
-required
-class="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-slate-300 outline-none">
-
-</div>
-
-<button
-type="button"
-onclick="adminLogin()"
-class="btn w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl font-bold text-lg">
-
-Admin Login
-
-</button>
-
-</form>
-
-<div class="mt-6 text-center">
-
-<a href="admin-forgot-password.html"
-class="text-slate-300 text-sm hover:text-white">
-
-Forgot Password?
-
-</a>
-
-</div>
-
-<div class="border-t border-white/10 mt-8 pt-5 text-center">
-
-<p class="text-slate-400 text-xs">
-© 2026 Bajaj Auto Transport System
-</p>
-
-</div>
-
+  <div class="border-t border-white/10 mt-7 pt-5 text-center">
+    <p class="text-slate-400 text-xs">© 2026 Bajaj Auto Transport System</p>
+  </div>
 </div>
 
 <script>
-
 async function adminLogin(){
 
-    const email =
-    document.getElementById("email").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-    const password =
-    document.getElementById("password").value.trim();
-
-    if(email===""){
-
-        alert("Please Enter Email");
-        return;
-
-    }
-
-    if(password===""){
-
-        alert("Please Enter Password");
-        return;
-
-    }
+    if(email===""){ alert("Please Enter Email"); return; }
+    if(password===""){ alert("Please Enter Password"); return; }
 
     try{
-
-        const response = await fetch(
-            "/admin-login",
-            {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body:JSON.stringify({
-                    email:email,
-                    password:password
-                })
-            }
-        );
+        const response = await fetch("/admin-login", {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body:JSON.stringify({ email:email, password:password })
+        });
 
         const data = await response.json();
 
         if(data.status=="success"){
-
             alert("Admin Login Successful");
-
             window.location.href="admin-dashboard.html";
-
-        }else{
-
+        } else {
             alert(data.message);
-
         }
-
-    }
-    catch(error){
-
+    } catch(error){
         alert("Cannot Connect To Flask Server");
         console.log(error);
-
     }
-
 }
-
 </script>
 
 </body>
