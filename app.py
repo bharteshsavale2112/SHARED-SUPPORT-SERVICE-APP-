@@ -7,6 +7,7 @@ import openpyxl
 import pandas as pd
 import os
 import json
+from openpyxl import load_workbook
 
 app = Flask(__name__)
 
@@ -1632,6 +1633,8 @@ def my_temp_pass(employeeCode):
 # ==========================
 
 
+   
+
 OT_FILE = "ot_requests.xlsx"
 
 OT_COLUMNS = [
@@ -1701,7 +1704,7 @@ def save_ot_request():
             "Total 3 Hours": total_3h
         }
 
-        book = ot_requests.read_excel(OT_FILE)
+        book = load_workbook(OT_FILE)   # <-- fixed
 
         if sheet_name in book.sheetnames:
             existing_df = pd.read_excel(OT_FILE, sheet_name=sheet_name)
