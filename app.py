@@ -1635,6 +1635,25 @@ def my_temp_pass(employeeCode):
 # OT REQUEST
 # ==========================
 
+import os
+
+@app.route("/save-ot-request", methods=["POST"])
+def save_ot_request():
+    try:
+        ...
+        append_row_to_sheet(sheet_name, row_values, is_emergency=emergency)
+
+        saved_path = os.path.abspath(OT_FILE)
+        print("SAVED TO:", saved_path)   # terminal madhe distel
+
+        return jsonify({
+            "status": "success",
+            "message": f"Data Saved Successfully at {saved_path}"
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+    
+
 OT_FILE = "ot_requests.xlsx"
 
 OT_COLUMNS = [
