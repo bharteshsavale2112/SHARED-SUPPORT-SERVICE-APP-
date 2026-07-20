@@ -1635,24 +1635,7 @@ def my_temp_pass(employeeCode):
 # OT REQUEST
 # ==========================
 
-import os
 
-@app.route("/save-ot-request", methods=["POST"])
-def save_ot_request():
-    try:
-        ...
-        append_row_to_sheet(sheet_name, row_values, is_emergency=emergency)
-
-        saved_path = os.path.abspath(OT_FILE)
-        print("SAVED TO:", saved_path)   # terminal madhe distel
-
-        return jsonify({
-            "status": "success",
-            "message": f"Data Saved Successfully at {saved_path}"
-        })
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-    
 
 OT_FILE = "ot_requests.xlsx"
 
@@ -1687,7 +1670,6 @@ EMERGENCY_FILL = PatternFill(start_color="FFF7E0", end_color="FFF7E0", fill_type
 
 
 def format_manpower(manpower):
-    """JSON list -> readable multi-line text for the Excel cell."""
     lines = []
     for p in manpower:
         provider = p.get("provider", "Unknown")
@@ -1699,7 +1681,6 @@ def format_manpower(manpower):
 
 
 def format_transport(transport):
-    """JSON list -> readable multi-line text for the Excel cell."""
     lines = []
     for t in transport:
         route = t.get("route", "Unknown Route")
@@ -1726,7 +1707,6 @@ def style_header(ws):
 
 
 def create_ot_file():
-    """Master file banवतो jar exist nasel, formatted header sह."""
     if not os.path.exists(OT_FILE):
         wb = Workbook()
         ws = wb.active
@@ -1736,8 +1716,6 @@ def create_ot_file():
 
 
 def append_row_to_sheet(sheet_name, row_values, is_emergency=False):
-    """openpyxl वापरून row append karto -- formatting kayam rahते."""
-
     wb = load_workbook(OT_FILE)
 
     if sheet_name not in wb.sheetnames:
@@ -1753,7 +1731,6 @@ def append_row_to_sheet(sheet_name, row_values, is_emergency=False):
         cell.font = BODY_FONT
         cell.border = BORDER
 
-        # Manpower / Transport columns -> left aligned, wrap
         if col_idx in (8, 9):
             cell.alignment = BODY_ALIGN
         else:
@@ -1762,7 +1739,6 @@ def append_row_to_sheet(sheet_name, row_values, is_emergency=False):
         if is_emergency:
             cell.fill = EMERGENCY_FILL
 
-    # Row height auto-adjust for multi-line content
     line_count = max(
         str(row_values[7]).count("\n") + 1,
         str(row_values[8]).count("\n") + 1,
@@ -1776,13 +1752,9 @@ def append_row_to_sheet(sheet_name, row_values, is_emergency=False):
 create_ot_file()
 
 
+# ---- SINGLE route only (removed the duplicate/debug placeholder) ----
 @app.route("/save-ot-request", methods=["POST"])
 def save_ot_request():
-    """
-    Form submit zalyawar direct, neat-formatted data Excel madhe save hoto.
-    Admin approval / pending step nahi. Divas-nihay vegळya sheet madhe.
-    """
-
     try:
         data = request.get_json()
 
@@ -1802,7 +1774,7 @@ def save_ot_request():
         create_ot_file()
 
         now = datetime.now()
-        sheet_name = now.strftime("%d-%m-%Y")   # day-by-day sheet
+        sheet_name = now.strftime("%d-%m-%Y")
 
         row_values = [
             "OT" + now.strftime("%Y%m%d%H%M%S"),
@@ -1820,17 +1792,20 @@ def save_ot_request():
 
         append_row_to_sheet(sheet_name, row_values, is_emergency=emergency)
 
+        saved_path = os.path.abspath(OT_FILE)
+        print("SAVED TO:", saved_path)
+
         return jsonify({
             "status": "success",
-            "message": "Data Saved Successfully"
+            "message": f"Data Saved Successfully at {saved_path}"
         })
 
     except Exception as e:
+        print("SAVE ERROR:", e)
         return jsonify({
             "status": "error",
             "message": str(e)
-        })
-        
+        })        
 # ==========================
 # RUN SERVER
 # ==========================
