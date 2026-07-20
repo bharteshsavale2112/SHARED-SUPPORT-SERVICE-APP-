@@ -1701,7 +1701,7 @@ def save_ot_request():
             "Total 3 Hours": total_3h
         }
 
-        book = load_workbook(OT_FILE)
+        book = ot_requests(OT_FILE)
 
         if sheet_name in book.sheetnames:
             existing_df = pd.read_excel(OT_FILE, sheet_name=sheet_name)
