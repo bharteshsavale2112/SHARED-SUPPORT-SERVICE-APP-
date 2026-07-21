@@ -1682,7 +1682,7 @@ def format_manpower(manpower):
             lines.append(f"{provider}: 2Hrs={two}, 3Hrs={three}")
     return "\n".join(lines) if lines else "-"
 
-
+ 
 def format_transport(transport):
     lines = []
     for t in transport:
