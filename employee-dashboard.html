@@ -36,7 +36,6 @@ transform:translateY(-5px);
 
 </style>
 
-
 <!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
 <script>
 (function(){
@@ -157,8 +156,6 @@ class="text-gray-500">
 Shift :
 </p>
 
-
-
 <p
 id="empBusStop"
 class="text-gray-500">
@@ -176,9 +173,6 @@ Route No :
 </div>
 
 </div>
-
-
-
 
 <!-- OPTIONS GRID -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -237,68 +231,6 @@ Route No :
 
 </div>
 
-<!-- PASS STATUS -->
-
-<div class="mt-10 grid md:grid-cols-2 gap-6">
-
-<div class="bg-white rounded-3xl p-6 shadow">
-
-<h3 class="text-2xl font-bold text-slate-800 mb-4">
-Permanent Pass Status
-</h3>
-
-<div class="flex justify-between">
-<span>Pass Number</span>
-<span class="font-bold">PP2026001</span>
-</div>
-
-<div class="flex justify-between mt-3">
-<span>Status</span>
-<span class="text-green-600 font-bold">
-ACTIVE
-</span>
-</div>
-
-<div class="flex justify-between mt-3">
-<span>Valid Till</span>
-<span class="font-bold">
-31-Dec-2026
-</span>
-</div>
-
-</div>
-
-<div class="bg-white rounded-3xl p-6 shadow">
-
-<h3 class="text-2xl font-bold text-slate-800 mb-4">
-Temporary Pass Status
-</h3>
-
-<div class="flex justify-between">
-<span>Pass Number</span>
-<span class="font-bold">
-TP2026001
-</span>
-</div>
-
-<div class="flex justify-between mt-3">
-<span>Status</span>
-<span class="text-orange-500 font-bold">
-EXPIRES IN 12 HOURS
-</span>
-</div>
-
-<div class="flex justify-between mt-3">
-<span>Expiry Time</span>
-<span class="font-bold">
-10:30 PM
-</span>
-</div>
-
-</div>
-
-</div>
-
 </div>
 
 </section>
@@ -314,10 +246,6 @@ EXPIRES IN 12 HOURS
 </div>
 
 </footer>
-
-
-
-
 
 <script>
 
@@ -341,8 +269,6 @@ localStorage.getItem("busStop");
 document.getElementById("empRoute").innerHTML =
 "Route No : " +
 localStorage.getItem("routeNumber");
-
-
 
 // =========================
 // REQUEST PERMANENT PASS
@@ -382,8 +308,6 @@ async function requestPermanentPass(){
 
 }
 
-
-
 // =========================
 // OPEN MY PASS
 // =========================
@@ -393,8 +317,6 @@ function openMyPass(){
     window.location.href="my-pass.html";
 
 }
-
-
 
 // =========================
 // LOGOUT
