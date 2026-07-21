@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bajaj Auto | Pass Change Requests</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Inter',sans-serif;}
+body{background:#f1f5f9;margin:0;}
+.logo-tile{background:#fff;border-radius:12px;padding:6px 12px;display:inline-flex;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.logo-tile img{height:40px;width:auto;object-fit:contain;}
+table{width:100%;border-collapse:collapse;}
+th{background:#0056b3;color:#fff;padding:12px;text-align:left;font-size:13px;white-space:nowrap;}
+td{padding:12px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#334155;vertical-align:top;}
+tr:hover td{background:#f8fafc;}
+#backBtn{position:fixed;bottom:22px;right:22px;z-index:9999;background:#1e293b;color:#fff;border:none;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.3);cursor:pointer;}
+#backBtn:hover{background:#0f172a;}
+@media(max-width:600px){#backBtn{bottom:16px;right:16px;padding:8px 14px;font-size:13px;}}
+</style>
+<script>
+(function(){
+  async function verifySession(){
+    try{const res=await fetch("/check-session",{cache:"no-store"});if(!res.ok){window.location.href="adminlogin.html";}}catch(e){window.location.href="adminlogin.html";}
+  }
+  verifySession();
+  window.addEventListener("pageshow",function(e){if(e.persisted){verifySession();}});
+})();
+</script>
+<link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+<button id="backBtn" onclick="window.location.href='admin-dashboard.html'">← Back</button>
+<header class="bg-white shadow sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+    <div class="logo-tile"><img src="logo.png" alt="Bajaj Auto"></div>
+    <div><h1 class="font-extrabold text-blue-900 text-lg sm:text-xl">🔁 Pass Change Requests</h1><p class="text-xs text-gray-500">Bajaj Auto Transport Management</p></div>
+  </div>
+</header>
+<main class="max-w-7xl mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold text-slate-800">All Submissions</h2>
+    <button onclick="loadData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold text-sm">🔄 Refresh</button>
+  </div>
+  <div class="bg-white rounded-2xl shadow overflow-hidden" style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>#</th><th>Day</th>
+<th>Emp Code</th>
+<th>Name</th>
+<th>Dept</th>
+<th>Mobile</th>
+<th>Change Type</th>
+<th>Curr Route</th>
+<th>Curr Stop</th>
+<th>Req Shift</th>
+<th>Req Route</th>
+<th>Req Stop</th>
+<th>Reason</th>
+<th>Time</th>
+</tr></thead>
+      <tbody id="tbody"><tr><td colspan="14" style="text-align:center;">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+<script>
+async function loadData(){
+  const tb=document.getElementById("tbody");
+  tb.innerHTML='<tr><td colspan="14" style="text-align:center;">Loading…</td></tr>';
+  try{
+    const res=await fetch("/admin/change-requests",{cache:"no-store"});
+    const data=await res.json();
+    if(!Array.isArray(data) || data.length===0){
+      tb.innerHTML='<tr><td colspan="14" style="text-align:center;padding:30px;color:#64748b;">No change requests submitted yet.</td></tr>';
+      return;
+    }
+    tb.innerHTML="";
+    data.reverse().forEach((item,i)=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${i+1}</td><td>${item["_day"]||""}</td><td>${item["Employee Code"]!==undefined?item["Employee Code"]:""}</td><td>${item["Employee Name"]!==undefined?item["Employee Name"]:""}</td><td>${item["Department"]!==undefined?item["Department"]:""}</td><td>${item["Mobile"]!==undefined?item["Mobile"]:""}</td><td>${item["Change Type"]!==undefined?item["Change Type"]:""}</td><td>${item["Current Route"]!==undefined?item["Current Route"]:""}</td><td>${item["Current Bus Stop"]!==undefined?item["Current Bus Stop"]:""}</td><td>${item["Requested Shift"]!==undefined?item["Requested Shift"]:""}</td><td>${item["Requested Route"]!==undefined?item["Requested Route"]:""}</td><td>${item["Requested Bus Stop"]!==undefined?item["Requested Bus Stop"]:""}</td><td>${item["Reason"]!==undefined?item["Reason"]:""}</td><td>${item["Timestamp"]!==undefined?item["Timestamp"]:""}</td>`;
+      tb.appendChild(tr);
+    });
+  }catch(e){ tb.innerHTML='<tr><td colspan="14" style="text-align:center;color:#dc2626;">Unable to load data</td></tr>'; }
+}
+loadData();
+</script>
+</body>
+</html>
