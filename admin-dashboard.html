@@ -9,6 +9,7 @@
 <title>Bajaj Auto Plant 1 | Admin Dashboard</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -404,13 +405,13 @@ Transport Admin Panel
 
 <a href="viewroots.html">🚌 Routes</a>
 
+<a href="admin-routes.html">🛣️ Manage Routes</a>
+
 <a href="admin-pass-requests.html">📄 Pass Requests</a>
 
-<a href="admin-change-requests.html">🔁 Pass Change Requests</a>
+<a href="live-map.html">📍 Live Tracking</a>
 
-<a href="admin-feedback.html">🗣️ Employee Feedback</a>
-
-<a href="admin-vendor-visits.html">🧾 Vendor Visits</a>
+<a href="admin-route-links.html">🔗 Tracking Links</a>
 
 <a href="settings.html">⚙ Settings</a>
 
@@ -518,63 +519,6 @@ admin@bajaj.com
 
 </div>
 
-<!-- Recent Employees -->
-
-<div class="table-box">
-
-<div class="flex justify-between items-center mb-5">
-
-<h2 class="text-2xl font-bold">
-
-👨‍💼 Recent Employees
-
-</h2>
-
-<a
-href="employee-management.html"
-class="bg-blue-600 text-white px-4 py-2 rounded-lg">
-
-View All
-
-</a>
-
-</div>
-
-<table>
-
-<thead>
-
-<tr>
-
-<th>Employee Code</th>
-
-<th>Name</th>
-
-<th>Department</th>
-
-<th>Route</th>
-
-</tr>
-
-</thead>
-
-<tbody id="employeeTable">
-
-<tr>
-
-<td colspan="4" style="text-align:center">
-
-Loading...
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</div>
 
 <!-- Pending Pass Requests -->
 
@@ -636,44 +580,148 @@ Loading...
 
 </div>
 
-<!-- Reports -->
+<!-- Live Bus Tracking -->
 
 <div class="table-box">
 
-<h2 class="text-2xl font-bold mb-5">
+<h2 class="text-2xl font-bold mb-4">
 
-📊 Reports
+📍 Live Bus Tracking
 
 </h2>
 
-<div class="grid md:grid-cols-4 gap-5">
+<div class="grid md:grid-cols-3 gap-5">
 
-<button class="bg-blue-600 text-white p-4 rounded-xl">
+<div class="card">
 
-Employee Report
+<h1>12</h1>
 
-</button>
+<p>Buses Running</p>
 
-<button class="bg-green-600 text-white p-4 rounded-xl">
+</div>
 
-Pass Report
+<div class="card">
 
-</button>
+<h1>98%</h1>
 
-<button class="bg-orange-500 text-white p-4 rounded-xl">
+<p>GPS Active</p>
 
-Route Report
+</div>
 
-</button>
+<div class="card">
 
-<button class="bg-purple-600 text-white p-4 rounded-xl">
+<h1>08</h1>
 
-GPS Report
+<p>Routes Active</p>
 
+</div>
+
+</div>
+
+<!-- Share Live Tracking Link (shift + route wise) -->
+
+<div class="mt-6 p-5 rounded-2xl" style="background:#f8fafc;border:1px solid #e2e8f0;">
+
+<h3 class="text-lg font-bold mb-4" style="color:#0056b3;">🔗 Share Live Tracking Link (Shift-wise / Route-wise)</h3>
+
+<div class="grid md:grid-cols-3 gap-4">
+
+<select id="ltShiftSelect" class="p-3 rounded-xl border" style="border-color:#cbd5e1;">
+<option value="">-- Select Shift --</option>
+<option value="1st Shift">1st Shift</option>
+<option value="2nd Shift">2nd Shift</option>
+<option value="3rd Shift">3rd Shift</option>
+<option value="General Shift">General Shift</option>
+</select>
+
+<select id="ltRouteSelect" class="p-3 rounded-xl border" style="border-color:#cbd5e1;" disabled>
+<option value="">-- Select Shift First --</option>
+</select>
+
+<button onclick="generateTrackingLink()" class="bg-blue-600 text-white p-3 rounded-xl font-semibold">
+Submit
 </button>
 
 </div>
 
+<div id="ltLinkBox" style="display:none;" class="mt-4">
+
+<div class="flex flex-col md:flex-row gap-3">
+
+<input id="ltLinkInput" readonly class="p-3 rounded-xl border flex-1" style="border-color:#cbd5e1;background:white;">
+
+<button onclick="copyTrackingLink()" class="bg-slate-700 text-white px-4 py-3 rounded-xl font-semibold">
+📋 Copy Link
+</button>
+
+<a id="ltWhatsappBtn" href="#" target="_blank" class="bg-green-600 text-white px-4 py-3 rounded-xl font-semibold text-center">
+📲 Share on WhatsApp
+</a>
+
+</div>
+
+<p class="text-sm text-gray-500 mt-2">✅ Submit hote hi neeche wahi live tracking map connect ho gaya hai — yehi view employee ko bhi apne dashboard ke "Track Bus" button se dikhega.</p>
+
+<div class="mt-4 rounded-xl overflow-hidden border" style="border-color:#cbd5e1;">
+<iframe id="ltMapFrame" src="" style="width:100%;height:480px;border:0;"></iframe>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- Reports -->
+
+<div class="table-box" id="reportsSection">
+
+<div class="flex flex-wrap justify-between items-center mb-6 gap-3">
+<h2 class="text-2xl font-bold">📊 Reports &amp; Analytics</h2>
+<button onclick="loadReports()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold">🔄 Refresh</button>
+</div>
+
+<!-- KPI strip -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+<div class="text-3xl font-extrabold" id="repEmployees">0</div><div class="opacity-90 text-sm mt-1">Employees</div></div>
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#16a34a,#15803d);">
+<div class="text-3xl font-extrabold" id="repRoutes">0</div><div class="opacity-90 text-sm mt-1">Routes</div></div>
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#f59e0b,#d97706);">
+<div class="text-3xl font-extrabold" id="repDepts">0</div><div class="opacity-90 text-sm mt-1">Departments</div></div>
+<div class="rounded-2xl p-5 text-white" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);">
+<div class="text-3xl font-extrabold" id="repPasses">0</div><div class="opacity-90 text-sm mt-1">Generated Passes</div></div>
+</div>
+
+<!-- Charts grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">👥 Employees by Department (Top 10)</h3>
+<div style="position:relative;height:300px;"><canvas id="chartDept"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">🕐 Employees by Shift</h3>
+<div style="position:relative;height:300px;"><canvas id="chartShift"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">🚌 Employees by Route (Top 10)</h3>
+<div style="position:relative;height:300px;"><canvas id="chartRoute"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">📄 Pass Requests Status</h3>
+<div style="position:relative;height:300px;"><canvas id="chartPass"></canvas></div>
+</div>
+
+<div class="bg-white rounded-2xl p-5 border lg:col-span-2" style="border-color:#e2e8f0;">
+<h3 class="font-bold mb-3 text-slate-700">✅ Approvals Overview (Permanent vs Temporary)</h3>
+<div style="position:relative;height:320px;"><canvas id="chartApprovals"></canvas></div>
+</div>
+
+</div>
 </div>
 <script>
 
@@ -687,6 +735,77 @@ function toggleMenu(){
     .getElementById("sidebar")
     .classList.toggle("show");
 
+}
+
+// ==============================
+// LIVE TRACKING - SHARE LINK
+// (route names must match the keys used in viewroots.html's SHIFT_ROUTES)
+// ==============================
+
+const ROUTE_NAMES_BY_SHIFT = {
+    "1st Shift": ["Route 1 (LONI KALBHOR)","Route 2 (NARAYANGAON)","Route 3 (SINHAGAD ROAD)","Route 4 (WARJE)","Route 5 (WAGHOLI)","Route 6 (KATRAJ)","Route 7 (MENGDEWADI)","Route 8 (PABAL)","Route 9 (VISHRANTWADI)","Route 10 (OLD SANGAVI)","Route 11 (ALANDI)","Route 12 (RAVET)","Route 13 (KALE WADI)","Route 14 (SHASTRI CHOWK)","Route 15 (DEHU ROAD)","Route 16 (SHEETAL BAGH)","Route 17 (WADGAON)","Route 18 (BHOSARI EXTRA)","Route 19 (SHARAD NAGAR)","Route 20 (RAJGURU NAGAR - KHED)","Route 21 (YCM)","Route 22 (LINK ROAD)","Route 23 (TALEGAON)","Route 24 (SHAHU NAGAR)","Route 25 (AUTO GAS TALEGAON)","Route 26 (WALHEKARWADI)","Route 27 (MOHAN NAGAR)","Route 28 (BAJAJ SCHOOL)","Route 29 (DEHUGAON)","Route 30 (WAKI PHATA)","Route 31 (MEDANKARWADI)","Route 32 (BALAJI NAGAR CHAKAN)","Route 33 (CHAKAN CHOWK)","Route 33 (DANGE CHOWK)","Route 35 (NIGDI)","Route 36 (MEDANKARWADI EXTRA)","Route 37 (IAI COMPANY)","Route 38 (KHANDO MANDIR CHAKAN)","Route 40 (CHAKAN CHOWK)"],
+    "2nd Shift": ["Route 1 (SINHGAD)","Route 2 (WAGHOLI)","Route 3 (DEHU GAON)","Route 4 (MEDANKARWADI)","Route 5 (WAKI PHATA)","Route 6 (RAVET-WALHEKARWADI)","Route 7 (ALANDI)","Route 8 (SHASTRI CHOWK)","Route 9 (DEHUROAD)","Route 10 (PIMPLE GURAV)","Route 11 (JADHAVWADI)","Route 12 (TALEGAON)","Route 13 (WADGAON)","Route 14 (KHED)","Route 15 (KALEWADI)","Route 16 (SHAHU NAGAR)","Route 17 (CHAKAN CHOWK)","Route 18 (MOHAN NAGAR)","Route 19 (ANKUSH CHOWK)","Route 20 (NARAYANGAON)","Route 21 (NIGDI)"],
+    "3rd Shift": ["Route 1 (NIGDI)","Route 2 (TALEGAON)","Route 3 (DEHU GAON)","Route 4 (SHASTRI CHOWK)","Route 5 (RAJGURU NAGAR)","Route 6 (MEDANKARWADI)","Route 7 (BALAJI NAGAR)","Route 8 (CHIKHALI)","Route 9 (DEHUROAD)","Route 10 (PCMC)"],
+    "General Shift": ["Route 1 (SINHGAD)","Route 2 (WAGHOLI)","Route 3 (DEHU GAON)","Route 4 (MEDANKARWADI)","Route 5 (WAKI PHATA)","Route 6 (RAVET-WALHEKARWADI)","Route 7 (ALANDI)","Route 8 (SHASTRI CHOWK)","Route 9 (DEHUROAD)","Route 10 (PIMPLE GURAV)","Route 11 (JADHAVWADI)","Route 12 (TALEGAON)","Route 13 (WADGAON)","Route 14 (KHED)","Route 15 (KALEWADI)","Route 16 (SHAHU NAGAR)","Route 17 (CHAKAN CHOWK)","Route 18 (MOHAN NAGAR)","Route 19 (ANKUSH CHOWK)","Route 20 (NARAYANGAON)","Route 21 (NIGDI)"]
+};
+
+const ltShiftSelect = document.getElementById("ltShiftSelect");
+const ltRouteSelect = document.getElementById("ltRouteSelect");
+const ltLinkBox = document.getElementById("ltLinkBox");
+const ltLinkInput = document.getElementById("ltLinkInput");
+const ltWhatsappBtn = document.getElementById("ltWhatsappBtn");
+
+ltShiftSelect.addEventListener("change", function(){
+
+    const shift = ltShiftSelect.value;
+    const routes = ROUTE_NAMES_BY_SHIFT[shift] || [];
+
+    if(routes.length === 0){
+        ltRouteSelect.innerHTML = '<option value="">-- Select Shift First --</option>';
+        ltRouteSelect.disabled = true;
+    } else {
+        ltRouteSelect.innerHTML = '<option value="">-- Select Route --</option>' +
+            routes.map(r => `<option value="${r}">${r}</option>`).join("");
+        ltRouteSelect.disabled = false;
+    }
+
+    ltLinkBox.style.display = "none";
+});
+
+function generateTrackingLink(){
+
+    const shift = ltShiftSelect.value;
+    const route = ltRouteSelect.value;
+
+    if(!shift || !route){
+        alert("Pehle Shift aur Route dono select karo");
+        return;
+    }
+
+    const url = window.location.origin + "/viewroots.html?shift=" +
+        encodeURIComponent(shift) + "&route=" + encodeURIComponent(route);
+
+    ltLinkInput.value = url;
+    ltLinkBox.style.display = "block";
+
+    // connect the map preview right here, live
+    document.getElementById("ltMapFrame").src = url;
+
+    ltWhatsappBtn.href = "https://wa.me/?text=" +
+        encodeURIComponent("Live Bus Tracking - " + route + " (" + shift + "):\n" + url);
+}
+
+function copyTrackingLink(){
+
+    ltLinkInput.select();
+    ltLinkInput.setSelectionRange(0, 99999);
+
+    navigator.clipboard.writeText(ltLinkInput.value).then(()=>{
+        alert("Link Copied!");
+    }).catch(()=>{
+        document.execCommand("copy");
+        alert("Link Copied!");
+    });
 }
 
 // ==============================
@@ -761,7 +880,7 @@ async function loadEmployees(){
 
         });
 
-        document.getElementById("employeeTable").innerHTML=html;
+        var _et=document.getElementById("employeeTable"); if(_et){_et.innerHTML=html;}
 
     }
 
@@ -939,17 +1058,76 @@ async function rejectPass(id){
 // AUTO LOAD
 // ==============================
 
-loadDashboard();
 
-loadEmployees();
+// ==============================
+// REPORTS & ANALYTICS (Charts)
+// ==============================
+const REP_COLORS = ["#2563eb","#16a34a","#f59e0b","#7c3aed","#dc2626","#0891b2","#db2777","#65a30d","#ea580c","#4f46e5"];
+let repCharts = {};
+
+function repMakeChart(id, type, labels, data, opts){
+    if(typeof Chart === "undefined") return;
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(repCharts[id]) repCharts[id].destroy();
+    repCharts[id] = new Chart(el, {type:type, data:{labels:labels, datasets:[data]}, options:Object.assign({
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:(type!=="bar")}}
+    }, opts||{})});
+}
+
+function repTop(obj, n){
+    const entries = Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]).slice(0,n);
+    return {labels:entries.map(e=>e[0]), values:entries.map(e=>e[1])};
+}
+
+async function loadReports(){
+    try{
+        const res = await fetch("/reports-data", {cache:"no-store"});
+        const d = await res.json();
+        if(d.status !== "success") return;
+
+        document.getElementById("repEmployees").innerHTML = d.totals.employees;
+        document.getElementById("repRoutes").innerHTML    = d.totals.routes;
+        document.getElementById("repDepts").innerHTML     = d.totals.departments;
+        document.getElementById("repPasses").innerHTML    = d.totals.generatedPasses;
+
+        const dept = repTop(d.byDepartment, 10);
+        repMakeChart("chartDept","bar",dept.labels,{label:"Employees",data:dept.values,backgroundColor:"#2563eb",borderRadius:6},{indexAxis:"y"});
+
+        const shift = repTop(d.byShift, 10);
+        repMakeChart("chartShift","doughnut",shift.labels,{data:shift.values,backgroundColor:REP_COLORS});
+
+        const route = repTop(d.byRoute, 10);
+        repMakeChart("chartRoute","bar",route.labels,{label:"Employees",data:route.values,backgroundColor:"#16a34a",borderRadius:6},{indexAxis:"y"});
+
+        const ps = d.passStatus||{};
+        repMakeChart("chartPass","pie",["Pending","Approved","Rejected"],
+            {data:[ps.Pending||0,ps.Approved||0,ps.Rejected||0],backgroundColor:["#f59e0b","#16a34a","#dc2626"]});
+
+        const tps = d.tempPassStatus||{};
+        repMakeChart("chartApprovals","bar",["Pending","Approved","Rejected"],
+            {label:"Permanent Passes",data:[ps.Pending||0,ps.Approved||0,ps.Rejected||0],backgroundColor:"#2563eb",borderRadius:6},
+            {plugins:{legend:{display:true}}});
+        // add temporary dataset
+        if(repCharts["chartApprovals"]){
+            repCharts["chartApprovals"].data.datasets.push({label:"Temporary Passes",data:[tps.Pending||0,tps.Approved||0,tps.Rejected||0],backgroundColor:"#7c3aed",borderRadius:6});
+            repCharts["chartApprovals"].update();
+        }
+    }catch(err){ console.log("reports error", err); }
+}
+
+loadReports();
+setInterval(loadReports, 60000);
+
+
+loadDashboard();
 
 loadPendingRequests();
 
 setInterval(()=>{
 
     loadDashboard();
-
-    loadEmployees();
 
     loadPendingRequests();
 
@@ -1114,8 +1292,8 @@ setInterval(footerData,30000);
 <style>
 #globalBackBtn{
     position:fixed;
-    bottom:22px;
-    right:22px;
+    top:14px;
+    right:14px;
     z-index:99999;
     background:#1e293b;
     color:#fff;
@@ -1131,8 +1309,8 @@ setInterval(footerData,30000);
 #globalBackBtn:hover{ background:#0f172a; }
 @media (max-width:600px){
     #globalBackBtn{
-        bottom:16px;
-        right:16px;
+        top:8px;
+        right:8px;
         padding:8px 14px;
         font-size:13px;
     }

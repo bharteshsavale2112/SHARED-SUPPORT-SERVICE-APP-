@@ -1,130 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Bajaj Auto | Bus Pass</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>Bajaj Auto |  Bus Pass</title>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
-body{min-height:100vh;background:linear-gradient(135deg,#0b3a8f,#0056b3 45%,#1e3a8a);display:flex;align-items:center;justify-content:center;padding:24px;}
-.pass{width:100%;max-width:640px;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.35);position:relative;}
-.pass-top{background:linear-gradient(135deg,#0047ab,#0056b3);color:#fff;padding:26px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;}
-.pass-top::after{content:"";position:absolute;bottom:-1px;left:0;right:0;height:1px;background:rgba(255,255,255,.2);}
-.brand{display:flex;align-items:center;gap:14px;}
-.brand .logo-tile{background:#fff;border-radius:12px;padding:7px 12px;display:inline-flex;}
-.brand .logo-tile img{height:40px;width:auto;object-fit:contain;display:block;}
-.brand h1{font-size:20px;font-weight:800;line-height:1.1;}
-.brand p{font-size:12px;opacity:.85;font-weight:500;}
-.pass-type{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);padding:8px 16px;border-radius:999px;font-weight:700;font-size:13px;white-space:nowrap;}
-.status-band{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:#f8fafc;border-bottom:1px solid #eef2f7;}
-.status-band .label{font-size:12px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.status{background:#0a8f2f;color:#fff;padding:6px 18px;border-radius:999px;font-weight:700;font-size:13px;display:inline-block;}
-.body{display:grid;grid-template-columns:1fr auto;gap:24px;padding:28px;}
-.details{display:grid;grid-template-columns:1fr;gap:0;}
-.drow{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px dashed #e5e7eb;}
-.drow:last-child{border-bottom:none;}
-.dlabel{color:#64748b;font-weight:600;font-size:13px;}
-.dvalue{color:#0f172a;font-weight:700;font-size:14px;text-align:right;}
-.side{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;min-width:150px;}
-.avatar{height:88px;width:88px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-size:40px;border:3px solid #dbeafe;}
-.sign-wrap{text-align:center;}
-.sign-wrap img{width:130px;height:auto;}
-.sign-wrap span{display:block;font-size:11px;color:#94a3b8;border-top:1px solid #cbd5e1;padding-top:4px;margin-top:2px;}
-.actions{padding:0 28px 24px;}
-.btn-pdf{width:100%;padding:15px;border:none;border-radius:14px;background:#16a34a;color:#fff;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;}
-.btn-pdf:hover{background:#15803d;}
-.footer{background:#0047ab;color:#fff;text-align:center;padding:14px;font-size:13px;font-weight:700;letter-spacing:.5px;}
-#backBtn{position:fixed;bottom:22px;right:22px;z-index:9999;background:#0f172a;color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer;}
-#backBtn:hover{background:#000;}
-@media (max-width:560px){
-  .body{grid-template-columns:1fr;}
-  .side{flex-direction:row;justify-content:center;flex-wrap:wrap;}
-  .brand h1{font-size:17px;}
-  .pass-top{flex-direction:column;align-items:flex-start;}
-  #backBtn{bottom:16px;right:16px;padding:8px 14px;font-size:13px;}
+
+body{
+margin:0;
+padding:40px;
+background:#87ceeb;
+font-family:Inter, sans-serif;
 }
-@media print{ #backBtn,.actions{display:none;} body{background:#fff;padding:0;} .pass{box-shadow:none;max-width:100%;} }
+
+.pass{
+max-width:1000px;
+margin:auto;
+background:white;
+border-radius:25px;
+overflow:hidden;
+border:4px solid #0047ab;
+box-shadow:0 20px 45px rgba(0,0,0,0.25);
+}
+
+.header{
+background:#0047ab;
+color:white;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:25px 30px;
+}
+
+.header h1{
+margin:0;
+font-size:28px;
+}
+
+.header img{
+height:90px;
+background:white;
+padding:8px 14px;
+border-radius:12px;
+}
+
+.title{
+text-align:center;
+padding:20px;
+font-size:32px;
+font-weight:bold;
+background:#0047ab;
+color:white;
+margin:20px;
+border-radius:10px;
+}
+
+.content{
+display:grid;
+grid-template-columns:1fr 1fr;
+padding:30px;
+gap:20px;
+align-items:start;
+}
+
+.row{
+display:grid;
+grid-template-columns:150px 20px auto;
+margin-bottom:14px;
+font-size:18px;
+}
+
+.label{
+font-weight:700;
+color:#003b82;
+}
+
+.value{
+font-weight:600;
+}
+
+.right{
+text-align:center;
+}
+
+.signature{
+width:220px;
+margin-top:10px;
+}
+
+.status-wrap{
+text-align:center;
+margin-bottom:10px;
+}
+
+.status{
+background:#0a8f2f;
+color:white;
+padding:10px 40px;
+border-radius:30px;
+display:inline-block;
+margin-top:10px;
+font-weight:bold;
+font-size:18px;
+}
+
+.buttons{
+display:flex;
+gap:15px;
+margin:20px;
+}
+
+button{
+flex:1;
+padding:16px;
+font-size:17px;
+font-weight:bold;
+border:none;
+border-radius:10px;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+opacity:.9;
+}
+
+.print{background:#0056b3;color:white;}
+.pdf{background:#16a34a;color:white;}
+.back{background:#334155;color:white;width:calc(100% - 40px);margin:0 20px 20px;padding:14px;font-size:16px;}
+
+.footer{
+background:#0047ab;
+color:white;
+text-align:center;
+padding:15px;
+font-size:16px;
+font-weight:bold;
+letter-spacing:.5px;
+}
+
+@media print{
+button{display:none;}
+body{background:white;padding:0;}
+.pass{border:none;box-shadow:none;}
+}
+
+/* ================= MOBILE RESPONSIVE FIX ================= */
+
+@media (max-width: 768px) {
+
+body{
+padding:10px;
+}
+
+.pass{
+border-radius:15px;
+}
+
+.header{
+flex-direction:column;
+text-align:center;
+gap:12px;
+padding:20px;
+}
+
+.header h1{
+font-size:22px;
+}
+
+.header img{
+height:70px;
+}
+
+.title{
+font-size:20px;
+padding:15px;
+margin:10px;
+}
+
+.content{
+grid-template-columns:1fr;
+padding:15px;
+}
+
+.row{
+grid-template-columns:120px 10px auto;
+font-size:14px;
+}
+
+.buttons{
+flex-direction:column;
+}
+
+button{
+font-size:16px;
+padding:14px;
+}
+
+.signature{
+width:160px;
+}
+
+.status{
+font-size:16px;
+padding:8px 25px;
+}
+}
 </style>
+
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
 <script>
 (function(){
-  async function verifySession(){
-    try{const res=await fetch("/check-session",{cache:"no-store"});if(!res.ok){window.location.href="employeelogin.html";}}catch(e){window.location.href="employeelogin.html";}
-  }
-  verifySession();
-  window.addEventListener("pageshow",function(e){if(e.persisted){verifySession();}});
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "employeelogin.html";
+            }
+        } catch(e){
+            window.location.href = "employeelogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
 })();
 </script>
+<!-- ============ END SESSION GUARD ============ -->
+
 <link rel="stylesheet" href="mobile.css">
 </head>
+
 <body>
 
-<button id="backBtn" onclick="goBack()">&larr; Back</button>
-
 <div class="pass">
-  <div class="pass-top">
-    <div class="brand">
-      <div class="logo-tile"><img src="logo.png" alt="Bajaj Auto"></div>
-      <div><h1>Bajaj Auto</h1><p>Employee Transport</p></div>
-    </div>
-    <div class="pass-type">🎫 BUS PASS</div>
-  </div>
 
-  <div class="status-band">
-    <span class="label">Pass Status</span>
-    <span id="status" class="status">Loading…</span>
-  </div>
+<div class="header">
+<h1>Bajaj Auto</h1>
+<img src="Bajaj.png" alt="Bajaj Logo">
+</div>
 
-  <div class="body">
-    <div class="details">
-      <div class="drow"><span class="dlabel">Name</span><span class="dvalue" id="employeeName">…</span></div>
-      <div class="drow"><span class="dlabel">Employee ID</span><span class="dvalue" id="employeeCode">…</span></div>
-      <div class="drow"><span class="dlabel">Department</span><span class="dvalue" id="department">…</span></div>
-      <div class="drow"><span class="dlabel">Shift</span><span class="dvalue" id="shift">…</span></div>
-      <div class="drow"><span class="dlabel">Route</span><span class="dvalue" id="routeNumber">…</span></div>
-      <div class="drow"><span class="dlabel">Bus Stop</span><span class="dvalue" id="busStop">…</span></div>
-      <div class="drow"><span class="dlabel">Mobile</span><span class="dvalue" id="mobile">…</span></div>
-      <div class="drow"><span class="dlabel">Issue Date</span><span class="dvalue" id="issueDate">…</span></div>
-    </div>
-    <div class="side">
-      <div class="avatar">👤</div>
-      <div class="sign-wrap"><img src="sign.png" alt="Signature"><span>Authorized Signature</span></div>
-    </div>
-  </div>
+<div class="title"> Bus Pass</div>
 
-  <div class="actions">
-    <button class="btn-pdf" onclick="window.print()">⬇️ Download PDF</button>
-  </div>
+<div class="content">
 
-  <div class="footer">BAJAJ AUTO TRANSPORT SYSTEM</div>
+<div class="left">
+
+<div class="row"><div class="label">Name</div><div>:</div><div id="employeeName">Loading...</div></div>
+<div class="row"><div class="label">ID</div><div>:</div><div id="employeeCode">Loading...</div></div>
+<div class="row"><div class="label">Dept</div><div>:</div><div id="department">Loading...</div></div>
+<div class="row"><div class="label">Shift</div><div>:</div><div id="shift">Loading...</div></div>
+<div class="row"><div class="label">Route</div><div>:</div><div id="routeNumber">Loading...</div></div>
+<div class="row"><div class="label">Stop</div><div>:</div><div id="busStop">Loading...</div></div>
+<div class="row"><div class="label">Mobile</div><div>:</div><div id="mobile">Loading...</div></div>
+<div class="row"><div class="label">Issue Date</div><div>:</div><div id="issueDate">Loading...</div></div>
+
+</div>
+
+<div class="right">
+<img class="signature" src="sign.png">
+<div class="status-wrap">
+<div id="status" class="status">Loading...</div>
+</div>
+</div>
+
+</div>
+
+<div class="buttons">
+<button class="print" onclick="window.print()">🖨️ Print</button>
+<button class="pdf" onclick="window.print()">⬇️ Download PDF</button>
+</div>
+
+<button class="back" onclick="goBack()">← Back To Dashboard</button>
+
+<div class="footer">BAJAJ AUTO TRANSPORT SYSTEM</div>
+
 </div>
 
 <script>
+
 const employeeCode = localStorage.getItem("employeeCode");
+
+//
+console.log("Employee Code from localStorage:", employeeCode);
+
 async function loadPass(){
-  try{
-    const res = await fetch("/my-pass/" + employeeCode);
-    const data = await res.json();
-    if(data.status !== "success"){
-      if(res.status === 401 || res.status === 403){
-        alert("Session expired or you're logged in as a different user in this browser. Please login again.");
-        window.location.href = "employeelogin.html"; return;
-      }
-      alert(data.message); return;
+
+    try{
+
+        const res = await fetch(
+            "/my-pass/" + employeeCode
+        );
+
+        const data = await res.json();
+
+        console.log(data);
+
+        if(data.status !== "success"){
+
+            // If the session isn't valid for this page (expired, or
+            // logged in as a different role in this same browser), send
+            // the person to login instead of leaving everything stuck
+            // on "Loading...".
+            if(res.status === 401 || res.status === 403){
+                alert("Session expired or you're logged in as a different user in this browser. Please login again.");
+                window.location.href = "employeelogin.html";
+                return;
+            }
+
+            alert(data.message);
+            return;
+
+        }
+
+        document.getElementById("employeeName").innerText =
+        data.employeeName || "";
+
+        document.getElementById("employeeCode").innerText =
+        data.employeeCode || "";
+
+        document.getElementById("department").innerText =
+        data.department || "";
+
+        document.getElementById("shift").innerText =
+        data.shift || "";
+
+        document.getElementById("routeNumber").innerText =
+        data.routeNumber || "";
+
+        document.getElementById("busStop").innerText =
+        data.busStop || "";
+
+        document.getElementById("mobile").innerText =
+        data.mobile || "";
+
+        document.getElementById("issueDate").innerText =
+        data.issueDate || "";
+
+        document.getElementById("status").innerText =
+        data.passStatus || "";
+
     }
-    document.getElementById("employeeName").innerText = data.employeeName || "";
-    document.getElementById("employeeCode").innerText = data.employeeCode || "";
-    document.getElementById("department").innerText = data.department || "";
-    document.getElementById("shift").innerText = data.shift || "";
-    document.getElementById("routeNumber").innerText = data.routeNumber || "";
-    document.getElementById("busStop").innerText = data.busStop || "";
-    document.getElementById("mobile").innerText = data.mobile || "";
-    document.getElementById("issueDate").innerText = data.issueDate || "";
-    document.getElementById("status").innerText = data.passStatus || "";
-  }catch(err){ console.log(err); alert("Error loading pass"); }
+
+    catch(err){
+
+        console.log(err);
+        alert("Error loading pass");
+
+    }
+
 }
-function goBack(){ window.location.href="employee-dashboard.html"; }
+
+function goBack(){
+    window.location.href="employee-dashboard.html";
+}
+
 window.onload = loadPass;
+
 </script>
+
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
+#globalBackBtn{
+    position:fixed;
+    top:14px;
+    right:14px;
+    z-index:99999;
+    background:#1e293b;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    cursor:pointer;
+}
+#globalBackBtn:hover{ background:#0f172a; }
+@media (max-width:600px){
+    #globalBackBtn{
+        top:8px;
+        right:8px;
+        padding:8px 14px;
+        font-size:13px;
+    }
+}
+</style>
+<button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
+<!-- ============ END BACK BUTTON ============ -->
+
 </body>
 </html>

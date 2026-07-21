@@ -36,6 +36,7 @@ transform:translateY(-5px);
 
 </style>
 
+
 <!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
 <script>
 (function(){
@@ -150,11 +151,7 @@ class="text-gray-500">
 Department :
 </p>
 
-<p
-id="empShift"
-class="text-gray-500">
-Shift :
-</p>
+
 
 <p
 id="empBusStop"
@@ -174,62 +171,135 @@ Route No :
 
 </div>
 
-<!-- OPTIONS GRID -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
 
 <!-- PERMANENT PASS -->
-<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
-    <div class="text-5xl mb-4">🎫</div>
-    <h3 class="text-xl font-bold text-slate-800 mb-2">Bus Pass</h3>
-    <p class="text-gray-500 text-sm mb-5 flex-1">Request your monthly permanent bus pass. Generated only after admin approval.</p>
-    <button onclick="requestPermanentPass()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold transition">Request Bus Pass</button>
-    <button onclick="openMyPass()" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-bold transition">🪪 My Bus Pass</button>
+
+<div class="card bg-white rounded-3xl p-6 shadow border">
+
+    <div class="text-5xl mb-4">
+        🎫
+    </div>
+
+    <h3 class="text-xl font-bold text-slate-800 mb-2">
+         Bus Pass
+    </h3>
+
+    <p class="text-gray-500 text-sm mb-5">
+        Generate monthly permanent bus pass.
+    </p>
+
+    <!-- Request Button -->
+
+    <button
+        onclick="requestPermanentPass()"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold transition">
+
+        Request Bus Pass
+
+    </button>
+
+    <!-- My Pass Button -->
+
+    <button
+        onclick="openMyPass()"
+        class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-bold transition">
+
+        🪪 My Bus Pass
+
+    </button>
+
 </div>
 
 <!-- TEMP PASS -->
-<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
-    <div class="text-5xl mb-4">⏳</div>
-    <h3 class="text-xl font-bold text-slate-800 mb-2">Temporary Pass</h3>
-    <p class="text-gray-500 text-sm mb-5 flex-1">Apply for a 12 hour temporary pass. Sent to admin for approval.</p>
-    <a href="tempbuspass.html"><button class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-bold">Apply for Pass</button></a>
-    <a href="my-temp-pass.html"><button class="w-full bg-slate-700 hover:bg-slate-800 text-white py-2 rounded-2xl font-semibold mt-3">View / Download Temp Pass</button></a>
+
+<div class="card bg-white rounded-3xl p-6 shadow border">
+
+<div class="text-5xl mb-4">
+⏳
 </div>
 
-<!-- ROUTES + LIVE GPS -->
-<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
-    <div class="text-5xl mb-4">🚌</div>
-    <h3 class="text-xl font-bold text-slate-800 mb-2">View Routes &amp; Live GPS</h3>
-    <p class="text-gray-500 text-sm mb-5 flex-1">See your route, stops and track your bus live on the map using the latest GPS link.</p>
-    <a href="viewroots.html"><button class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-bold">View Routes</button></a>
-</div>
+<h3 class="text-xl font-bold text-slate-800 mb-2">
+Temporary Pass
+</h3>
 
-<!-- BUS PASS CHANGE REQUEST (replaces Live Tracking) -->
-<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
-    <div class="text-5xl mb-4">🔁</div>
-    <h3 class="text-xl font-bold text-slate-800 mb-2">Bus Pass Change Request</h3>
-    <p class="text-gray-500 text-sm mb-5 flex-1">Request changes to your existing bus pass (route, stop or shift).</p>
-    <a href="bus-pass-change.html"><button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl font-bold">Request a Change</button></a>
-</div>
+<p class="text-gray-500 text-sm mb-5">
+Generate 12 Hour Temporary Pass.
+</p>
 
-<!-- EMPLOYEE FEEDBACK -->
-<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
-    <div class="text-5xl mb-4">🗣️</div>
-    <h3 class="text-xl font-bold text-slate-800 mb-2">Employee Feedback Form</h3>
-    <p class="text-gray-500 text-sm mb-5 flex-1">Share your feedback, suggestions or concerns with the transport team.</p>
-    <a href="employee-feedback.html"><button class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-2xl font-bold">Give Feedback</button></a>
-</div>
+<a href="tempbuspass.html">
 
-<!-- SHE MARATHI POLICY -->
-<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
-    <div class="text-5xl mb-4">📜</div>
-    <h3 class="text-xl font-bold text-slate-800 mb-2">SHE Marathi Policy</h3>
-    <p class="text-gray-500 text-sm mb-5 flex-1">वाचा संपूर्ण SHE (सुरक्षा, आरोग्य व पर्यावरण) धोरण मराठीत.</p>
-    <a href="she-policy.html"><button class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-bold">View Policy</button></a>
-</div>
+<button class="w-full bg-green-600 text-white py-3 rounded-2xl font-bold">
+Generate Pass
+</button>
+
+</a>
+
+<a href="my-temp-pass.html">
+
+<button class="w-full bg-slate-700 text-white py-2 rounded-2xl font-semibold mt-3">
+View / Download My Temp Pass
+</button>
+
+</a>
 
 </div>
 
+<!-- ROUTES -->
+
+<div class="card bg-white rounded-3xl p-6 shadow border">
+
+<div class="text-5xl mb-4">
+🚌
 </div>
+
+<h3 class="text-xl font-bold text-slate-800 mb-2">
+View Routes
+</h3>
+
+<p class="text-gray-500 text-sm mb-5">
+Check bus route and stop details.
+</p>
+
+<a href="viewroots.html">
+
+<button class="w-full bg-yellow-500 text-white py-3 rounded-2xl font-bold">
+View Routes
+</button>
+
+</a>
+
+</div>
+
+<!-- TRACK -->
+
+<div class="card bg-white rounded-3xl p-6 shadow border">
+
+<div class="text-5xl mb-4">
+📍
+</div>
+
+<h3 class="text-xl font-bold text-slate-800 mb-2">
+Live Tracking
+</h3>
+
+<p class="text-gray-500 text-sm mb-5">
+Track your bus in real time.
+</p>
+
+<a href="https://vms-livetrack.pragatiutrack.com/home?id=f5ab49e7-7964-4e69-b174-23cdaf7ad0b2" target="_blank">
+
+<button class="w-full bg-red-600 text-white py-3 rounded-2xl font-bold">
+Track Bus
+</button>
+
+</a>
+
+</div>
+
+</div>
+
 
 </div>
 
@@ -247,6 +317,10 @@ Route No :
 
 </footer>
 
+
+
+
+
 <script>
 
 document.getElementById("empName").innerHTML =
@@ -260,7 +334,9 @@ document.getElementById("empDepartment").innerHTML =
 "Department : " +
 localStorage.getItem("department");
 
-if(document.getElementById("empShift")){document.getElementById("empShift").innerHTML = "Shift : " + localStorage.getItem("shift");}
+document.getElementById("empShift").innerHTML =
+"Shift : " +
+localStorage.getItem("shift");
 
 document.getElementById("empBusStop").innerHTML =
 "Pickup Point : " +
@@ -269,6 +345,8 @@ localStorage.getItem("busStop");
 document.getElementById("empRoute").innerHTML =
 "Route No : " +
 localStorage.getItem("routeNumber");
+
+
 
 // =========================
 // REQUEST PERMANENT PASS
@@ -308,6 +386,8 @@ async function requestPermanentPass(){
 
 }
 
+
+
 // =========================
 // OPEN MY PASS
 // =========================
@@ -317,6 +397,8 @@ function openMyPass(){
     window.location.href="my-pass.html";
 
 }
+
+
 
 // =========================
 // LOGOUT
@@ -338,8 +420,8 @@ function logout(){
 <style>
 #globalBackBtn{
     position:fixed;
-    bottom:22px;
-    right:22px;
+    top:14px;
+    right:14px;
     z-index:99999;
     background:#1e293b;
     color:#fff;
@@ -355,8 +437,8 @@ function logout(){
 #globalBackBtn:hover{ background:#0f172a; }
 @media (max-width:600px){
     #globalBackBtn{
-        bottom:16px;
-        right:16px;
+        top:8px;
+        right:8px;
         padding:8px 14px;
         font-size:13px;
     }
