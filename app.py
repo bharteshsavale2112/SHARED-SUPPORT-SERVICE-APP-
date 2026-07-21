@@ -1682,7 +1682,7 @@ def format_manpower(manpower):
             lines.append(f"{provider}: 2Hrs={two}, 3Hrs={three}")
     return "\n".join(lines) if lines else "-"
 
-
+ 
 def format_transport(transport):
     lines = []
     for t in transport:
@@ -1809,6 +1809,327 @@ def save_ot_request():
             "status": "error",
             "message": str(e)
         })        
+
+# =====================================================================
+# ============  NEW FEATURES (added)  =================================
+# =====================================================================
+
+from openpyxl import load_workbook as _lwb, Workbook as _WB
+
+
+def _append_daywise(path, sheet_name, headers, row_dict):
+    """Append a row to a day-wise sheet inside an .xlsx workbook."""
+    if os.path.exists(path):
+        wb = _lwb(path)
+    else:
+        wb = _WB()
+        wb.remove(wb.active)
+
+    if sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+    else:
+        ws = wb.create_sheet(title=sheet_name)
+        for c, h in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=c, value=h)
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="0056B3", end_color="0056B3", fill_type="solid")
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            ws.column_dimensions[get_column_letter(c)].width = 22
+        ws.freeze_panes = "A2"
+
+    next_row = ws.max_row + 1
+    for c, h in enumerate(headers, start=1):
+        ws.cell(row=next_row, column=c, value=row_dict.get(h, ""))
+    wb.save(path)
+
+
+def _read_all_daywise(path):
+    if not os.path.exists(path):
+        return []
+    rows = []
+    wb = _lwb(path, data_only=True)
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        data = list(ws.iter_rows(values_only=True))
+        if not data:
+            continue
+        headers = [str(h) if h is not None else "" for h in data[0]]
+        for r in data[1:]:
+            if r is None or all(v is None or str(v).strip() == "" for v in r):
+                continue
+            item = {headers[i]: ("" if r[i] is None else r[i]) for i in range(len(headers))}
+            item["_day"] = sheet_name
+            rows.append(item)
+    return rows
+
+
+# ============ ROUTE LIVE-TRACKING LINKS (Pragathi GPS, DB-driven) ====
+
+ROUTE_LINKS_FILE = "route_links.xlsx"
+ROUTE_LINKS_COLS = ["shift", "route", "trackingUrl", "updatedAt"]
+
+
+def create_route_links_file():
+    if not os.path.exists(ROUTE_LINKS_FILE):
+        pd.DataFrame(columns=ROUTE_LINKS_COLS).to_excel(ROUTE_LINKS_FILE, index=False)
+
+
+create_route_links_file()
+
+
+@app.route("/route-links", methods=["GET"])
+def route_links():
+    try:
+        create_route_links_file()
+        df = pd.read_excel(ROUTE_LINKS_FILE).fillna("")
+        return jsonify(df.to_dict(orient="records"))
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/route-link", methods=["GET"])
+def route_link_lookup():
+    try:
+        shift = str(request.args.get("shift", "")).strip()
+        route = str(request.args.get("route", "")).strip()
+        create_route_links_file()
+        df = pd.read_excel(ROUTE_LINKS_FILE).fillna("")
+        df["shift"] = df["shift"].astype(str).str.strip()
+        df["route"] = df["route"].astype(str).str.strip()
+        match = df[(df["shift"] == shift) & (df["route"] == route)]
+        if match.empty:
+            return jsonify({"status": "success", "trackingUrl": "", "updatedAt": ""})
+        row = match.iloc[-1]
+        return jsonify({"status": "success", "trackingUrl": str(row["trackingUrl"]), "updatedAt": str(row["updatedAt"])})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/save-route-link", methods=["POST"])
+@login_required("admin")
+def save_route_link():
+    try:
+        data = request.get_json() or {}
+        shift = str(data.get("shift", "")).strip()
+        route = str(data.get("route", "")).strip()
+        url = str(data.get("trackingUrl", "")).strip()
+        if shift == "" or route == "":
+            return jsonify({"status": "error", "message": "Shift and Route are required"})
+        create_route_links_file()
+        df = pd.read_excel(ROUTE_LINKS_FILE).fillna("")
+        df["shift"] = df["shift"].astype(str)
+        df["route"] = df["route"].astype(str)
+        mask = (df["shift"].str.strip() == shift) & (df["route"].str.strip() == route)
+        now = datetime.now().strftime("%d-%m-%Y %H:%M")
+        if mask.any():
+            df.loc[mask, "trackingUrl"] = url
+            df.loc[mask, "updatedAt"] = now
+        else:
+            df = pd.concat([df, pd.DataFrame([{"shift": shift, "route": route, "trackingUrl": url, "updatedAt": now}])], ignore_index=True)
+        df.to_excel(ROUTE_LINKS_FILE, index=False)
+        return jsonify({"status": "success", "message": "Tracking link saved successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ============ DEPARTMENT HEADS (Vendor Visit auto-fill) =============
+
+DEPT_HEADS_FILE = "department_heads.xlsx"
+DEPARTMENTS = [
+    "Production", "Quality", "Maintenance", "HR", "Administration",
+    "Alluminium Shop", "BU HR -Operations", "Central Maintenance",
+    "Assembly Planned Maint", "Chassis Sub Assembly Center", "Civil",
+    "Dispensary", "Civil & Utility", "Engine Assembly Line-KTM",
+    "Engine Assembly", "Export", "Exoprt Assembly CKD", "Export Open",
+    "Facility Engineering", "Flying Start GT-OP", "HRD", "Machining",
+    "Manufacturing Check", "Manufacturing Engine", "ME (E&T)",
+    "ME(Vehicle)", "Paint Shop", "Personnel", "PPC", "Production Planning",
+    "Vehicel Assembly-Pulsar", "Quality Assurance", "Reliability Sub Vehicle",
+    "Reliability Supply Vehicle", "Safety", "Security", "Steel Shop",
+    "Steel Shop (C-10)", "Time Office", "Tool Room", "TPM",
+    "Utilities & Services", "Vehicle Assembly Electric", "Vehicle Dispatch",
+    "Vehicle Assembly", "Works Admin (C-01)"
+]
+
+
+def create_dept_heads_file():
+    if not os.path.exists(DEPT_HEADS_FILE):
+        rows = [{"department": d, "head": "HOD - " + d} for d in DEPARTMENTS]
+        pd.DataFrame(rows, columns=["department", "head"]).to_excel(DEPT_HEADS_FILE, index=False)
+
+
+create_dept_heads_file()
+
+
+@app.route("/department-heads", methods=["GET"])
+def department_heads():
+    try:
+        create_dept_heads_file()
+        df = pd.read_excel(DEPT_HEADS_FILE).fillna("")
+        mapping = {str(r["department"]).strip(): str(r["head"]).strip() for _, r in df.iterrows()}
+        return jsonify({"status": "success", "departments": mapping})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ============ EMPLOYEE FORMS: Change Request + Feedback ============
+
+EMPLOYEE_FORMS_FILE = "employee_forms.xlsx"
+CHANGE_REQ_HEADERS = [
+    "Timestamp", "Employee Code", "Employee Name", "Department", "Mobile",
+    "Current Shift", "Current Route", "Current Bus Stop",
+    "Requested Shift", "Requested Route", "Requested Bus Stop",
+    "Change Type", "Reason"
+]
+FEEDBACK_HEADERS = [
+    "Timestamp", "Employee Code", "Employee Name", "Department",
+    "Category", "Rating", "Feedback"
+]
+
+
+@app.route("/bus-pass-change-request", methods=["POST"])
+@login_required("employee")
+def bus_pass_change_request():
+    try:
+        data = request.get_json() or {}
+        code = str(session.get("employeeCode", "")).strip()
+        now = datetime.now()
+        row = {
+            "Timestamp": now.strftime("%d-%m-%Y %H:%M:%S"),
+            "Employee Code": code,
+            "Employee Name": data.get("employeeName", ""),
+            "Department": data.get("department", ""),
+            "Mobile": data.get("mobile", ""),
+            "Current Shift": data.get("currentShift", ""),
+            "Current Route": data.get("currentRoute", ""),
+            "Current Bus Stop": data.get("currentBusStop", ""),
+            "Requested Shift": data.get("requestedShift", ""),
+            "Requested Route": data.get("requestedRoute", ""),
+            "Requested Bus Stop": data.get("requestedBusStop", ""),
+            "Change Type": data.get("changeType", ""),
+            "Reason": data.get("reason", ""),
+        }
+        _append_daywise(EMPLOYEE_FORMS_FILE, "ChangeReq " + now.strftime("%d-%m-%Y"), CHANGE_REQ_HEADERS, row)
+        return jsonify({"status": "success", "message": "Bus Pass Change Request submitted successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/submit-feedback", methods=["POST"])
+@login_required("employee")
+def submit_feedback():
+    try:
+        data = request.get_json() or {}
+        code = str(session.get("employeeCode", "")).strip()
+        now = datetime.now()
+        row = {
+            "Timestamp": now.strftime("%d-%m-%Y %H:%M:%S"),
+            "Employee Code": code,
+            "Employee Name": data.get("employeeName", ""),
+            "Department": data.get("department", ""),
+            "Category": data.get("category", ""),
+            "Rating": data.get("rating", ""),
+            "Feedback": data.get("feedback", ""),
+        }
+        _append_daywise(EMPLOYEE_FORMS_FILE, "Feedback " + now.strftime("%d-%m-%Y"), FEEDBACK_HEADERS, row)
+        return jsonify({"status": "success", "message": "Feedback submitted successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/admin/change-requests", methods=["GET"])
+@login_required("admin")
+def admin_change_requests():
+    try:
+        rows = [r for r in _read_all_daywise(EMPLOYEE_FORMS_FILE) if str(r.get("_day", "")).startswith("ChangeReq")]
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/admin/feedback", methods=["GET"])
+@login_required("admin")
+def admin_feedback():
+    try:
+        rows = [r for r in _read_all_daywise(EMPLOYEE_FORMS_FILE) if str(r.get("_day", "")).startswith("Feedback")]
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ============ VENDOR VISIT FORM (Home page) -> day-wise Excel =======
+
+VENDOR_FILE = "vendor_visits.xlsx"
+VENDOR_HEADERS = [
+    "Timestamp", "Ticket Number", "Name", "Department", "Authorized Person",
+    "Vendor Name", "Vendor Pickup Time", "From Date", "To Date", "Purpose of Visit"
+]
+
+
+@app.route("/vendor-visit", methods=["POST"])
+def vendor_visit():
+    try:
+        data = request.get_json() or {}
+        required = ["ticketNumber", "name", "department", "vendorName", "vendorPickupTime", "fromDate", "toDate", "purpose"]
+        for f in required:
+            if str(data.get(f, "")).strip() == "":
+                return jsonify({"status": "error", "message": f"{f} is required"})
+        now = datetime.now()
+        row = {
+            "Timestamp": now.strftime("%d-%m-%Y %H:%M:%S"),
+            "Ticket Number": data.get("ticketNumber", ""),
+            "Name": data.get("name", ""),
+            "Department": data.get("department", ""),
+            "Authorized Person": data.get("authorizedPerson", ""),
+            "Vendor Name": data.get("vendorName", ""),
+            "Vendor Pickup Time": data.get("vendorPickupTime", ""),
+            "From Date": data.get("fromDate", ""),
+            "To Date": data.get("toDate", ""),
+            "Purpose of Visit": data.get("purpose", ""),
+        }
+        _append_daywise(VENDOR_FILE, now.strftime("%d-%m-%Y"), VENDOR_HEADERS, row)
+        return jsonify({"status": "success", "message": "Vendor visit submitted successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@app.route("/admin/vendor-visits", methods=["GET"])
+@login_required("admin")
+def admin_vendor_visits():
+    try:
+        return jsonify(_read_all_daywise(VENDOR_FILE))
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+# ============ EMPLOYEE: my pass request status =====================
+
+@app.route("/my-request-status", methods=["GET"])
+@login_required("employee")
+def my_request_status():
+    try:
+        code = str(session.get("employeeCode", "")).strip()
+        result = {"status": "success", "permanent": None, "temporary": None}
+        if os.path.exists(PASS_REQUEST_FILE):
+            req = pd.read_excel(PASS_REQUEST_FILE).fillna("")
+            req["employeeCode"] = req["employeeCode"].astype(str).str.strip()
+            mine = req[req["employeeCode"] == code]
+            if not mine.empty:
+                last = mine.iloc[-1]
+                result["permanent"] = {"status": str(last.get("status", "")), "requestDate": str(last.get("requestDate", "")), "approvedDate": str(last.get("approvedDate", ""))}
+        if os.path.exists(TEMP_PASS_FILE):
+            tdf = pd.read_excel(TEMP_PASS_FILE).fillna("")
+            tdf["employeeCode"] = tdf["employeeCode"].astype(str).str.strip()
+            mine = tdf[tdf["employeeCode"] == code]
+            if not mine.empty:
+                last = mine.iloc[-1]
+                result["temporary"] = {"status": str(last.get("status", "")), "requestDate": str(last.get("requestDate", "")), "validUntil": str(last.get("validUntil", ""))}
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+
 # ==========================
 # RUN SERVER
 # ==========================

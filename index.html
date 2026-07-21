@@ -55,6 +55,7 @@ body{ font-family:'Inter',sans-serif; background:#f1f5f9; }
       <a href="viewroots.html" class="hover:text-blue-600 transition">Routes</a>
       <a href="EmergencyContact.html" class="hover:text-blue-600 transition">Emergency</a>
       <a href="ot-approval.html" class="hover:text-blue-600 transition">OT Approval</a>
+      <a href="#vendorVisit" class="hover:text-blue-600 transition">Vendor Visit</a>
     </nav>
 
     <!-- Desktop buttons -->
@@ -75,6 +76,7 @@ body{ font-family:'Inter',sans-serif; background:#f1f5f9; }
       <a href="EmergencyContact.html" class="py-3 border-b">Emergency Contact</a>
       <a href="ot-approval.html" class="py-3 border-b">OT Manpower Approval</a>
       <a href="driverpannel.html" class="py-3 border-b">Driver Panel</a>
+      <a href="#vendorVisit" class="py-3 border-b">Vendor Visit</a>
     </nav>
     <div class="grid grid-cols-2 gap-3 pt-4">
       <a href="employeelogin.html"><button class="w-full bg-white border border-blue-600 text-blue-600 px-4 py-2.5 rounded-xl font-semibold">Employee Login</button></a>
@@ -199,6 +201,45 @@ body{ font-family:'Inter',sans-serif; background:#f1f5f9; }
   </div>
 </section>
 
+
+<!-- ================= VENDOR VISIT FORM ================= -->
+<section id="vendorVisit" class="py-16 sm:py-20 bg-white">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="text-center mb-8">
+      <div class="text-5xl mb-2">🧾</div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-800">Vendor Visit Form</h2>
+      <p class="text-gray-500 mt-2">Register a vendor visit. All submissions are saved securely.</p>
+    </div>
+    <div class="bg-slate-50 border rounded-3xl shadow-sm p-6 sm:p-8">
+      <form id="vendorForm" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">Ticket Number <span class="text-rose-600">*</span></label><input id="v_ticket" class="vfld" placeholder="e.g. TKT-10245"></div>
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">Name <span class="text-rose-600">*</span></label><input id="v_name" class="vfld" placeholder="Your full name"></div>
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">Department <span class="text-rose-600">*</span></label><select id="v_department" class="vfld"><option value="">Select Department</option></select></div>
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">Authorized Person (Department Head)</label><input id="v_authorized" class="vfld" readonly placeholder="Auto-filled from department"></div>
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">Vendor Name <span class="text-rose-600">*</span></label>
+          <select id="v_vendor" class="vfld">
+            <option value="">Select Vendor</option>
+            <option value="100221 – UNO MINDA LIMITED">100221 – UNO MINDA LIMITED</option>
+            <option value="106920 – UNO MINDA LIMITED">106920 – UNO MINDA LIMITED</option>
+            <option value="117927 – UNO MINDA LIMITED">117927 – UNO MINDA LIMITED</option>
+            <option value="114534 – UNO MINDA LIMITED">114534 – UNO MINDA LIMITED</option>
+          </select></div>
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">Vendor Pickup Time <span class="text-rose-600">*</span></label><input id="v_pickup" type="time" class="vfld"></div>
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">From Date <span class="text-rose-600">*</span></label><input id="v_from" type="date" class="vfld"></div>
+        <div><label class="block font-semibold text-slate-700 text-sm mb-1">To Date <span class="text-rose-600">*</span></label><input id="v_to" type="date" class="vfld"></div>
+        <div class="sm:col-span-2"><label class="block font-semibold text-slate-700 text-sm mb-1">Purpose of Visit <span class="text-rose-600">*</span></label><textarea id="v_purpose" rows="3" class="vfld" placeholder="Describe the purpose of the visit"></textarea></div>
+        <div class="sm:col-span-2"><button type="submit" class="btn w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl font-bold shadow-lg shadow-blue-600/30">Submit Vendor Visit</button></div>
+      </form>
+      <div id="v_msg" class="hidden mt-5 rounded-2xl p-4 text-center font-semibold"></div>
+    </div>
+  </div>
+</section>
+<style>
+.vfld{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px;outline:none;background:#fff;transition:.15s;}
+.vfld:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15);}
+.vfld[readonly]{background:#eef2f7;color:#475569;}
+</style>
+
 <!-- ================= FOOTER ================= -->
 <footer class="bg-slate-950 text-slate-400 py-8">
   <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
@@ -221,6 +262,62 @@ function changeShift(btn, shift, routes){
   document.querySelectorAll(".shiftBtn").forEach(b=>b.classList.remove("active"));
   if(btn) btn.classList.add("active");
 }
+
+// ================= VENDOR VISIT FORM =================
+let DEPT_HEADS = {};
+async function initVendorForm(){
+  const sel = document.getElementById("v_department");
+  if(!sel) return;
+  try{
+    const res = await fetch("/department-heads");
+    const data = await res.json();
+    if(data.status === "success"){
+      DEPT_HEADS = data.departments || {};
+      Object.keys(DEPT_HEADS).forEach(d=>{ const o=document.createElement("option"); o.value=d; o.textContent=d; sel.appendChild(o); });
+    }
+  }catch(e){ console.log(e); }
+  sel.addEventListener("change", ()=>{ document.getElementById("v_authorized").value = DEPT_HEADS[sel.value] || ""; });
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("v_from").value = today;
+  document.getElementById("v_to").value = today;
+  document.getElementById("vendorForm").addEventListener("submit", async function(e){
+    e.preventDefault();
+    const fields = {
+      ticketNumber: document.getElementById("v_ticket").value.trim(),
+      name: document.getElementById("v_name").value.trim(),
+      department: document.getElementById("v_department").value,
+      authorizedPerson: document.getElementById("v_authorized").value,
+      vendorName: document.getElementById("v_vendor").value,
+      vendorPickupTime: document.getElementById("v_pickup").value,
+      fromDate: document.getElementById("v_from").value,
+      toDate: document.getElementById("v_to").value,
+      purpose: document.getElementById("v_purpose").value.trim()
+    };
+    const required = ["ticketNumber","name","department","vendorName","vendorPickupTime","fromDate","toDate","purpose"];
+    for(const f of required){ if(!fields[f]){ showVendorMsg("⚠️ Please fill all required (*) fields.", false); return; } }
+    if(fields.toDate < fields.fromDate){ showVendorMsg("⚠️ 'To Date' cannot be before 'From Date'.", false); return; }
+    try{
+      const res = await fetch("/vendor-visit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(fields)});
+      const data = await res.json();
+      if(data.status === "success"){
+        showVendorMsg("✅ "+data.message, true);
+        document.getElementById("vendorForm").reset();
+        document.getElementById("v_authorized").value="";
+        const t=new Date().toISOString().split("T")[0];
+        document.getElementById("v_from").value=t; document.getElementById("v_to").value=t;
+      } else { showVendorMsg("⚠️ "+(data.message||"Could not submit"), false); }
+    }catch(err){ showVendorMsg("Server error. Please try again.", false); }
+  });
+}
+function showVendorMsg(text, ok){
+  const m=document.getElementById("v_msg");
+  m.textContent=text;
+  m.className="mt-5 rounded-2xl p-4 text-center font-semibold "+(ok?"bg-green-100 text-green-700":"bg-red-100 text-red-700");
+  m.classList.remove("hidden");
+  m.scrollIntoView({behavior:"smooth",block:"center"});
+}
+initVendorForm();
+
 </script>
 
 </body>
