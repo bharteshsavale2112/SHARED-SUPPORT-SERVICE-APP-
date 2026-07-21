@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bajaj Auto | Bus Pass Change Request</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Inter',sans-serif;}
+body{background:#f1f5f9;margin:0;}
+.logo-tile{background:#fff;border-radius:12px;padding:6px 12px;display:inline-flex;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.logo-tile img{height:40px;width:auto;object-fit:contain;}
+.fld{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:12px;font-size:14px;outline:none;transition:.15s;background:#fff;}
+.fld:focus{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.15);}
+.fld[readonly]{background:#f1f5f9;color:#475569;}
+label{font-weight:600;color:#334155;font-size:13px;display:block;margin-bottom:6px;}
+.req::after{content:" *";color:#e11d48;}
+#backBtn{position:fixed;bottom:22px;right:22px;z-index:9999;background:#1e293b;color:#fff;border:none;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.3);cursor:pointer;}
+#backBtn:hover{background:#0f172a;}
+@media(max-width:600px){#backBtn{bottom:16px;right:16px;padding:8px 14px;font-size:13px;}}
+</style>
+<script>
+(function(){
+  async function verifySession(){
+    try{const res=await fetch("/check-session",{cache:"no-store"});if(!res.ok){window.location.href="employeelogin.html";}}catch(e){window.location.href="employeelogin.html";}
+  }
+  verifySession();
+  window.addEventListener("pageshow",function(e){if(e.persisted){verifySession();}});
+})();
+</script>
+<link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+
+<button id="backBtn" onclick="window.location.href='employee-dashboard.html'">&larr; Back</button>
+
+<header class="bg-white shadow sticky top-0 z-40">
+  <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+    <div class="logo-tile"><img src="logo.png" alt="Bajaj Auto"></div>
+    <div>
+      <h1 class="font-extrabold text-blue-900 text-lg sm:text-xl">Bus Pass Change Request</h1>
+      <p class="text-xs text-gray-500">Bajaj Auto Transport Management</p>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-4xl mx-auto px-4 py-8">
+  <div class="bg-white rounded-3xl shadow-lg p-6 sm:p-8">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="text-4xl">🔁</div>
+      <div>
+        <h2 class="text-xl font-bold text-slate-800">Request a change to your Bus Pass</h2>
+        <p class="text-sm text-gray-500">Fill in your current and requested details. Your request is saved for admin review.</p>
+      </div>
+    </div>
+
+    <form id="changeForm" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div><label class="req">Employee Code</label><input class="fld" id="employeeCode" readonly></div>
+      <div><label class="req">Employee Name</label><input class="fld" id="employeeName" readonly></div>
+      <div><label>Department</label><input class="fld" id="department" readonly></div>
+      <div><label class="req">Mobile</label><input class="fld" id="mobile" type="tel"></div>
+
+      <div class="sm:col-span-2 border-t pt-4 mt-1"><p class="font-bold text-slate-700 mb-1">Current Pass Details</p></div>
+      <div><label>Current Shift</label><input class="fld" id="currentShift"></div>
+      <div><label>Current Route</label><input class="fld" id="currentRoute"></div>
+      <div class="sm:col-span-2"><label>Current Bus Stop</label><input class="fld" id="currentBusStop"></div>
+
+      <div class="sm:col-span-2 border-t pt-4 mt-1"><p class="font-bold text-slate-700 mb-1">Requested Change</p></div>
+      <div><label class="req">Change Type</label>
+        <select class="fld" id="changeType" required>
+          <option value="">-- Select --</option>
+          <option>Route Change</option>
+          <option>Bus Stop Change</option>
+          <option>Shift Change</option>
+          <option>Other</option>
+        </select></div>
+      <div><label>Requested Shift</label>
+        <select class="fld" id="requestedShift">
+          <option value="">-- Select (if changing) --</option>
+          <option>1st Shift</option>
+          <option>2nd Shift</option>
+          <option>3rd Shift</option>
+          <option>General Shift</option>
+        </select></div>
+      <div><label>Requested Route</label><input class="fld" id="requestedRoute" placeholder="e.g. Route 5 (WAGHOLI)"></div>
+      <div><label>Requested Bus Stop</label><input class="fld" id="requestedBusStop" placeholder="Preferred stop"></div>
+      <div class="sm:col-span-2"><label class="req">Reason for Change</label><textarea class="fld" id="reason" rows="3" required placeholder="Explain why you need this change"></textarea></div>
+
+      <div class="sm:col-span-2"><button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-2xl font-bold transition">Submit Change Request</button></div>
+    </form>
+
+    <div id="msg" class="hidden mt-5 rounded-2xl p-4 text-center font-semibold"></div>
+  </div>
+</main>
+
+<script>
+document.getElementById("employeeCode").value = localStorage.getItem("employeeCode") || "";
+document.getElementById("employeeName").value = localStorage.getItem("employeeName") || "";
+document.getElementById("department").value  = localStorage.getItem("department") || "";
+document.getElementById("mobile").value      = localStorage.getItem("mobile") || "";
+document.getElementById("currentShift").value= localStorage.getItem("shift") || "";
+document.getElementById("currentRoute").value= localStorage.getItem("routeNumber") || "";
+document.getElementById("currentBusStop").value = localStorage.getItem("busStop") || "";
+
+function showMsg(text, ok){
+  const m=document.getElementById("msg");
+  m.textContent=text;
+  m.className="mt-5 rounded-2xl p-4 text-center font-semibold "+(ok?"bg-green-100 text-green-700":"bg-red-100 text-red-700");
+  m.classList.remove("hidden");
+}
+
+document.getElementById("changeForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const mobile=document.getElementById("mobile").value.trim();
+  const changeType=document.getElementById("changeType").value;
+  const reason=document.getElementById("reason").value.trim();
+  if(!mobile || !changeType || !reason){ showMsg("Please fill all required (*) fields.", false); return; }
+  const payload={
+    employeeName:document.getElementById("employeeName").value,
+    department:document.getElementById("department").value,
+    mobile:mobile,
+    currentShift:document.getElementById("currentShift").value,
+    currentRoute:document.getElementById("currentRoute").value,
+    currentBusStop:document.getElementById("currentBusStop").value,
+    requestedShift:document.getElementById("requestedShift").value,
+    requestedRoute:document.getElementById("requestedRoute").value,
+    requestedBusStop:document.getElementById("requestedBusStop").value,
+    changeType:changeType,
+    reason:reason
+  };
+  try{
+    const res=await fetch("/bus-pass-change-request",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const data=await res.json();
+    if(data.status==="success"){
+      showMsg("✅ "+data.message, true);
+      document.getElementById("changeForm").reset();
+      document.getElementById("employeeCode").value = localStorage.getItem("employeeCode") || "";
+      document.getElementById("employeeName").value = localStorage.getItem("employeeName") || "";
+      document.getElementById("department").value  = localStorage.getItem("department") || "";
+    } else { showMsg("⚠️ "+(data.message||"Could not submit"), false); }
+  }catch(err){ showMsg("Server error. Please try again.", false); }
+});
+</script>
+</body>
+</html>
