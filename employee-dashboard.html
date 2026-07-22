@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Employee Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+font-family:'Inter',sans-serif;
+background:#f1f5f9;
+}
+
+.hero{
+background:
+linear-gradient(rgba(15,23,42,.92),rgba(15,23,42,.92)),
+url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1600&auto=format&fit=crop');
+background-size:cover;
+background-position:center;
+}
+
+.card{
+transition:.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
+}
+
+</style>
+
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "employeelogin.html";
+            }
+        } catch(e){
+            window.location.href = "employeelogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
+
+<link rel="stylesheet" href="mobile.css">
+</head>
+
+<body>
+
+<!-- HEADER -->
+
+<header class="bg-white shadow sticky top-0 z-50">
+
+<div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+
+<div class="flex items-center gap-3">
+
+<img src="download (1).png" alt="Bajaj Auto" class="h-14 md:h-16 w-auto object-contain">
+
+<div>
+<h1 class="font-extrabold text-blue-900">
+BAJAJ AUTO
+</h1>
+
+<p class="text-xs text-gray-500">
+Employee Dashboard
+</p>
+</div>
+
+</div>
+
+<a href="index.html">
+
+<button class="bg-red-600 text-white px-5 py-2 rounded-xl font-semibold">
+Logout
+</button>
+
+</a>
+
+</div>
+
+</header>
+
+<!-- HERO -->
+
+<section class="hero py-12">
+
+<div class="max-w-7xl mx-auto px-4">
+
+<h2 class="text-5xl font-extrabold text-white">
+Welcome Employee
+</h2>
+
+<p class="text-slate-300 mt-3 text-lg">
+Employee Transport Management Dashboard
+</p>
+
+</div>
+
+</section>
+
+<!-- CONTENT -->
+
+<section class="py-10">
+
+<div class="max-w-7xl mx-auto px-4">
+
+<!-- EMPLOYEE PROFILE -->
+
+<div class="bg-white rounded-3xl shadow-lg p-8 mb-8">
+
+<div class="flex flex-col md:flex-row gap-6 items-center">
+
+<div class="h-28 w-28 rounded-full bg-blue-100 flex items-center justify-center text-5xl">
+👨
+</div>
+
+<div>
+
+    <h3
+id="empName"
+class="text-3xl font-bold text-slate-800">
+Employee Name
+</h3>
+
+<p
+id="empCode"
+class="text-gray-500">
+Employee ID :
+</p>
+
+<p
+id="empDepartment"
+class="text-gray-500">
+Department :
+</p>
+
+<p
+id="empShift"
+class="text-gray-500">
+Shift :
+</p>
+
+
+
+<p
+id="empBusStop"
+class="text-gray-500">
+Pickup Point :
+</p>
+
+<p
+id="empRoute"
+class="text-gray-500">
+Route No :
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<!-- OPTIONS GRID -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+<!-- PERMANENT PASS -->
+<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
+    <div class="text-5xl mb-4">🎫</div>
+    <h3 class="text-xl font-bold text-slate-800 mb-2">Bus Pass</h3>
+    <p class="text-gray-500 text-sm mb-5 flex-1">Request your monthly permanent bus pass. Generated only after admin approval.</p>
+    <button onclick="requestPermanentPass()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold transition">Request Bus Pass</button>
+    <button onclick="openMyPass()" class="w-full mt-3 bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-bold transition">🪪 My Bus Pass</button>
+</div>
+
+<!-- TEMP PASS -->
+<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
+    <div class="text-5xl mb-4">⏳</div>
+    <h3 class="text-xl font-bold text-slate-800 mb-2">Temporary Pass</h3>
+    <p class="text-gray-500 text-sm mb-5 flex-1">Apply for a 12 hour temporary pass. Sent to admin for approval.</p>
+    <a href="tempbuspass.html"><button class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-2xl font-bold">Apply for Pass</button></a>
+    <a href="my-temp-pass.html"><button class="w-full bg-slate-700 hover:bg-slate-800 text-white py-2 rounded-2xl font-semibold mt-3">View / Download Temp Pass</button></a>
+</div>
+
+<!-- ROUTES + LIVE GPS -->
+<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
+    <div class="text-5xl mb-4">🚌</div>
+    <h3 class="text-xl font-bold text-slate-800 mb-2">View Routes &amp; Live GPS</h3>
+    <p class="text-gray-500 text-sm mb-5 flex-1">See your route, stops and track your bus live on the map using the latest GPS link.</p>
+    <a href="viewroots.html"><button class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-3 rounded-2xl font-bold">View Routes</button></a>
+</div>
+
+<!-- BUS PASS CHANGE REQUEST (replaces Live Tracking) -->
+<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
+    <div class="text-5xl mb-4">🔁</div>
+    <h3 class="text-xl font-bold text-slate-800 mb-2">Bus Pass Change Request</h3>
+    <p class="text-gray-500 text-sm mb-5 flex-1">Request changes to your existing bus pass (route, stop or shift).</p>
+    <a href="bus-pass-change.html"><button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl font-bold">Request a Change</button></a>
+</div>
+
+<!-- EMPLOYEE FEEDBACK -->
+<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
+    <div class="text-5xl mb-4">🗣️</div>
+    <h3 class="text-xl font-bold text-slate-800 mb-2">Employee Feedback Form</h3>
+    <p class="text-gray-500 text-sm mb-5 flex-1">Share your feedback, suggestions or concerns with the transport team.</p>
+    <a href="employee-feedback.html"><button class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-2xl font-bold">Give Feedback</button></a>
+</div>
+
+<!-- SHE MARATHI POLICY -->
+<div class="card bg-white rounded-3xl p-6 shadow border flex flex-col">
+    <div class="text-5xl mb-4">📜</div>
+    <h3 class="text-xl font-bold text-slate-800 mb-2">SHE Marathi Policy</h3>
+    <p class="text-gray-500 text-sm mb-5 flex-1">वाचा संपूर्ण SHE (सुरक्षा, आरोग्य व पर्यावरण) धोरण मराठीत.</p>
+    <a href="she-policy.html"><button class="w-full bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-2xl font-bold">View Policy</button></a>
+</div>
+
+</div>
+
+</div>
+
+<!-- PASS STATUS -->
+
+<div class="mt-10 grid md:grid-cols-2 gap-6">
+
+<div class="bg-white rounded-3xl p-6 shadow">
+
+<h3 class="text-2xl font-bold text-slate-800 mb-4">
+Permanent Pass Status
+</h3>
+
+<div class="flex justify-between">
+<span>Pass Number</span>
+<span class="font-bold">PP2026001</span>
+</div>
+
+<div class="flex justify-between mt-3">
+<span>Status</span>
+<span class="text-green-600 font-bold">
+ACTIVE
+</span>
+</div>
+
+<div class="flex justify-between mt-3">
+<span>Valid Till</span>
+<span class="font-bold">
+31-Dec-2026
+</span>
+</div>
+
+</div>
+
+<div class="bg-white rounded-3xl p-6 shadow">
+
+<h3 class="text-2xl font-bold text-slate-800 mb-4">
+Temporary Pass Status
+</h3>
+
+<div class="flex justify-between">
+<span>Pass Number</span>
+<span class="font-bold">
+TP2026001
+</span>
+</div>
+
+<div class="flex justify-between mt-3">
+<span>Status</span>
+<span class="text-orange-500 font-bold">
+EXPIRES IN 12 HOURS
+</span>
+</div>
+
+<div class="flex justify-between mt-3">
+<span>Expiry Time</span>
+<span class="font-bold">
+10:30 PM
+</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer class="bg-slate-950 text-slate-400 py-6 mt-10">
+
+<div class="max-w-7xl mx-auto px-4 text-center">
+
+© 2026 Bajaj Auto Transport Management System
+
+</div>
+
+</footer>
+
+
+
+
+
+<script>
+
+document.getElementById("empName").innerHTML =
+localStorage.getItem("employeeName");
+
+document.getElementById("empCode").innerHTML =
+"Employee ID : " +
+localStorage.getItem("employeeCode");
+
+document.getElementById("empDepartment").innerHTML =
+"Department : " +
+localStorage.getItem("department");
+
+if(document.getElementById("empShift")){document.getElementById("empShift").innerHTML = "Shift : " + localStorage.getItem("shift");}
+
+document.getElementById("empBusStop").innerHTML =
+"Pickup Point : " +
+localStorage.getItem("busStop");
+
+document.getElementById("empRoute").innerHTML =
+"Route No : " +
+localStorage.getItem("routeNumber");
+
+
+
+// =========================
+// REQUEST PERMANENT PASS
+// =========================
+
+async function requestPermanentPass(){
+
+    const employeeCode = localStorage.getItem("employeeCode");
+
+    try{
+
+        const response = await fetch(
+            "/request-pass",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    employeeCode:employeeCode
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        alert(data.message);
+
+    }
+    catch(error){
+
+        console.log(error);
+
+        alert("Server Error");
+
+    }
+
+}
+
+
+
+// =========================
+// OPEN MY PASS
+// =========================
+
+function openMyPass(){
+
+    window.location.href="my-pass.html";
+
+}
+
+
+
+// =========================
+// LOGOUT
+// =========================
+
+function logout(){
+
+    fetch("/logout", { method: "POST" })
+    .finally(function(){
+        localStorage.clear();
+        window.location.href="employeelogin.html";
+    });
+
+}
+
+</script>
+
+<!-- ============ UNIVERSAL BACK BUTTON (added) ============ -->
+<style>
+#globalBackBtn{
+    position:fixed;
+    bottom:22px;
+    right:22px;
+    z-index:99999;
+    background:#1e293b;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+    cursor:pointer;
+}
+#globalBackBtn:hover{ background:#0f172a; }
+@media (max-width:600px){
+    #globalBackBtn{
+        bottom:16px;
+        right:16px;
+        padding:8px 14px;
+        font-size:13px;
+    }
+}
+</style>
+<button id="globalBackBtn" onclick="(function(){ if(window.history.length>1){ window.history.back(); } else { window.location.href='index.html'; } })()">← Back</button>
+<!-- ============ END BACK BUTTON ============ -->
+
+</body>
+</html>

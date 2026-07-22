@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Bajaj Auto | Temporary Bus Pass</title>
+
+<style>
+
+body{
+margin:0;
+padding:40px;
+background:#87ceeb;
+font-family:Inter, sans-serif;
+}
+
+.pass{
+max-width:1000px;
+margin:auto;
+background:white;
+border-radius:25px;
+overflow:hidden;
+border:4px solid #dc2626;
+box-shadow:0 20px 45px rgba(0,0,0,0.25);
+}
+
+.header{
+background:#dc2626;
+color:white;
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:25px 30px;
+}
+
+.header h1{
+margin:0;
+font-size:28px;
+}
+
+.header img{
+height:90px;
+background:white;
+padding:8px 14px;
+border-radius:12px;
+}
+
+.title{
+text-align:center;
+padding:20px;
+font-size:32px;
+font-weight:bold;
+background:#dc2626;
+color:white;
+margin:20px;
+border-radius:10px;
+}
+
+.content{
+display:grid;
+grid-template-columns:1fr 1fr;
+padding:30px;
+gap:20px;
+align-items:start;
+}
+
+.row{
+display:grid;
+grid-template-columns:150px 20px auto;
+margin-bottom:14px;
+font-size:18px;
+}
+
+.label{
+font-weight:700;
+color:#991b1b;
+}
+
+.value{
+font-weight:600;
+}
+
+.right{
+text-align:center;
+}
+
+.signature{
+width:220px;
+margin-top:10px;
+}
+
+.status-wrap{
+text-align:center;
+margin-bottom:10px;
+}
+
+.status{
+background:#0a8f2f;
+color:white;
+padding:10px 40px;
+border-radius:30px;
+display:inline-block;
+margin-top:10px;
+font-weight:bold;
+font-size:18px;
+}
+
+.status.expired{
+background:#dc2626;
+}
+
+.buttons{
+display:flex;
+gap:15px;
+margin:20px;
+}
+
+button{
+flex:1;
+padding:16px;
+font-size:17px;
+font-weight:bold;
+border:none;
+border-radius:10px;
+cursor:pointer;
+transition:.2s;
+}
+
+button:hover{
+opacity:.9;
+}
+
+.print{background:#dc2626;color:white;}
+.pdf{background:#16a34a;color:white;}
+.back{background:#334155;color:white;width:calc(100% - 40px);margin:0 20px 20px;padding:14px;font-size:16px;}
+
+.footer{
+background:#dc2626;
+color:white;
+text-align:center;
+padding:15px;
+font-size:16px;
+font-weight:bold;
+letter-spacing:.5px;
+}
+
+.emptyState{
+text-align:center;
+padding:60px 20px;
+}
+
+.emptyState a{
+display:inline-block;
+margin-top:20px;
+background:#dc2626;
+color:white;
+padding:14px 30px;
+border-radius:10px;
+text-decoration:none;
+font-weight:bold;
+}
+
+@media print{
+button{display:none;}
+body{background:white;padding:0;}
+.pass{border:none;box-shadow:none;}
+}
+
+/* ================= MOBILE RESPONSIVE FIX ================= */
+
+@media (max-width: 768px) {
+
+body{
+padding:10px;
+}
+
+.pass{
+border-radius:15px;
+}
+
+.header{
+flex-direction:column;
+text-align:center;
+gap:12px;
+padding:20px;
+}
+
+.header h1{
+font-size:22px;
+}
+
+.header img{
+height:70px;
+}
+
+.title{
+font-size:20px;
+padding:15px;
+margin:10px;
+}
+
+.content{
+grid-template-columns:1fr;
+padding:15px;
+}
+
+.row{
+grid-template-columns:120px 10px auto;
+font-size:14px;
+}
+
+.buttons{
+flex-direction:column;
+}
+
+button{
+font-size:16px;
+padding:14px;
+}
+
+.signature{
+width:160px;
+}
+
+.status{
+font-size:16px;
+padding:8px 25px;
+}
+}
+</style>
+
+
+<!-- ============ AUTO LOGOUT / SESSION GUARD (added) ============ -->
+<script>
+(function(){
+    async function verifySession(){
+        try{
+            const res = await fetch("/check-session", { cache: "no-store" });
+            if(!res.ok){
+                window.location.href = "employeelogin.html";
+            }
+        } catch(e){
+            window.location.href = "employeelogin.html";
+        }
+    }
+    verifySession();
+    window.addEventListener("pageshow", function(event){
+        if(event.persisted){ verifySession(); }
+    });
+})();
+</script>
+<!-- ============ END SESSION GUARD ============ -->
+
+<link rel="stylesheet" href="mobile.css">
+</head>
+
+<body>
+
+<div class="pass" id="passCard">
+
+<div class="header">
+<h1>Bajaj Auto</h1>
+<img src="Bajaj.png" alt="Bajaj Logo">
+</div>
+
+<div class="title">Temporary Bus Pass</div>
+
+<div id="passContent">
+
+<div class="content">
+
+<div class="left">
+
+<div class="row"><div class="label">Name</div><div>:</div><div id="employeeName">Loading...</div></div>
+<div class="row"><div class="label">ID</div><div>:</div><div id="employeeCode">Loading...</div></div>
+<div class="row"><div class="label">Dept</div><div>:</div><div id="department">Loading...</div></div>
+<div class="row"><div class="label">Mobile</div><div>:</div><div id="mobile">Loading...</div></div>
+<div class="row"><div class="label">Reason</div><div>:</div><div id="reason">Loading...</div></div>
+<div class="row"><div class="label">Pickup</div><div>:</div><div id="pickupLocation">Loading...</div></div>
+<div class="row"><div class="label">Drop</div><div>:</div><div id="dropLocation">Loading...</div></div>
+<div class="row"><div class="label">Travel Time</div><div>:</div><div id="travelDateTime">Loading...</div></div>
+<div class="row"><div class="label">Pass ID</div><div>:</div><div id="tempPassId">Loading...</div></div>
+<div class="row"><div class="label">Valid Until</div><div>:</div><div id="validUntil">Loading...</div></div>
+
+</div>
+
+<div class="right">
+<img class="signature" src="sign.png">
+<div class="status-wrap">
+<div id="status" class="status">Loading...</div>
+</div>
+</div>
+
+</div>
+
+<div class="buttons">
+<button class="print" onclick="window.print()">🖨️ Print</button>
+<button class="pdf" onclick="window.print()">⬇️ Download PDF</button>
+</div>
+
+</div>
+
+<div id="emptyState" class="emptyState" style="display:none;">
+<h2>No Approved Temporary Pass Found</h2>
+<p>You don't have an active temporary bus pass right now.</p>
+<a href="tempbuspass.html">Request a Temporary Pass</a>
+</div>
+
+<button class="back" onclick="goBack()">← Back To Dashboard</button>
+
+<div class="footer">BAJAJ AUTO TRANSPORT SYSTEM</div>
+
+</div>
+
+<script>
+
+const employeeCode = localStorage.getItem("employeeCode");
+
+async function loadTempPass(){
+
+    try{
+
+        const res = await fetch(
+            "/my-temp-pass/" + employeeCode
+        );
+
+        const data = await res.json();
+
+        if(data.status !== "success"){
+
+            if(res.status === 401 || res.status === 403){
+                alert("Session expired or you're logged in as a different user in this browser. Please login again.");
+                window.location.href = "employeelogin.html";
+                return;
+            }
+
+            document.getElementById("passContent").style.display = "none";
+            document.getElementById("emptyState").style.display = "block";
+            return;
+
+        }
+
+        document.getElementById("employeeName").innerText = data.employeeName || "";
+        document.getElementById("employeeCode").innerText = data.employeeCode || "";
+        document.getElementById("department").innerText = data.department || "";
+        document.getElementById("mobile").innerText = data.mobile || "";
+        document.getElementById("reason").innerText = data.reason || "";
+        document.getElementById("pickupLocation").innerText = data.pickupLocation || "";
+        document.getElementById("dropLocation").innerText = data.dropLocation || "";
+        document.getElementById("travelDateTime").innerText = data.travelDateTime || "";
+        document.getElementById("tempPassId").innerText = data.tempPassId || "";
+        document.getElementById("validUntil").innerText = data.validUntil || "";
+
+        const statusEl = document.getElementById("status");
+
+        if(data.isExpired){
+            statusEl.innerText = "EXPIRED";
+            statusEl.classList.add("expired");
+        } else {
+            statusEl.innerText = "ACTIVE";
+        }
+
+    }
+
+    catch(err){
+
+        console.log(err);
+        document.getElementById("passContent").style.display = "none";
+        document.getElementById("emptyState").style.display = "block";
+
+    }
+
+}
+
+function goBack(){
+    window.location.href = "employee-dashboard.html";
+}
+
+window.onload = loadTempPass;
+
+</script>
+
+</body>
+</html>

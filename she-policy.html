@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bajaj Auto | SHE धोरण (मराठी)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{font-family:'Noto Sans Devanagari','Inter',sans-serif;}
+body{background:#f1f5f9;margin:0;}
+.logo-tile{background:#fff;border-radius:12px;padding:6px 12px;display:inline-flex;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.logo-tile img{height:40px;width:auto;object-fit:contain;}
+.policy h3{color:#0056b3;font-weight:700;font-size:1.15rem;margin-top:1.5rem;margin-bottom:.5rem;}
+.policy p{color:#334155;line-height:1.9;margin-bottom:.6rem;}
+.policy li{color:#334155;line-height:1.9;}
+.pill{background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:16px;}
+#backBtn{position:fixed;bottom:22px;right:22px;z-index:9999;background:#1e293b;color:#fff;border:none;padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.3);cursor:pointer;}
+#backBtn:hover{background:#0f172a;}
+@media(max-width:600px){#backBtn{bottom:16px;right:16px;padding:8px 14px;font-size:13px;}}
+</style>
+<script>
+(function(){
+  async function verifySession(){
+    try{const res=await fetch("/check-session",{cache:"no-store"});if(!res.ok){window.location.href="employeelogin.html";}}catch(e){window.location.href="employeelogin.html";}
+  }
+  verifySession();
+  window.addEventListener("pageshow",function(e){if(e.persisted){verifySession();}});
+})();
+</script>
+<link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+
+<button id="backBtn" onclick="window.location.href='employee-dashboard.html'">&larr; Back</button>
+
+<header class="bg-white shadow sticky top-0 z-40">
+  <div class="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+    <div class="logo-tile"><img src="logo.png" alt="Bajaj Auto"></div>
+    <div>
+      <h1 class="font-extrabold text-blue-900 text-lg sm:text-xl">SHE धोरण (मराठी)</h1>
+      <p class="text-xs text-gray-500">सुरक्षा, आरोग्य व पर्यावरण धोरण</p>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-4xl mx-auto px-4 py-8">
+  <div class="bg-white rounded-3xl shadow-lg p-6 sm:p-10 policy">
+
+    <div class="text-center mb-6">
+      <div class="text-5xl mb-2">📜</div>
+      <h2 class="text-2xl font-extrabold text-slate-800">सुरक्षा, आरोग्य आणि पर्यावरण (SHE) धोरण</h2>
+      <p class="text-gray-500 mt-1">बजाज ऑटो लिमिटेड — प्लांट १</p>
+    </div>
+
+    <div class="pill mb-6">
+      <p class="font-semibold text-blue-900 mb-0">आमची बांधिलकी</p>
+      <p class="mb-0">बजाज ऑटो सर्व कर्मचारी, कंत्राटी कामगार, अभ्यागत आणि समाजाच्या सुरक्षा, आरोग्य व पर्यावरण संरक्षणासाठी कटिबद्ध आहे. सुरक्षित व निरोगी कार्यस्थळ निर्माण करणे ही आमची सर्वोच्च प्राथमिकता आहे.</p>
+    </div>
+
+    <h3>१. उद्देश</h3>
+    <p>या धोरणाचा उद्देश म्हणजे कामाच्या ठिकाणी अपघात, दुखापती व आजार टाळणे, पर्यावरणाचे रक्षण करणे आणि सर्व लागू कायदे व नियमांचे पालन करणे हा आहे.</p>
+
+    <h3>२. सुरक्षा (Safety)</h3>
+    <ul class="list-disc pl-6">
+      <li>सर्व कर्मचाऱ्यांनी विहित सुरक्षा साधने (PPE) — हेल्मेट, सुरक्षा बूट, हातमोजे, गॉगल इ. — वापरणे बंधनकारक आहे.</li>
+      <li>कोणतीही असुरक्षित कृती किंवा असुरक्षित परिस्थिती त्वरित वरिष्ठांना कळवावी.</li>
+      <li>यंत्रसामग्री चालवताना सर्व सुरक्षा नियम व कार्यपद्धतीचे पालन करावे.</li>
+      <li>वाहतूक व बस प्रवासादरम्यान सीट बेल्टचा वापर करावा व चालकाच्या सूचनांचे पालन करावे.</li>
+      <li>आपत्कालीन निर्गमन मार्ग (Emergency Exit) व अग्निशमन साधनांची माहिती ठेवावी.</li>
+    </ul>
+
+    <h3>३. आरोग्य (Health)</h3>
+    <ul class="list-disc pl-6">
+      <li>कर्मचाऱ्यांच्या शारीरिक व मानसिक आरोग्याची काळजी घेतली जाईल.</li>
+      <li>नियमित आरोग्य तपासणी व वैद्यकीय सुविधा उपलब्ध करून दिल्या जातील.</li>
+      <li>कामाच्या ठिकाणी स्वच्छता व आरोग्यदायी वातावरण राखले जाईल.</li>
+      <li>आजारी असल्यास कामावर येऊ नये व त्वरित दवाखान्याशी संपर्क साधावा.</li>
+    </ul>
+
+    <h3>४. पर्यावरण (Environment)</h3>
+    <ul class="list-disc pl-6">
+      <li>ऊर्जा, पाणी व नैसर्गिक साधनसंपत्तीचा जबाबदारीने वापर करावा.</li>
+      <li>कचऱ्याचे योग्य वर्गीकरण व विल्हेवाट लावावी; प्रदूषण कमी करण्याचा प्रयत्न करावा.</li>
+      <li>पुनर्वापर (Recycle) व पुनर्उपयोगास प्रोत्साहन द्यावे.</li>
+      <li>पर्यावरणपूरक वाहतूक (शेअर्ड बस सेवा) चा वापर करावा.</li>
+    </ul>
+
+    <h3>५. जबाबदाऱ्या</h3>
+    <p>प्रत्येक कर्मचाऱ्याची जबाबदारी आहे की त्यांनी स्वतःची व सहकाऱ्यांची सुरक्षा जपावी, धोरणाचे पालन करावे आणि कोणतीही धोकादायक बाब त्वरित कळवावी. व्यवस्थापन सुरक्षित साधने, प्रशिक्षण व संसाधने पुरवण्यास कटिबद्ध आहे.</p>
+
+    <h3>६. प्रशिक्षण व जागरूकता</h3>
+    <p>सर्व कर्मचाऱ्यांना नियमित सुरक्षा प्रशिक्षण, मॉक ड्रिल व जागरूकता कार्यक्रमांद्वारे SHE बाबत माहिती दिली जाईल.</p>
+
+    <h3>७. सतत सुधारणा</h3>
+    <p>आम्ही आमच्या SHE कामगिरीचे नियमित मूल्यांकन करून सतत सुधारणा करण्यास वचनबद्ध आहोत.</p>
+
+    <div class="pill mt-8">
+      <p class="mb-0"><b>लक्षात ठेवा:</b> सुरक्षा ही प्रत्येकाची जबाबदारी आहे. "सुरक्षित काम — आनंदी जीवन."</p>
+    </div>
+
+    <p class="text-center text-gray-400 text-sm mt-8">© 2026 Bajaj Auto Ltd. — SHE Policy</p>
+  </div>
+</main>
+
+</body>
+</html>
