@@ -1866,12 +1866,27 @@ def _read_all_daywise(path):
 # ============ ROUTE LIVE-TRACKING LINKS (Pragathi GPS, DB-driven) ====
 
 ROUTE_LINKS_FILE = "route_links.xlsx"
-ROUTE_LINKS_COLS = ["shift", "route", "trackingUrl", "updatedAt"]
+ROUTE_LINKS_COLS = ["shift", "route", "trackingUrl", "driverName", "driverMobile", "busNumber", "updatedAt"]
 
 
 def create_route_links_file():
+    """Ensure the route-links workbook exists and has all required columns.
+    Older files are auto-migrated (missing columns added) without data loss."""
     if not os.path.exists(ROUTE_LINKS_FILE):
         pd.DataFrame(columns=ROUTE_LINKS_COLS).to_excel(ROUTE_LINKS_FILE, index=False)
+        return
+    try:
+        df = pd.read_excel(ROUTE_LINKS_FILE)
+        changed = False
+        for col in ROUTE_LINKS_COLS:
+            if col not in df.columns:
+                df[col] = ""
+                changed = True
+        if changed:
+            df = df[ROUTE_LINKS_COLS]
+            df.to_excel(ROUTE_LINKS_FILE, index=False)
+    except Exception:
+        pass
 
 
 create_route_links_file()
@@ -1898,9 +1913,16 @@ def route_link_lookup():
         df["route"] = df["route"].astype(str).str.strip()
         match = df[(df["shift"] == shift) & (df["route"] == route)]
         if match.empty:
-            return jsonify({"status": "success", "trackingUrl": "", "updatedAt": ""})
+            return jsonify({"status": "success", "trackingUrl": "", "driverName": "", "driverMobile": "", "busNumber": "", "updatedAt": ""})
         row = match.iloc[-1]
-        return jsonify({"status": "success", "trackingUrl": str(row["trackingUrl"]), "updatedAt": str(row["updatedAt"])})
+        return jsonify({
+            "status": "success",
+            "trackingUrl": str(row.get("trackingUrl", "")),
+            "driverName": str(row.get("driverName", "")),
+            "driverMobile": str(row.get("driverMobile", "")),
+            "busNumber": str(row.get("busNumber", "")),
+            "updatedAt": str(row.get("updatedAt", "")),
+        })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
@@ -1912,24 +1934,70 @@ def save_route_link():
         data = request.get_json() or {}
         shift = str(data.get("shift", "")).strip()
         route = str(data.get("route", "")).strip()
-        url = str(data.get("trackingUrl", "")).strip()
         if shift == "" or route == "":
             return jsonify({"status": "error", "message": "Shift and Route are required"})
         create_route_links_file()
         df = pd.read_excel(ROUTE_LINKS_FILE).fillna("")
+        for c in ROUTE_LINKS_COLS:
+            if c not in df.columns:
+                df[c] = ""
         df["shift"] = df["shift"].astype(str)
         df["route"] = df["route"].astype(str)
         mask = (df["shift"].str.strip() == shift) & (df["route"].str.strip() == route)
         now = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+        # Only update the fields that were actually sent in the request so a
+        # partial update (e.g. saving just the tracking link) never wipes the
+        # existing driver/bus details, and vice-versa.
+        editable = {"trackingUrl": "trackingUrl", "driverName": "driverName",
+                    "driverMobile": "driverMobile", "busNumber": "busNumber"}
+        provided = {col: str(data.get(key, "")).strip()
+                    for key, col in editable.items() if key in data}
+
         if mask.any():
-            df.loc[mask, "trackingUrl"] = url
+            for col, val in provided.items():
+                df.loc[mask, col] = val
             df.loc[mask, "updatedAt"] = now
         else:
-            df = pd.concat([df, pd.DataFrame([{"shift": shift, "route": route, "trackingUrl": url, "updatedAt": now}])], ignore_index=True)
+            new_row = {"shift": shift, "route": route, "trackingUrl": "",
+                       "driverName": "", "driverMobile": "", "busNumber": "",
+                       "updatedAt": now}
+            new_row.update(provided)
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        df = df[ROUTE_LINKS_COLS]
+
         df.to_excel(ROUTE_LINKS_FILE, index=False)
-        return jsonify({"status": "success", "message": "Tracking link saved successfully"})
+        return jsonify({"status": "success", "message": "Route details saved successfully"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
+
+
+# ---- Transport supervisors / helpline (shown on Routes page) ----
+SUPERVISORS_FILE = "supervisors.xlsx"
+SUPERVISORS_COLS = ["name", "role", "mobile"]
+DEFAULT_SUPERVISORS = [
+    {"name": "TUSHAR", "role": "Transport Supervisor", "mobile": "7350561144"},
+    {"name": "TUSHAR PATIL", "role": "GER Supervisor", "mobile": "7350561144"},
+]
+
+
+def create_supervisors_file():
+    if not os.path.exists(SUPERVISORS_FILE):
+        pd.DataFrame(DEFAULT_SUPERVISORS, columns=SUPERVISORS_COLS).to_excel(SUPERVISORS_FILE, index=False)
+
+
+create_supervisors_file()
+
+
+@app.route("/supervisors", methods=["GET"])
+def supervisors():
+    try:
+        create_supervisors_file()
+        df = pd.read_excel(SUPERVISORS_FILE).fillna("")
+        return jsonify(df.to_dict(orient="records"))
+    except Exception:
+        return jsonify(DEFAULT_SUPERVISORS)
 
 
 # ============ DEPARTMENT HEADS (Vendor Visit auto-fill) =============

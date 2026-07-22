@@ -29,6 +29,19 @@ body{margin:0;background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100v
 #backBtn{position:fixed;bottom:22px;right:22px;z-index:9999;background:#1e293b;color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 6px 16px rgba(0,0,0,.3);cursor:pointer;}
 #backBtn:hover{background:#0f172a;}
 @media(max-width:600px){#backBtn{bottom:16px;right:16px;padding:8px 14px;font-size:13px;}}
+
+/* ---- driver info + supervisor cards (added) ---- */
+.driver-box{margin-top:14px;background:rgba(2,6,23,.35);border:1px solid rgba(255,255,255,.10);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.driver-empty{color:#94a3b8;font-size:13px;text-align:center;}
+.dinfo{display:flex;align-items:center;gap:8px;font-size:14px;}
+.dic{width:22px;text-align:center;flex:0 0 auto;}
+.dlbl{color:#94a3b8;font-size:12px;width:58px;flex:0 0 auto;}
+.dval{color:#f1f5f9;font-weight:700;word-break:break-word;}
+a.dcall{color:#34d399;text-decoration:none;}
+a.dcall:hover{text-decoration:underline;}
+.admin-lbl{display:block;color:#bfdbfe;font-size:11px;font-weight:700;margin-bottom:3px;margin-top:6px;}
+.sup-card{display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:12px 14px;}
+.sup-ic{font-size:22px;flex:0 0 auto;}
 </style>
 <link rel="stylesheet" href="mobile.css">
 </head>
@@ -59,6 +72,13 @@ body{margin:0;background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100v
       <option value="General Shift">General Shift</option>
     </select>
     <p id="adminHint" class="text-slate-300 text-xs mt-3 hidden">🛠️ Admin mode: paste the Pragathi GPS live-tracking URL for each route and click Save. Employees will instantly see the latest link.</p>
+  </div>
+</div>
+
+<div id="supervisorWrap" class="max-w-6xl mx-auto px-4 mt-5" style="display:none;">
+  <div class="glass p-4 sm:p-5">
+    <p class="text-yellow-300 font-bold mb-3">🛡️ Transport Supervisors / Helpline</p>
+    <div id="supervisorBox" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
   </div>
 </div>
 
@@ -219,7 +239,41 @@ async function loadContext(){
   try{
     const r = await fetch("/route-links",{cache:"no-store"});
     const data = await r.json();
-    if(Array.isArray(data)){ data.forEach(row=>{ LINKS[linkKey(String(row.shift).trim(), String(row.route).trim())] = String(row.trackingUrl||"").trim(); }); }
+    if(Array.isArray(data)){ data.forEach(row=>{ LINKS[linkKey(String(row.shift).trim(), String(row.route).trim())] = {
+        url: String(row.trackingUrl||"").trim(),
+        driverName: String(row.driverName||"").trim(),
+        driverMobile: String(row.driverMobile||"").trim(),
+        busNumber: String(row.busNumber||"").trim()
+    }; }); }
+  }catch(e){}
+  loadSupervisors();
+}
+
+function getInfo(shift, route){
+  const val = LINKS[linkKey(shift, route)];
+  if(!val) return {url:"",driverName:"",driverMobile:"",busNumber:""};
+  if(typeof val === "string") return {url:val,driverName:"",driverMobile:"",busNumber:""};
+  return val;
+}
+
+async function loadSupervisors(){
+  try{
+    const r = await fetch("/supervisors",{cache:"no-store"});
+    const list = await r.json();
+    const box = document.getElementById("supervisorBox");
+    if(!box || !Array.isArray(list) || list.length===0) return;
+    box.innerHTML = list.map(s=>{
+      const mob = String(s.mobile||"").trim();
+      const tel = mob.replace(/[^0-9+]/g,"");
+      return `<div class="sup-card">
+        <div class="sup-ic">__SHIELD__</div>
+        <div class="min-w-0">
+          <p class="font-bold text-white leading-tight truncate">${s.name||""}</p>
+          <p class="text-slate-300 text-xs">${s.role||"Supervisor"}</p>
+          <a href="tel:${tel}" class="text-emerald-300 font-semibold text-sm hover:underline">__PHONE__ ${mob}</a>
+        </div></div>`;
+    }).join("");
+    document.getElementById("supervisorWrap").style.display = "block";
   }catch(e){}
 }
 
@@ -232,17 +286,28 @@ function renderRoutes(shift){
   names.forEach(routeName=>{
     const stops = routes[routeName];
     const from = stops[0], to = stops[stops.length-1];
-    const savedUrl = LINKS[linkKey(shift, routeName)] || "";
+    const info = getInfo(shift, routeName);
+    const savedUrl = info.url || "";
     const hasLink = savedUrl.length > 0;
+    const drvName = info.driverName || "";
+    const drvMob = info.driverMobile || "";
+    const busNo = info.busNumber || "";
+    const telMob = drvMob.replace(/[^0-9+]/g,"");
     const card = document.createElement("div");
     card.className = "route-card";
     let adminHtml = "";
     if(ROLE === "admin"){
       adminHtml = `
         <div class="admin-box">
-          <label class="block text-blue-200 text-xs font-bold mb-1">Pragathi GPS Live Tracking URL</label>
-          <input type="url" class="field-input mb-2" placeholder="https://vms-livetrack.pragatiutrack.com/..." value="${savedUrl.replace(/"/g,'&quot;')}">
-          <button class="btn btn-save">💾 Save Link</button>
+          <label class="admin-lbl">🚌 Bus Number</label>
+          <input type="text" class="field-input mb-2 fld-bus" placeholder="e.g. MH 14 AB 1234" value="${busNo.replace(/"/g,'&quot;')}">
+          <label class="admin-lbl">👤 Driver Name</label>
+          <input type="text" class="field-input mb-2 fld-drv" placeholder="Driver full name" value="${drvName.replace(/"/g,'&quot;')}">
+          <label class="admin-lbl">📞 Driver Mobile</label>
+          <input type="text" class="field-input mb-2 fld-mob" placeholder="10-digit mobile" value="${drvMob.replace(/"/g,'&quot;')}">
+          <label class="admin-lbl">Pragathi GPS Live Tracking URL</label>
+          <input type="url" class="field-input mb-2 fld-url" placeholder="https://vms-livetrack.pragatiutrack.com/..." value="${savedUrl.replace(/"/g,'&quot;')}">
+          <button class="btn btn-save">💾 Save Route Details</button>
         </div>`;
     }
     card.innerHTML = `
@@ -252,6 +317,12 @@ function renderRoutes(shift){
       </div>
       <p class="text-slate-300 text-sm mt-1">${from} → ${to}</p>
       <p class="text-slate-400 text-xs mt-1">${stops.length} stops</p>
+      ${ (busNo||drvName||drvMob) ? `
+      <div class="driver-box">
+        ${ busNo ? `<div class="dinfo"><span class="dic">__BUS__</span><span class="dlbl">Bus No.</span><span class="dval">${busNo}</span></div>` : `` }
+        ${ drvName ? `<div class="dinfo"><span class="dic">__PERSON__</span><span class="dlbl">Driver</span><span class="dval">${drvName}</span></div>` : `` }
+        ${ drvMob ? `<div class="dinfo"><span class="dic">__PHONE__</span><span class="dlbl">Mobile</span><a href="tel:${telMob}" class="dval dcall">${drvMob}</a></div>` : `` }
+      </div>` : `<div class="driver-box driver-empty">Driver details not assigned yet</div>` }
       <div class="grid grid-cols-2 gap-3 mt-4">
         <button class="btn btn-stops act-stops">📍 Show Stops</button>
         <button class="btn btn-track act-track">🚍 Live GPS</button>
@@ -261,25 +332,29 @@ function renderRoutes(shift){
     card.querySelector(".act-stops").onclick = ()=> showStops(routeName);
     card.querySelector(".act-track").onclick = ()=> openTracking(routeName);
     if(ROLE === "admin"){
-      const inp = card.querySelector("input");
-      card.querySelector(".btn-save").onclick = ()=> saveLink(routeName, inp.value, card);
+      card.querySelector(".btn-save").onclick = ()=> saveRoute(routeName, card);
     }
     routesGrid.appendChild(card);
   });
 }
 
-async function saveLink(routeName, url, card){
+async function saveRoute(routeName, card){
+  const url = card.querySelector(".fld-url") ? card.querySelector(".fld-url").value.trim() : "";
+  const busNo = card.querySelector(".fld-bus") ? card.querySelector(".fld-bus").value.trim() : "";
+  const drvName = card.querySelector(".fld-drv") ? card.querySelector(".fld-drv").value.trim() : "";
+  const drvMob = card.querySelector(".fld-mob") ? card.querySelector(".fld-mob").value.trim() : "";
   try{
-    const res = await fetch("/save-route-link",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({shift:currentShift, route:routeName, trackingUrl:url.trim()})});
+    const res = await fetch("/save-route-link",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({shift:currentShift, route:routeName, trackingUrl:url, busNumber:busNo, driverName:drvName, driverMobile:drvMob})});
     const data = await res.json();
     if(data.status === "success"){
-      LINKS[linkKey(currentShift, routeName)] = url.trim();
+      LINKS[linkKey(currentShift, routeName)] = {url:url, driverName:drvName, driverMobile:drvMob, busNumber:busNo};
       const badge = card.querySelector(".badge");
-      if(url.trim()){ badge.className="badge bg-emerald-600 text-white"; badge.textContent="GPS ✓"; }
+      if(url){ badge.className="badge bg-emerald-600 text-white"; badge.textContent="GPS ✓"; }
       else { badge.className="badge bg-slate-600 text-slate-200"; badge.textContent="No GPS"; }
+      renderRoutes(currentShift);
       alert("✅ " + data.message);
     } else { alert("⚠️ " + (data.message || "Could not save")); }
-  }catch(e){ alert("Server error while saving link"); }
+  }catch(e){ alert("Server error while saving route details"); }
 }
 
 function showStops(routeName){
@@ -304,8 +379,13 @@ async function openTracking(routeName){
     const r = await fetch("/route-link?shift="+encodeURIComponent(currentShift)+"&route="+encodeURIComponent(routeName),{cache:"no-store"});
     const data = await r.json();
     url = (data && data.trackingUrl) ? String(data.trackingUrl).trim() : "";
-    LINKS[linkKey(currentShift, routeName)] = url;
-  }catch(e){ url = LINKS[linkKey(currentShift, routeName)] || ""; }
+    LINKS[linkKey(currentShift, routeName)] = {
+        url: url,
+        driverName: (data && data.driverName) ? String(data.driverName).trim() : (getInfo(currentShift,routeName).driverName||""),
+        driverMobile: (data && data.driverMobile) ? String(data.driverMobile).trim() : (getInfo(currentShift,routeName).driverMobile||""),
+        busNumber: (data && data.busNumber) ? String(data.busNumber).trim() : (getInfo(currentShift,routeName).busNumber||"")
+    };
+  }catch(e){ url = getInfo(currentShift, routeName).url || ""; }
   if(url){ frame.src = url; wrap.style.display = "block"; openNew.href = url; openNew.style.display = "block"; }
   else { noLink.style.display = "block"; }
 }
